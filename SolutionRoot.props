@@ -1,0 +1,23 @@
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)externals\msbuild-def\release.props" Condition="$(Configuration) == 'Release'" />
+    <Import Project="$(SolutionDir)externals\msbuild-def\debug.props" Condition="$(Configuration) == 'Debug'" />
+    <Import Project="$(SolutionDir)externals\msbuild-def\unittests.props" Condition="$(Configuration) == 'UnitTests'" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)externals\extlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)externals\netlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)externals\QtTools\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        EXT_ENABLE_OPENSSL; EXT_ENABLE_CPPZLIB;
+        _CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      
+      <!-- warning C4250: inherits via dominance -->
+      <AdditionalOptions>/wd4250 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

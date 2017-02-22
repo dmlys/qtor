@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{EA067ECD-736B-468F-93E8-2EB9395EE703}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)SolutionRoot.props" Condition="exists('$(SolutionDir)SolutionRoot.props')" />
+    <Import Project="$(SolutionDir)externals\msbuild-def\RelativeSources.props" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(SolutionDir)externals\msbuild-def\Qt.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- precompiled -->
+      <!--       <PrecompiledHeader>Use</PrecompiledHeader>
+      <ForcedIncludeFiles>precompiled.h; %(ForcedIncludeFiles);</ForcedIncludeFiles>
+      <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile> -->
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">log4cplus.lib; yaml-cpp-mt.lib; zlib-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">log4cplusD.lib; yaml-cpp-mt-gd.lib; zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sqlite3.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <!-- Qt -->
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">Qt5Widgets.lib; Qt5Core.lib; Qt5Gui.lib; Qt5Script.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">Qt5Widgetsd.lib; Qt5Cored.lib; Qt5Guid.lib; Qt5Scriptd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\externals\extlib\extlib.vcxproj">
+      <Project>{1c5a8c14-535d-44df-9a69-b5d2bd44f774}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\externals\netlib\netlib.vcxproj">
+      <Project>{a0cf8db4-824a-4c7b-98d5-77e83548ac1e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\externals\QtTools\QtTools.vcxproj">
+      <Project>{3b471441-8dd5-4867-b6a9-909474e9e844}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

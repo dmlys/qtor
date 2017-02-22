@@ -1,0 +1,12 @@
+[submodule "extlib"]
+	path = externals/extlib
+	url = ../extlib.git
+[submodule "msbuild-def"]
+	path = externals/msbuild-def
+	url = ../msbuild-def.git
+[submodule "QtTools"]
+	path = externals/QtTools
+	url = ../QtTools.git
+[submodule "netlib"]
+	path = externals/netlib
+	url = ../netlib.git
