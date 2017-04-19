@@ -45,12 +45,12 @@
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile> -->
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="$(Configuration) == 'Release'">log4cplus.lib; yaml-cpp-mt.lib; zlib-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="$(Configuration) != 'Release'">log4cplusD.lib; yaml-cpp-mt-gd.lib; zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies>sqlite3.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">yaml-cpp-mt.lib; zlib-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">yaml-cpp-mt-gd.lib; zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <!-- <AdditionalDependencies>sqlite3.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
       <!-- Qt -->
-      <AdditionalDependencies Condition="$(Configuration) == 'Release'">Qt5Widgets.lib; Qt5Core.lib; Qt5Gui.lib; Qt5Script.lib; %(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="$(Configuration) != 'Release'">Qt5Widgetsd.lib; Qt5Cored.lib; Qt5Guid.lib; Qt5Scriptd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <!-- <AdditionalDependencies Condition="$(Configuration) == 'Release'">Qt5Widgets.lib; Qt5Core.lib; Qt5Gui.lib; Qt5Script.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
+      <!-- <AdditionalDependencies Condition="$(Configuration) != 'Release'">Qt5Widgetsd.lib; Qt5Cored.lib; Qt5Guid.lib; Qt5Scriptd.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -65,7 +65,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\transmission\data_source.cpp" />
+    <ClCompile Include="src\transmission\requests.cpp" />
     <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\torrent.hpp" />
+    <ClInclude Include="src\transmission\abstract_data_source.hpp" />
+    <ClInclude Include="src\transmission\data_source.hpp" />
+    <ClInclude Include="src\transmission\requests.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,20 +1,39 @@
 #include <array>
+#include <memory>
 #include <string>
 #include <map>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <regex>
 
 #include <ext/is_string.hpp>
 #include <ext/utility.hpp>
 #include <ext/base64.hpp>
+#include <ext/itoa.hpp>
+
 #include <ext/netlib/codecs/url_encoding.hpp>
 #include <ext/netlib/socket_stream.hpp>
 #include <ext/netlib/http_response_parser.hpp>
 #include <ext/netlib/http_response_stream.hpp>
 
-#pragma  comment(lib, "openssl-mt-gd.lib")
-#pragma  comment(lib, "openssl-eay-mt-gd.lib")
+#include <fmt/format.h>
+
+#include <ext/netlib/socket_rest_supervisor.hpp>
+#include <ext/library_logger/logger.hpp>
+#include <ext/library_logger/logging_macros.hpp>
+
+#include <transmission/data_source.hpp>
+
+#ifdef NDEBUG
+#pragma  comment(lib, "libfmt-mt.lib")
+#pragma  comment(lib, "openssl-crypto-mt.lib")
+#pragma  comment(lib, "openssl-ssl-mt.lib")
+#else
+#pragma  comment(lib, "libfmt-mt-gd.lib")
+#pragma  comment(lib, "openssl-crypto-mt-gd.lib")
+#pragma  comment(lib, "openssl-ssl-mt-gd.lib")
+#endif
 
 //class http_method
 //{
@@ -33,7 +52,6 @@
 //
 //std::array<const char *, 0> empty_headers;
 //constexpr char * empty_headers[0] = {};
-
 
 template <class Sink, class HeaderString, class ValueString>
 void write_http_header(Sink & sink, const HeaderString & name, const ValueString & value)
@@ -91,45 +109,34 @@ write_http_headers(Sink & sink, const Range & headers_map)
 	}
 }
 
-template <class Sink, class String, class Headers = decltype(empty_headers)>
-void write_http_get(Sink & sink, const String & resource, const Headers & headers = empty_headers)
-{
-	using ext::netlib::write_string;
-	write_string(sink, "GET ");
-	write_string(sink, resource);
-	write_string(sink, " HTTP/1.1\r\n");
-
-	auto chops = {
-		"Host", "httpbin.org",
-		"Connection", "close",
-		//"Accept-Encoding", "gzip",
-	};
-
-	write_http_headers(sink, chops);
-	write_string(sink, "\r\n");
-}
-
-
 int main()
 {
 	using namespace std;
-
 	ext::socket_stream_init();
-	ext::socket_stream sock;
 
-	sock.connect("httpbin.org", "http");
+	auto * ds = new qtor::transmission::data_source;
+	ext::library_logger::stream_logger lg(clog);
 
-	auto & ss = sock;
+	ds->set_logger(&lg);
+	ds->set_timeout(10s);
+	ds->set_address("https://melkiy:9091/transmission/rpc");
+	//ds->set_address("http://httpbin.org/get");
 
-	auto headers = {"Connection", "close", "Accept-Encoding", "gzip"};
-	write_http_get(ss, "/get", headers);
-	cout << ss.rdbuf() << endl;
+	ds->connect().wait();
+	auto ftorrents = ds->torrent_get({});
 
-	//write_http_headers(ss, hmap);
-
-	//std::string response;
-	//int code = ext::netlib::parse_http_response(sock, response);
-	//cout << response << endl;
+	try
+	{
+		auto list = ftorrents.get();
+		for (auto & t : list)
+		{
+			cout << fmt::format("{} - {}", t.id, t.name) << endl;
+		}
+	}
+	catch (std::exception & ex)
+	{
+		cerr << ex.what() << endl;
+	}
 
 	system("pause");
 	return 0;

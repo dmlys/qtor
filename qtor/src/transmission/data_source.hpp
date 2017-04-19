@@ -1,0 +1,39 @@
+#pragma once
+#include "abstract_data_source.hpp"
+#include <ext/netlib/socket_rest_supervisor.hpp>
+
+namespace qtor {
+namespace transmission
+{
+	class data_source :
+		public abstract_data_source,
+		public ext::netlib::socket_rest_supervisor
+	{
+	private:
+		typedef ext::netlib::socket_rest_supervisor base_type;
+
+	private:
+		std::string m_encoded_uri;
+		std::string m_xtransmission_session;
+
+	protected:
+		class request_base;
+		class subscription_base;
+		class torrent_subscription;
+		class torrent_request;
+
+	//protected:
+	//	void emit_signal(event_sig & sig, event_type ev) override;
+
+	public:
+		void set_address(std::string addr) override;
+		void set_timeout(std::chrono::steady_clock::duration timeout) override;
+
+		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
+		auto torrent_get(torrent_index_list idx) -> ext::future<torrent_list> override;
+
+	public:
+		data_source() = default;
+		~data_source() = default;
+	};
+}}
