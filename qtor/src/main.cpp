@@ -12,18 +12,15 @@
 #include <ext/base64.hpp>
 #include <ext/itoa.hpp>
 
-#include <ext/netlib/codecs/url_encoding.hpp>
-#include <ext/netlib/socket_stream.hpp>
-#include <ext/netlib/http_response_parser.hpp>
-#include <ext/netlib/http_response_stream.hpp>
-
 #include <fmt/format.h>
 
 #include <ext/netlib/socket_rest_supervisor.hpp>
 #include <ext/library_logger/logger.hpp>
 #include <ext/library_logger/logging_macros.hpp>
 
-#include <transmission/data_source.hpp>
+#include <qtor/torrent_store.hpp>
+#include <qtor/torrent_model.hpp>
+#include <qtor/transmission/data_source.hpp>
 
 #ifdef NDEBUG
 #pragma  comment(lib, "libfmt-mt.lib")
@@ -117,12 +114,19 @@ int main()
 	auto * ds = new qtor::transmission::data_source;
 	ext::library_logger::stream_logger lg(clog);
 
+	//qtor::torrent_store store;
+	//qtor::torrent_model model;
+
 	ds->set_logger(&lg);
 	ds->set_timeout(10s);
-	ds->set_address("https://melkiy:9091/transmission/rpc");
+	ds->set_address("https://localhost:9091/transmission/rpc");
 	//ds->set_address("http://httpbin.org/get");
 
-	ds->connect().wait();
+	if (not ds->connect().get())
+	{
+		return EXIT_FAILURE;
+	}
+
 	auto ftorrents = ds->torrent_get({});
 
 	try
@@ -138,6 +142,5 @@ int main()
 		cerr << ex.what() << endl;
 	}
 
-	system("pause");
 	return 0;
 }

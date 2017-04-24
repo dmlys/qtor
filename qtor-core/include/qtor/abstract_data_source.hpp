@@ -8,7 +8,7 @@
 #include <ext/netlib/connection_controller.hpp>
 #include <ext/netlib/subscription_handle.hpp>
 
-#include <torrent.hpp>
+#include <qtor/torrent.hpp>
 
 namespace qtor
 {
@@ -19,7 +19,7 @@ namespace qtor
 
 	public:
 		virtual auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle = 0;
-		virtual auto torrent_get(torrent_index_list ids) -> ext::future<torrent_list> = 0;
+		virtual auto torrent_get(torrent_id_list ids) -> ext::future<torrent_list> = 0;
 
 		virtual void set_address(std::string addr) = 0;
 		virtual void set_timeout(std::chrono::steady_clock::duration timeout) = 0;

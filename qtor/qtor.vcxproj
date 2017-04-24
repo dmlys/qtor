@@ -45,6 +45,7 @@
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile> -->
     </ClCompile>
     <Link>
+      <SubSystem>Console</SubSystem>
       <AdditionalDependencies Condition="$(Configuration) == 'Release'">yaml-cpp-mt.lib; zlib-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="$(Configuration) != 'Release'">yaml-cpp-mt-gd.lib; zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
       <!-- <AdditionalDependencies>sqlite3.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
@@ -63,17 +64,12 @@
     <ProjectReference Include="..\externals\QtTools\QtTools.vcxproj">
       <Project>{3b471441-8dd5-4867-b6a9-909474e9e844}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\transmission-remote\transmission-remote.vcxproj">
+      <Project>{d94d4828-ff42-4e26-a659-c3b02ca9ab43}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\transmission\data_source.cpp" />
-    <ClCompile Include="src\transmission\requests.cpp" />
     <ClCompile Include="src\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\torrent.hpp" />
-    <ClInclude Include="src\transmission\abstract_data_source.hpp" />
-    <ClInclude Include="src\transmission\data_source.hpp" />
-    <ClInclude Include="src\transmission\requests.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

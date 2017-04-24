@@ -1,5 +1,5 @@
 #pragma once
-#include "abstract_data_source.hpp"
+#include <qtor/abstract_data_source.hpp>
 #include <ext/netlib/socket_rest_supervisor.hpp>
 
 namespace qtor {
@@ -30,7 +30,7 @@ namespace transmission
 		void set_timeout(std::chrono::steady_clock::duration timeout) override;
 
 		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
-		auto torrent_get(torrent_index_list idx) -> ext::future<torrent_list> override;
+		auto torrent_get(torrent_id_list ids) -> ext::future<torrent_list> override;
 
 	public:
 		data_source() = default;

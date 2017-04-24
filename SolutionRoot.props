@@ -9,6 +9,10 @@
       <AdditionalIncludeDirectories>$(SolutionDir)externals\extlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)externals\netlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)externals\QtTools\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      
+      <AdditionalIncludeDirectories>$(SolutionDir)qtor-core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)transmission-remote\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      
       <PreprocessorDefinitions>
         EXT_ENABLE_OPENSSL; EXT_ENABLE_CPPZLIB;
         _CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)

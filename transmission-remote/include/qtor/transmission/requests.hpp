@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <istream>
 
 #include <ext/type_traits.hpp>
@@ -8,7 +9,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <fmt/format.h>
-#include <torrent.hpp>
+#include <qtor/torrent.hpp>
 
 namespace qtor {
 namespace transmission
@@ -20,13 +21,9 @@ namespace transmission
 	///   ids    - ... for all field ids should be absent.
 	inline namespace constants
 	{
-		const auto request_template = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ], "ids": [ {} ] }} }})";
-		const auto request_template_all = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ] }} }})";
-
-		const auto request_default_fields =
-		{
-			"id", "name"
-		};
+		extern const std::string request_template;
+		extern const std::string request_template_all;
+		extern const std::vector<std::string> request_default_fields;
 
 		extern const std::string torrent_get;
 		extern const std::string torrent_set;

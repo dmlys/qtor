@@ -10,13 +10,13 @@ namespace qtor
 	struct torrent_filename;
 	struct statistics;
 
-	typedef std::string                      torrent_index_type;
-	typedef std::vector<torrent_index_type>  torrent_index_list;
+	typedef std::string                      torrent_id_type;
+	typedef std::vector<torrent_id_type>     torrent_id_list;
 	typedef std::vector<torrent>             torrent_list;
 
 	struct torrent
 	{
-		torrent_index_type id;
+		torrent_id_type id;
 		
 		std::string name;
 	};
@@ -26,7 +26,7 @@ namespace qtor
 	{
 		auto operator()(const torrent & val) const noexcept
 		{
-			return std::hash<torrent_index_type>{} (val.id);
+			return std::hash<torrent_id_type>{} (val.id);
 		}
 	};
 
@@ -37,4 +37,7 @@ namespace qtor
 			return t1.id == t2.id;
 		}
 	};
+
+
+	
 }

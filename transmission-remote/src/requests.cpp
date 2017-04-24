@@ -1,4 +1,4 @@
-#include "requests.hpp"
+#include <qtor/transmission/requests.hpp>
 #include <yaml-cpp/yaml.h>
 
 namespace qtor {
@@ -6,6 +6,14 @@ namespace transmission
 {
 	inline namespace constants
 	{
+		const std::string request_template = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ], "ids": [ {} ] }} }})";
+		const std::string request_template_all = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ] }} }})";
+
+		const std::vector<std::string> request_default_fields =
+		{
+			"id", "name"
+		};
+
 		const std::string torrent_get = "torrent-get";
 		const std::string torrent_set = "torrent-set";
 		const std::string torrent_add = "torrent-add";
@@ -13,7 +21,7 @@ namespace transmission
 		static const std::string Arguments = "arguments";
 		static const std::string Torrents = "torrents";
 		static const std::string Name = "name";
-		static const std::string Id = "id";		
+		static const std::string Id = "id";
 	}
 
 

@@ -1,34 +1,34 @@
 #pragma once
-#include <Torrent.hpp>
+#include <qtor/torrent.hpp>
+#include <qtor/abstract_data_source.hpp>
+#include <qtor/view_manager.hpp>
 #include <viewed/hash_container_base.hpp>
 
 namespace qtor
 {
-	class TorrentStore :
+	/// Torrent store hash store of torrents.
+	/// Store is associated with torrents subscription.
+	/// It also managed view connected views and automatically pauses subscription 
+	/// if there are no connected views.
+	class torrent_store :
 		public viewed::hash_container_base<
-			Torrent,
-			TorrentIdHasher,
-			TorrentIdEqual
-		>
+			torrent,
+			torrent_id_hasher,
+			torrent_id_equal
+		>,
+		public view_manager
 	{
 		typedef viewed::hash_container_base<
-			Torrent,
-			TorrentIdHasher,
-			TorrentIdEqual
+			torrent,
+			torrent_id_hasher,
+			torrent_id_equal
 		> base_type;
 
 	private:
-		virtual void subscribe();
-		virtual void start_subscription();
-		virtual void stop_subscription();
+		abstract_data_source * m_source = nullptr;
 
-	private:
-		/// текущее кол-во проекций
-		unsigned view_count();
-		/// регистрирует проекцию, Возвращает новое кол-во проекций после
-		unsigned view_addref();
-		/// уменьшает счетчик проекций. Возвращает новое кол-во проекций после 
-		unsigned view_release();
+	protected:
+		auto subscribe() -> ext::netlib::subscription_handle override;
 
 	public:
 		/// добавляет данные. Уже имеющиеся данные обновляются, остальные добавляются
@@ -44,5 +44,8 @@ namespace qtor
 		template <class RecordRange>
 		void assign_records(RecordRange newRecs);
 
+	public:
+		torrent_store() = default;
+		~torrent_store() = default;
 	};
 }

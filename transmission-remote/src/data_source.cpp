@@ -1,5 +1,5 @@
-#include "data_source.hpp"
-#include "requests.hpp"
+#include <qtor/transmission/data_source.hpp>
+#include <qtor/transmission/requests.hpp>
 
 #include <ext/netlib/parse_url.hpp>
 #include <ext/netlib/http_response_parser.hpp>
@@ -156,7 +156,7 @@ namespace transmission
 	class data_source::torrent_request : public request<torrent_list, request_base>
 	{
 	public:
-		torrent_index_list m_request_idx;
+		torrent_id_list m_request_idx;
 
 	public:
 		auto request_command() -> std::string override
@@ -174,7 +174,7 @@ namespace transmission
 	class data_source::torrent_subscription : public subscription_base
 	{
 	public:
-		torrent_index_list m_request_idx;
+		torrent_id_list m_request_idx;
 		torrent_handler m_handler;
 
 	public:
@@ -191,7 +191,7 @@ namespace transmission
 	};
 
 
-	auto data_source::torrent_get(torrent_index_list idx) -> ext::future<torrent_list>
+	auto data_source::torrent_get(torrent_id_list idx) -> ext::future<torrent_list>
 	{
 		auto obj = ext::make_intrusive<torrent_request>();
 		obj->m_request_idx = std::move(idx);
