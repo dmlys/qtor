@@ -42,17 +42,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
+    <ClInclude Include="include\qtor\formatter.hpp" />
     <ClInclude Include="include\qtor\torrent.hpp" />
     <ClInclude Include="include\qtor\torrent_comparator.hpp" />
     <ClInclude Include="include\qtor\torrent_filter.hpp" />
-    <ClInclude Include="include\qtor\torrent_model.hpp" />
+    <ClInclude Include="include\qtor\TorrentModel.hpp" />
     <ClInclude Include="include\qtor\torrent_store.hpp" />
     <ClInclude Include="include\qtor\view_manager.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\torrent_model.cpp" />
+    <ClCompile Include="src\AbstractTorrentModel.cpp" />
+    <ClCompile Include="src\formatter.cpp" />
+    <ClCompile Include="src\TorrentModel.cpp" />
+    <ClCompile Include="src\torrent_filter.cpp" />
     <ClCompile Include="src\torrent_store.cpp" />
     <ClCompile Include="src\view_manager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMOCCompile Include="include\qtor\AbstractTorrentModel.hqt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

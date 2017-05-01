@@ -19,7 +19,7 @@
 #include <ext/library_logger/logging_macros.hpp>
 
 #include <qtor/torrent_store.hpp>
-#include <qtor/torrent_model.hpp>
+#include <qtor/TorrentModel.hpp>
 #include <qtor/transmission/data_source.hpp>
 
 #ifdef NDEBUG

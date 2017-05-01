@@ -1,0 +1,50 @@
+#pragma once
+#include <QtCore/QAbstractTableModel>
+#include <qtor/torrent.hpp>
+
+namespace qtor
+{
+	class AbstractTorrentModel : public QAbstractTableModel
+	{
+		Q_OBJECT;
+
+	private:
+		typedef QAbstractTableModel     base_type;
+		typedef AbstractTorrentModel  self_type;
+
+	public:
+		static constexpr Qt::ItemDataRole TorrentRole = Qt::UserRole;
+
+	protected:
+		static const QStringList ms_columnNames;
+
+	protected:
+		// inherit constructors
+		using base_type::base_type;
+
+	public:
+		virtual QString FieldName(int section) const;
+		virtual QString TorrentId(int row) const;
+		virtual const torrent & GetTorrent(int row) const = 0;
+
+		virtual QString GetValue(int row, int column) const;
+		virtual QString GetValueShort(int row, int column) const;
+
+		virtual void FilterByName(QString expr) = 0;
+		virtual int FullRowCount() const = 0;
+
+	public:
+		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
+		int columnCount(const QModelIndex & parent = QModelIndex()) const override;
+
+		// some default implementations with help of GetValueShort / GetFieldName / others
+		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+
+	public:
+		QString TorrentId(const QModelIndex & idx) const { return idx.isValid() ? TorrentId(idx.row()) : QString::null; }
+		QString FieldName(const QModelIndex & idx) const { return idx.isValid() ? FieldName(idx.row()) : QString::null; }
+		QString GetValue(const QModelIndex & idx) const { return idx.isValid() ? GetValue(idx.row(), idx.column()) : QString::null; }
+		QString GetValueShort(const QModelIndex & idx) const { return idx.isValid() ? GetValueShort(idx.row(), idx.column()) : QString::null; }
+	};
+}
