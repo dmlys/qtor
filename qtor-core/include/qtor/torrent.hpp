@@ -6,11 +6,13 @@
 #include <string>
 #include <vector>
 
+#include <QtTools/ToolsBase.hpp>
+
 namespace qtor
 {
-	typedef std::string   string_type;
-	typedef std::int64_t  speed_type;
-	typedef std::int64_t  size_type;
+	typedef std::string    string_type;
+	typedef std::uint64_t  speed_type;
+	typedef std::uint64_t  size_type;
 
 	typedef std::chrono::system_clock::time_point  time_point_type;
 	typedef std::chrono::system_clock::duration    duration_type;
@@ -35,18 +37,6 @@ namespace qtor
 		time_point_type date_added;
 		time_point_type date_created;
 		duration_type  eta;
-
-
-		/// those fields are exposed as columns in a table model
-		enum
-		{
-			Name,
-			TotalSize,
-			DownloadSpeed,
-			UploadSpeed,
-			DateAdded,
-			DateCreated,
-		};
 	};
 
 	struct torrent_id_hasher
@@ -77,3 +67,8 @@ namespace qtor
 	typedef torrent_id_comparator<std::less<>>    torrent_id_less;
 	typedef torrent_id_comparator<std::greater<>> torrent_id_greater;
 }
+
+//Q_DECLARE_METATYPE(qtor::speed_type)
+//Q_DECLARE_METATYPE(qtor::size_type)
+Q_DECLARE_METATYPE(qtor::time_point_type);
+Q_DECLARE_METATYPE(qtor::duration_type);

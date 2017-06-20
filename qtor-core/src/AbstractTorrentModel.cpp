@@ -1,6 +1,4 @@
 #include <qtor/AbstractTorrentModel.hqt>
-#include <QtTools/ToolsBase.hpp>
-#include <QtTools/DateUtils.hpp>
 
 namespace qtor
 {
@@ -14,6 +12,20 @@ namespace qtor
 		QStringLiteral("DateCreated"),
 	};
 
+	QVariant AbstractTorrentModel::GetItem(torrent & t, unsigned id)
+	{
+		switch (id)
+		{
+			case Name:           return QVariant::fromValue(t.name);
+			case TotalSize:      return QVariant::fromValue(t.total_size);
+			case DownloadSpeed:  return QVariant::fromValue(t.download_speed);
+			case UploadSpeed:    return QVariant::fromValue(t.upload_speed);
+			case DateAdded:      return QVariant::fromValue(t.date_added);
+			case DateCreated:    return QVariant::fromValue(t.date_created);
+			default:             return QVariant {};
+		}
+	}
+
 	int AbstractTorrentModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
 		return ms_columnNames.size();
@@ -21,32 +33,51 @@ namespace qtor
 
 	QString AbstractTorrentModel::FieldName(int section) const
 	{
-		return section < ms_columnNames.size()
-			? ms_columnNames[section]
-			: QString::null;
+		if (section < m_columns.size())
+			return QString::null;
+
+		unsigned column = m_columns[section];
+		return ms_columnNames[column];
 	}
 
 	QString AbstractTorrentModel::TorrentId(int row) const
 	{
-		return ToQString(GetTorrent(row).id);
+		return m_formatter->format_string(GetTorrent(row).id);
 	}
 
 	QString AbstractTorrentModel::GetValueShort(int row, int column) const
 	{
-		return GetValue(row, column);
+		if (column < m_columns.size())
+			return QString::null;
+
+		const torrent & t = GetTorrent(row);
+		switch (m_columns[column])
+		{
+			case Name:           return m_formatter->format_short_string(t.name);
+			case TotalSize:      return m_formatter->format_size(t.total_size);
+			case DownloadSpeed:  return m_formatter->format_speed(t.download_speed);
+			case UploadSpeed:    return m_formatter->format_speed(t.upload_speed);
+			case DateAdded:      return m_formatter->format_datetime(t.date_added);
+			case DateCreated:    return m_formatter->format_datetime(t.date_created);
+
+			default: return QString::null;
+		}
 	}
 
 	QString AbstractTorrentModel::GetValue(int row, int column) const
 	{
+		if (column < m_columns.size())
+			return QString::null;
+
 		const torrent & t = GetTorrent(row);
-		switch (column)
+		switch (m_columns[column])
 		{
-			case torrent::Name:           return ToQString(t.name);
-			case torrent::TotalSize:      return QString::number(t.total_size);
-			case torrent::DownloadSpeed:  return QString::number(t.download_speed);
-			case torrent::UploadSpeed:    return QString::number(t.upload_speed);
-			case torrent::DateAdded:      return QtTools::ToQDateTime(t.date_added).toString();
-			case torrent::DateCreated:    return QtTools::ToQDateTime(t.date_created).toString();
+			case Name:           return m_formatter->format_string(t.name);
+			case TotalSize:      return m_formatter->format_size(t.total_size);
+			case DownloadSpeed:  return m_formatter->format_speed(t.download_speed);
+			case UploadSpeed:    return m_formatter->format_speed(t.upload_speed);
+			case DateAdded:      return m_formatter->format_datetime(t.date_added);
+			case DateCreated:    return m_formatter->format_datetime(t.date_created);
 			
 			default: return QString::null;
 		}

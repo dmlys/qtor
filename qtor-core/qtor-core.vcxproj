@@ -42,7 +42,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
-    <ClInclude Include="include\qtor\formatter.hpp" />
     <ClInclude Include="include\qtor\torrent.hpp" />
     <ClInclude Include="include\qtor\torrent_comparator.hpp" />
     <ClInclude Include="include\qtor\torrent_filter.hpp" />
@@ -60,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMOCCompile Include="include\qtor\AbstractTorrentModel.hqt" />
+    <QtMOCCompile Include="include\qtor\formatter.hqt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

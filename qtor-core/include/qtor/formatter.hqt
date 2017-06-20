@@ -1,0 +1,55 @@
+#pragma once
+#include <cstddef>
+#include <array>
+#include <qtor/torrent.hpp>
+
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QLocale>
+
+namespace qtor
+{
+	class formatter : public QObject
+	{
+		Q_OBJECT;
+
+	protected:
+		// weights
+		enum weight : unsigned
+		{
+			none, kilo, mega, giga, tera
+		};
+
+	protected:
+		static const std::array<std::uint64_t, 5> ms_weights;
+		static const char * ms_size_strings[5];
+		static const char * ms_speed_strings[5];
+		static const char * ms_duration_strings[4];
+
+		QLocale m_locale;
+
+	protected:
+		virtual weight weigh(std::uint64_t val) const;
+		virtual QString format_item(std::uint64_t val, const char *strings[5]) const;
+
+	public:
+		// more specialized formatters
+		virtual QString format_size(size_type val) const;
+		virtual QString format_speed(speed_type val) const;
+		
+		// more generic formatters
+		virtual QString format_uint64(std::uint64_t val) const;
+		virtual QString format_double(double val) const;
+		virtual QString format_string(string_type val) const;
+		virtual QString format_short_string(string_type val) const;
+
+		virtual QString format_datetime(time_point_type val) const;
+		virtual QString format_duration(duration_type val) const;
+
+	public:
+		using QObject::QObject;
+
+	public:
+		static const formatter default_formatter;
+	};
+}

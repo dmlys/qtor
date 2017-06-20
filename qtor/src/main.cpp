@@ -14,13 +14,15 @@
 
 #include <fmt/format.h>
 
-#include <ext/netlib/socket_rest_supervisor.hpp>
 #include <ext/library_logger/logger.hpp>
 #include <ext/library_logger/logging_macros.hpp>
 
 #include <qtor/torrent_store.hpp>
 #include <qtor/TorrentModel.hpp>
 #include <qtor/transmission/data_source.hpp>
+
+#include <QtWidgets/QApplication>
+#include <QtTools/GuiQueue.hqt>
 
 #ifdef NDEBUG
 #pragma  comment(lib, "libfmt-mt.lib")
@@ -31,6 +33,7 @@
 #pragma  comment(lib, "openssl-crypto-mt-gd.lib")
 #pragma  comment(lib, "openssl-ssl-mt-gd.lib")
 #endif
+
 
 //class http_method
 //{
@@ -106,41 +109,50 @@ write_http_headers(Sink & sink, const Range & headers_map)
 	}
 }
 
-int main()
+#include <qtor/formatter.hqt>
+
+int main(int argc, char * argv[])
 {
 	using namespace std;
-	ext::socket_stream_init();
 
-	auto * ds = new qtor::transmission::data_source;
-	ext::library_logger::stream_logger lg(clog);
+	qtor::formatter fmt;
 
-	//qtor::torrent_store store;
-	//qtor::torrent_model model;
+	auto str = fmt.format_speed(2000);
+	cout << str.toStdString() << endl;
 
-	ds->set_logger(&lg);
-	ds->set_timeout(10s);
-	ds->set_address("https://localhost:9091/transmission/rpc");
-	//ds->set_address("http://httpbin.org/get");
+	//ext::init_future_library();
+	//ext::socket_stream_init();
 
-	if (not ds->connect().get())
-	{
-		return EXIT_FAILURE;
-	}
+	//qtor::abstract_data_source * ds = new qtor::transmission::data_source;
+	//ext::library_logger::stream_logger lg(clog);
 
-	auto ftorrents = ds->torrent_get({});
+	////qtor::torrent_store store;
+	////qtor::torrent_model model;
 
-	try
-	{
-		auto list = ftorrents.get();
-		for (auto & t : list)
-		{
-			cout << fmt::format("{} - {}", t.id, t.name) << endl;
-		}
-	}
-	catch (std::exception & ex)
-	{
-		cerr << ex.what() << endl;
-	}
+	//ds->set_logger(&lg);
+	//ds->set_timeout(10s);
+	//ds->set_address("https://localhost:9091/transmission/rpc");
+	////ds->set_address("http://httpbin.org/get");
+
+	//if (not ds->connect().get())
+	//{
+	//	return EXIT_FAILURE;
+	//}
+
+	//auto ftorrents = ds->torrent_get({});
+
+	//try
+	//{
+	//	auto list = ftorrents.get();
+	//	for (auto & t : list)
+	//	{
+	//		cout << fmt::format("{} - {}", t.id, t.name) << endl;
+	//	}
+	//}
+	//catch (std::exception & ex)
+	//{
+	//	cerr << ex.what() << endl;
+	//}
 
 	return 0;
 }

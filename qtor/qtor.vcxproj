@@ -50,8 +50,8 @@
       <AdditionalDependencies Condition="$(Configuration) != 'Release'">yaml-cpp-mt-gd.lib; zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
       <!-- <AdditionalDependencies>sqlite3.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
       <!-- Qt -->
-      <!-- <AdditionalDependencies Condition="$(Configuration) == 'Release'">Qt5Widgets.lib; Qt5Core.lib; Qt5Gui.lib; Qt5Script.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
-      <!-- <AdditionalDependencies Condition="$(Configuration) != 'Release'">Qt5Widgetsd.lib; Qt5Cored.lib; Qt5Guid.lib; Qt5Scriptd.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">Qt5Widgets.lib; Qt5Core.lib; Qt5Gui.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">Qt5Widgetsd.lib; Qt5Cored.lib; Qt5Guid.lib; %(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -63,6 +63,9 @@
     </ProjectReference>
     <ProjectReference Include="..\externals\QtTools\QtTools.vcxproj">
       <Project>{3b471441-8dd5-4867-b6a9-909474e9e844}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\qtor-core\qtor-core.vcxproj">
+      <Project>{2ad66701-0517-4784-828f-40daa66c822a}</Project>
     </ProjectReference>
     <ProjectReference Include="..\transmission-remote\transmission-remote.vcxproj">
       <Project>{d94d4828-ff42-4e26-a659-c3b02ca9ab43}</Project>

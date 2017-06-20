@@ -5,6 +5,7 @@
 #include <functional>
 #include <ext/future.hpp>
 
+#include <ext/library_logger/logger.hpp>
 #include <ext/netlib/connection_controller.hpp>
 #include <ext/netlib/subscription_handle.hpp>
 
@@ -23,6 +24,7 @@ namespace qtor
 
 		virtual void set_address(std::string addr) = 0;
 		virtual void set_timeout(std::chrono::steady_clock::duration timeout) = 0;
+		virtual void set_logger(ext::library_logger::logger * logger) = 0;
 	};
 }
 

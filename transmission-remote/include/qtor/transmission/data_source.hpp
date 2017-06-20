@@ -2,6 +2,8 @@
 #include <qtor/abstract_data_source.hpp>
 #include <ext/netlib/socket_rest_supervisor.hpp>
 
+#include <QtTools/GuiQueue.hqt>
+
 namespace qtor {
 namespace transmission
 {
@@ -14,13 +16,16 @@ namespace transmission
 
 	private:
 		std::string m_encoded_uri;
-		std::string m_xtransmission_session;
+		std::string m_xtransmission_session;		
+		
+		QtTools::GuiQueue m_queue;
 
 	protected:
 		class request_base;
 		class subscription_base;
 		class torrent_subscription;
 		class torrent_request;
+		class post_continuation;
 
 	//protected:
 	//	void emit_signal(event_sig & sig, event_type ev) override;
@@ -28,6 +33,7 @@ namespace transmission
 	public:
 		void set_address(std::string addr) override;
 		void set_timeout(std::chrono::steady_clock::duration timeout) override;
+		void set_logger(ext::library_logger::logger * logger) override;
 
 		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
 		auto torrent_get(torrent_id_list ids) -> ext::future<torrent_list> override;

@@ -1,6 +1,7 @@
 #pragma once
 #include <QtCore/QAbstractTableModel>
 #include <qtor/torrent.hpp>
+#include <qtor/formatter.hqt>
 
 namespace qtor
 {
@@ -15,14 +16,30 @@ namespace qtor
 	public:
 		static constexpr Qt::ItemDataRole TorrentRole = Qt::UserRole;
 
+		/// those fields are exposed as columns
+		enum : unsigned
+		{
+			Name,
+			TotalSize,
+			DownloadSpeed,
+			UploadSpeed,
+			DateAdded,
+			DateCreated,
+		};
+
 	protected:
 		static const QStringList ms_columnNames;
+		std::vector<unsigned> m_columns;
+		const formatter * m_formatter = &formatter::default_formatter;
 
 	protected:
 		// inherit constructors
 		using base_type::base_type;
 
 	public:
+		const formatter * GetFormatter() { return m_formatter; }
+		static QVariant GetItem(torrent & t, unsigned id);
+
 		virtual QString FieldName(int section) const;
 		virtual QString TorrentId(int row) const;
 		virtual const torrent & GetTorrent(int row) const = 0;
