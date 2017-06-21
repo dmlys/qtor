@@ -20,9 +20,13 @@
 #include <qtor/torrent_store.hpp>
 #include <qtor/TorrentModel.hpp>
 #include <qtor/transmission/data_source.hpp>
+#include <qtor/torrent_store.hpp>
+#include <qtor/TorrentModel.hpp>
 
 #include <QtWidgets/QApplication>
 #include <QtTools/GuiQueue.hqt>
+
+#include <QtWidgets/QTableView>
 
 #ifdef NDEBUG
 #pragma  comment(lib, "libfmt-mt.lib")
@@ -33,7 +37,6 @@
 #pragma  comment(lib, "openssl-crypto-mt-gd.lib")
 #pragma  comment(lib, "openssl-ssl-mt-gd.lib")
 #endif
-
 
 //class http_method
 //{
@@ -53,106 +56,77 @@
 //std::array<const char *, 0> empty_headers;
 //constexpr char * empty_headers[0] = {};
 
-template <class Sink, class HeaderString, class ValueString>
-void write_http_header(Sink & sink, const HeaderString & name, const ValueString & value)
-{
-	using ext::netlib::write_string;
-	using ext::netlib::encode_url;
-	
-	write_string(sink, name);
-	write_string(sink, ": ");
-	encode_url(value, sink);
-	write_string(sink, "\r\n");
-}
+//template <class Sink, class HeaderString, class ValueString>
+//void write_http_header(Sink & sink, const HeaderString & name, const ValueString & value)
+//{
+//	using ext::netlib::write_string;
+//	using ext::netlib::encode_url;
+//	
+//	write_string(sink, name);
+//	write_string(sink, ": ");
+//	encode_url(value, sink);
+//	write_string(sink, "\r\n");
+//}
+//
+//template <class Sink, class Range>
+//std::enable_if_t<ext::is_string_range<Range>::value>
+//write_http_headers(Sink & sink, const Range & headers)
+//{
+//	using std::begin; using std::end;
+//	auto first = begin(headers);
+//	auto last = end(headers);
+//
+//	for (;;)
+//	{
+//		if (first == last) return;
+//		auto && name = *first;
+//		++first;
+//
+//		if (first == last) return;
+//		auto && val = *first;
+//		++first;
+//
+//		write_http_header(
+//			sink, 
+//			std::forward<decltype(name)>(name),
+//			std::forward<decltype(val)>(val)
+//		);
+//	}
+//}
+//
+//template <class Sink, class Range>
+//std::enable_if_t<not ext::is_string_range<Range>::value>
+//write_http_headers(Sink & sink, const Range & headers_map)
+//{
+//	for (auto && entity : headers_map)
+//	{
+//		using std::get;
+//		auto && name = get<0>(entity);
+//		auto && val = get<1>(entity);
+//
+//		write_http_header(
+//			sink,
+//			std::forward<decltype(name)>(name),
+//			std::forward<decltype(val)>(val)
+//		);
+//	}
+//}
 
-template <class Sink, class Range>
-std::enable_if_t<ext::is_string_range<Range>::value>
-write_http_headers(Sink & sink, const Range & headers)
-{
-	using std::begin; using std::end;
-	auto first = begin(headers);
-	auto last = end(headers);
-
-	for (;;)
-	{
-		if (first == last) return;
-		auto && name = *first;
-		++first;
-
-		if (first == last) return;
-		auto && val = *first;
-		++first;
-
-		write_http_header(
-			sink, 
-			std::forward<decltype(name)>(name),
-			std::forward<decltype(val)>(val)
-		);
-	}
-}
-
-template <class Sink, class Range>
-std::enable_if_t<not ext::is_string_range<Range>::value>
-write_http_headers(Sink & sink, const Range & headers_map)
-{
-	for (auto && entity : headers_map)
-	{
-		using std::get;
-		auto && name = get<0>(entity);
-		auto && val = get<1>(entity);
-
-		write_http_header(
-			sink,
-			std::forward<decltype(name)>(name),
-			std::forward<decltype(val)>(val)
-		);
-	}
-}
-
-#include <qtor/formatter.hqt>
 
 int main(int argc, char * argv[])
 {
 	using namespace std;
 
-	qtor::formatter fmt;
+	QApplication app {argc, argv};
 
-	auto str = fmt.format_speed(2000);
-	cout << str.toStdString() << endl;
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	auto store = std::make_shared<qtor::torrent_store>(source);
+	qtor::AbstractTorrentModel * model = new qtor::TorrentModel(store);
 
-	//ext::init_future_library();
-	//ext::socket_stream_init();
+	QTableView tableView;
+	tableView.setModel(model);
 
-	//qtor::abstract_data_source * ds = new qtor::transmission::data_source;
-	//ext::library_logger::stream_logger lg(clog);
+	tableView.show();
 
-	////qtor::torrent_store store;
-	////qtor::torrent_model model;
-
-	//ds->set_logger(&lg);
-	//ds->set_timeout(10s);
-	//ds->set_address("https://localhost:9091/transmission/rpc");
-	////ds->set_address("http://httpbin.org/get");
-
-	//if (not ds->connect().get())
-	//{
-	//	return EXIT_FAILURE;
-	//}
-
-	//auto ftorrents = ds->torrent_get({});
-
-	//try
-	//{
-	//	auto list = ftorrents.get();
-	//	for (auto & t : list)
-	//	{
-	//		cout << fmt::format("{} - {}", t.id, t.name) << endl;
-	//	}
-	//}
-	//catch (std::exception & ex)
-	//{
-	//	cerr << ex.what() << endl;
-	//}
-
-	return 0;
+	return app.exec();
 }

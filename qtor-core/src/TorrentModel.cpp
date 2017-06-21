@@ -22,18 +22,8 @@ namespace qtor
 	{
 		auto search = FromQString(expr);
 
-		bool same, incremental;
-		std::tie(same, incremental) = m_filter_pred.set_expr(std::move(search));
-		if (same) return;
-
-		beginResetModel();
-
-		if (incremental)
-			view_type::remove_filtered(m_store);
-		else
-			view_type::reinit_view();
-
-		endResetModel();
+		auto rtype = m_filter_pred.set_expr(std::move(search));
+		return refilter_and_notify(rtype);
 	}
 
 	void TorrentModel::sort(int column, Qt::SortOrder order)
@@ -42,9 +32,20 @@ namespace qtor
 		view_type::sort_and_notify(m_store.begin(), m_store.end());
 	}
 
-	TorrentModel::TorrentModel(torrent_store & owner, QObject * parent)
-		: base_type(parent), view_type(&owner)
+	TorrentModel::TorrentModel(std::shared_ptr<torrent_store> store, QObject * parent)
+		: base_type(parent), view_type(store.get())
 	{
+		assert(store);
+		m_recstore = std::move(store);
+		m_recstore->view_addref();
 
+		// from view_base_type
+		connect_signals();
+		reinit_view();
+	}
+
+	TorrentModel::~TorrentModel()
+	{
+		m_recstore->view_release();
 	}
 }

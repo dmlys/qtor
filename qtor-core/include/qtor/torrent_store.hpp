@@ -25,7 +25,7 @@ namespace qtor
 		> base_type;
 
 	private:
-		abstract_data_source * m_source = nullptr;
+		std::shared_ptr<abstract_data_source> m_source;
 
 	protected:
 		auto subscribe() -> ext::netlib::subscription_handle override;
@@ -45,7 +45,20 @@ namespace qtor
 		void assign_records(RecordRange newRecs);
 
 	public:
-		torrent_store() = default;
+		torrent_store(std::shared_ptr<abstract_data_source> source);
 		~torrent_store() = default;
 	};
+
+
+	template <class RecordRange>
+	void torrent_store::upsert_records(RecordRange newRecs)
+	{
+		upsert(std::make_move_iterator(newRecs.begin()), std::make_move_iterator(newRecs.end()));
+	}
+
+	template <class RecordRange>
+	void torrent_store::assign_records(RecordRange newRecs)
+	{
+		assign(std::make_move_iterator(newRecs.begin()), std::make_move_iterator(newRecs.end()));
+	}
 }

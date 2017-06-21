@@ -7,4 +7,10 @@ namespace qtor
 		auto handler = [this](auto recs) { assign_records(std::move(recs)); };
 		return m_source->subscribe_torrents(handler);
 	}
+
+	torrent_store::torrent_store(std::shared_ptr<abstract_data_source> source)
+		: m_source(source.get()) 
+	{
+
+	}
 }

@@ -28,12 +28,12 @@ namespace qtor
 
 	int AbstractTorrentModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
-		return ms_columnNames.size();
+		return qint(m_columns.size());
 	}
 
 	QString AbstractTorrentModel::FieldName(int section) const
 	{
-		if (section < m_columns.size())
+		if (section >= m_columns.size())
 			return QString::null;
 
 		unsigned column = m_columns[section];
@@ -47,7 +47,7 @@ namespace qtor
 
 	QString AbstractTorrentModel::GetValueShort(int row, int column) const
 	{
-		if (column < m_columns.size())
+		if (column >= m_columns.size())
 			return QString::null;
 
 		const torrent & t = GetTorrent(row);
@@ -66,7 +66,7 @@ namespace qtor
 
 	QString AbstractTorrentModel::GetValue(int row, int column) const
 	{
-		if (column < m_columns.size())
+		if (column >= m_columns.size())
 			return QString::null;
 
 		const torrent & t = GetTorrent(row);
@@ -115,5 +115,18 @@ namespace qtor
 
 			default: return {};
 		}
+	}
+
+	AbstractTorrentModel::AbstractTorrentModel(QObject * parent /*= nullptr*/)
+	{
+		m_columns = 
+		{
+			Name,
+			TotalSize,
+			DownloadSpeed,
+			UploadSpeed,
+			DateAdded,
+			DateCreated,
+		};
 	}
 }

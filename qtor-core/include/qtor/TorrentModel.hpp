@@ -36,7 +36,6 @@ namespace qtor
 		using view_type::m_store;   // vector of pointers
 		using view_type::m_sort_pred;
 		using view_type::m_filter_pred;
-		using view_type::sort;
 
 	private:
 		std::shared_ptr<torrent_store> m_recstore;
@@ -51,8 +50,8 @@ namespace qtor
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override;
 
 	public:		
-		TorrentModel(torrent_store & owner, QObject * parent);
-		~TorrentModel() = default;
+		TorrentModel(std::shared_ptr<torrent_store> store, QObject * parent = nullptr);
+		~TorrentModel();
 		Q_DISABLE_COPY(TorrentModel);
 	};
 }

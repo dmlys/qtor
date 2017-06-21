@@ -1,5 +1,6 @@
 #pragma once
 #include <qtor/torrent.hpp>
+#include <viewed/refilter_type.hpp>
 
 namespace qtor
 {
@@ -9,7 +10,7 @@ namespace qtor
 
 	public:
 		// same, incremental
-		std::pair<bool, bool> set_expr(std::string search);
+		viewed::refilter_type set_expr(std::string search);
 
 		bool matches(const torrent & t) const noexcept;
 		bool always_matches() const noexcept;

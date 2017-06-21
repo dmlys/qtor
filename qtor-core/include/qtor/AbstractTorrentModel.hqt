@@ -32,10 +32,6 @@ namespace qtor
 		std::vector<unsigned> m_columns;
 		const formatter * m_formatter = &formatter::default_formatter;
 
-	protected:
-		// inherit constructors
-		using base_type::base_type;
-
 	public:
 		const formatter * GetFormatter() { return m_formatter; }
 		static QVariant GetItem(torrent & t, unsigned id);
@@ -63,5 +59,8 @@ namespace qtor
 		QString FieldName(const QModelIndex & idx) const { return idx.isValid() ? FieldName(idx.row()) : QString::null; }
 		QString GetValue(const QModelIndex & idx) const { return idx.isValid() ? GetValue(idx.row(), idx.column()) : QString::null; }
 		QString GetValueShort(const QModelIndex & idx) const { return idx.isValid() ? GetValueShort(idx.row(), idx.column()) : QString::null; }
+
+	public:
+		AbstractTorrentModel(QObject * parent = nullptr);
 	};
 }

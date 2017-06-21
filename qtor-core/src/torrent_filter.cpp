@@ -91,16 +91,17 @@ namespace qtor
 		return res != last;
 	}
 
-	std::pair<bool, bool> torrent_filter::set_expr(std::string search)
+	viewed::refilter_type torrent_filter::set_expr(std::string search)
 	{
-		bool same, incremental;
-
 		trim(search);
-		same = iequals(m_search, search);
-		incremental = istarts_with(m_search, search);
-		
+		viewed::refilter_type result;
+		if (iequals(m_search, search))
+			result = viewed::refilter_type::same;
+		else if (istarts_with(m_search, search)) 
+			result = viewed::refilter_type::incremental;
+				
 		m_search = std::move(search);
-		return {same, incremental};
+		return result;
 	}
 	
 	bool torrent_filter::matches(const torrent & t) const noexcept
