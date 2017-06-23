@@ -55,6 +55,7 @@
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\testing_data_source.cpp" />
     <ClCompile Include="src\TorrentModel.cpp" />
+    <ClCompile Include="src\TorrentTableWidget.cpp" />
     <ClCompile Include="src\torrent_filter.cpp" />
     <ClCompile Include="src\torrent_store.cpp" />
     <ClCompile Include="src\view_manager.cpp" />
@@ -62,6 +63,7 @@
   <ItemGroup>
     <QtMOCCompile Include="include\qtor\AbstractTorrentModel.hqt" />
     <QtMOCCompile Include="include\qtor\formatter.hqt" />
+    <QtMOCCompile Include="include\qtor\TorrentTableWidget.hqt" />
   </ItemGroup>
   <ItemGroup>
     <QtRCCCompile Include="resources\qtor-core-resource.qrc" />

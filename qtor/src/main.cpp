@@ -25,9 +25,7 @@
 #include <qtor/TorrentModel.hpp>
 
 #include <QtWidgets/QApplication>
-#include <QtTools/GuiQueue.hqt>
-
-#include <QtWidgets/QTableView>
+#include <qtor/TorrentTableWidget.hqt>
 
 #ifdef NDEBUG
 #pragma  comment(lib, "libfmt-mt.lib")
@@ -126,11 +124,15 @@ int main(int argc, char * argv[])
 	source->connect().get();
 
 	auto store = std::make_shared<qtor::torrent_store>(source);
-	qtor::AbstractTorrentModel * model = new qtor::TorrentModel(store);
+	auto model = std::make_shared<qtor::TorrentModel>(store);
 
-	QTableView tableView;
-	tableView.setModel(model);
-	tableView.show();
+	qtor::TorrentTableWidget widget;
+	widget.Init(model);
+	widget.show();
+	
+	//QTableView widget;
+	//widget.setModel(model);
+	//widget.show();
 	
 	return app.exec();
 }

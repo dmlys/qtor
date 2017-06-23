@@ -9,7 +9,7 @@ namespace qtor
 	}
 
 	torrent_store::torrent_store(std::shared_ptr<abstract_data_source> source)
-		: m_source(source.get()) 
+		: m_source(std::move(source)) 
 	{
 
 	}

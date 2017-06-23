@@ -1,0 +1,109 @@
+#pragma once
+#include <memory>
+
+#include <QtWidgets/QFrame>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QTableView>
+
+#include <QtTools/DelayedExecutionTimer.hqt>
+#include <QtTools/HeaderControlModel.hqt>
+
+#include <qtor/AbstractTorrentModel.hqt>
+
+
+namespace qtor
+{
+	/// Table Widget. Can be used as standalone widget or embedded in another.
+	/// Consists of QTableView + QLineEdit filter.
+	/// Has:
+	///  * context menu
+	///  * table headers can be configured
+	/// Provides methods for behavior customization
+	class TorrentTableWidget : public QFrame
+	{
+		Q_OBJECT;
+
+	protected:
+		/// display model
+		std::shared_ptr<AbstractTorrentModel> m_model;
+
+		/// table headers customization/tracking
+		QtTools::HeaderControlModel * m_headerModel = nullptr;
+		QtTools::HeaderSectionInfoList * m_headerConfig = nullptr;
+
+		/// child widgets/graphical objects
+		QVBoxLayout * m_verticalLayout = nullptr;
+		QLineEdit * m_rowFilter = nullptr;
+		QTableView * m_tableView = nullptr;
+
+		/// hints for initial widget size
+		const QSize m_defMinSizeHint = QSize(300, 150);
+		QSize m_sizeHint = m_defMinSizeHint;
+
+		/// current filter string
+		QString m_filterString;
+
+	protected:
+		void ModelChanged();
+		void OnFilterChanged();
+
+		void ConnectModel();
+		void DisconnectModel();
+
+		/// basic menu handler
+		void contextMenuEvent(QContextMenuEvent * ev) override;
+
+	public:
+		/// returns model, serving horizontal QHeaderView.
+		/// Model created in Init call, this widget widget is a parent
+		QtTools::HeaderControlModel * GetHeaderModel() const { return m_headerModel; }
+
+		/// main layout
+		QVBoxLayout * GetLayout() const { return m_verticalLayout; }
+		/// filter field
+		QLineEdit * GetFilterWidget() const { return m_rowFilter; }
+		/// table view
+		QTableView * GetTableView() const { return m_tableView; }
+
+	public:
+		/// opens table headers configuration widget,		
+		void OpenHeaderConfigurationWidget();
+		/// opens table settings widget, for now it's OpenHeaderConfigurationWidget
+		void TableSettings();
+		/// adjusts resizes table columns by content
+		void ResizeColumnsToContents();
+		/// copies row value into clipboard, in format:
+		/// HeaderName: ColumnValue
+		void CopyFieldsValuesToClipboard(int row);
+
+	public:
+		void    SetFilter(QString newFilter);
+		QString GetFilter() const { return m_filterString; }
+
+		/// desired size
+		QSize sizeHint() const override;
+
+	public:
+		/// Returns the model that this widget displays. This model is set by calling Init
+		const std::shared_ptr<AbstractTorrentModel> & GetModel() const { return m_model; }
+
+		/// initializes widget
+		/// @Param model required, задает модель данных
+		/// if both params = nullptr - uninitializes widget
+		void Init(std::shared_ptr<AbstractTorrentModel> model);
+
+		/// initializes headers tracking, additionally sets headerConf configuration, see also QtTools::HeaderControlModel.
+		/// TorrentTableWidget must be initialized before calling this method.
+		void InitHeaderTracking(QtTools::HeaderSectionInfoList * headerConf = nullptr);
+
+		TorrentTableWidget(QWidget * parent = nullptr);
+		~TorrentTableWidget();
+
+	private:
+		void setupUi();
+		void retranslateUi();
+		void connectSignals();
+	};
+}
