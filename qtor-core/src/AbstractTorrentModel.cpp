@@ -117,16 +117,23 @@ namespace qtor
 		}
 	}
 
+	void AbstractTorrentModel::SetColumns(std::vector<unsigned> columns)
+	{
+		beginResetModel();
+		m_columns = std::move(columns);
+		endResetModel();
+	}
+
 	AbstractTorrentModel::AbstractTorrentModel(QObject * parent /*= nullptr*/)
 	{
 		m_columns = 
 		{
 			Name,
-			TotalSize,
-			DownloadSpeed,
-			UploadSpeed,
-			DateAdded,
-			DateCreated,
+			//TotalSize,
+			//DownloadSpeed,
+			//UploadSpeed,
+			//DateAdded,
+			//DateCreated,
 		};
 	}
 }

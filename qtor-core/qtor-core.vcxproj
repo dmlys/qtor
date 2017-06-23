@@ -42,6 +42,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
+    <ClInclude Include="include\qtor\testing_data_source.hpp" />
     <ClInclude Include="include\qtor\torrent.hpp" />
     <ClInclude Include="include\qtor\torrent_comparator.hpp" />
     <ClInclude Include="include\qtor\torrent_filter.hpp" />
@@ -52,6 +53,7 @@
   <ItemGroup>
     <ClCompile Include="src\AbstractTorrentModel.cpp" />
     <ClCompile Include="src\formatter.cpp" />
+    <ClCompile Include="src\testing_data_source.cpp" />
     <ClCompile Include="src\TorrentModel.cpp" />
     <ClCompile Include="src\torrent_filter.cpp" />
     <ClCompile Include="src\torrent_store.cpp" />
@@ -60,6 +62,12 @@
   <ItemGroup>
     <QtMOCCompile Include="include\qtor\AbstractTorrentModel.hqt" />
     <QtMOCCompile Include="include\qtor\formatter.hqt" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRCCCompile Include="resources\qtor-core-resource.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="resources\testing-data-source-data.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

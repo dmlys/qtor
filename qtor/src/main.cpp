@@ -17,9 +17,10 @@
 #include <ext/library_logger/logger.hpp>
 #include <ext/library_logger/logging_macros.hpp>
 
-#include <qtor/torrent_store.hpp>
-#include <qtor/TorrentModel.hpp>
+#include <qtor/abstract_data_source.hpp>
+#include <qtor/testing_data_source.hpp>
 #include <qtor/transmission/data_source.hpp>
+
 #include <qtor/torrent_store.hpp>
 #include <qtor/TorrentModel.hpp>
 
@@ -117,16 +118,19 @@ int main(int argc, char * argv[])
 {
 	using namespace std;
 
+	Q_INIT_RESOURCE(qtor_core_resource);
+
 	QApplication app {argc, argv};
 
-	auto source = std::make_shared<qtor::transmission::data_source>();
+	auto source = std::make_shared<qtor::testing_data_source>();
+	source->connect().get();
+
 	auto store = std::make_shared<qtor::torrent_store>(source);
 	qtor::AbstractTorrentModel * model = new qtor::TorrentModel(store);
 
 	QTableView tableView;
 	tableView.setModel(model);
-
 	tableView.show();
-
+	
 	return app.exec();
 }

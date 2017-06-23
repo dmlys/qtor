@@ -32,6 +32,9 @@ namespace qtor
 		std::vector<unsigned> m_columns;
 		const formatter * m_formatter = &formatter::default_formatter;
 
+	protected:
+		void SetColumns(std::vector<unsigned> columns);
+
 	public:
 		const formatter * GetFormatter() { return m_formatter; }
 		static QVariant GetItem(torrent & t, unsigned id);
