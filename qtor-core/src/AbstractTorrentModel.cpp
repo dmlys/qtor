@@ -1,3 +1,4 @@
+#include <QtCore/QSize>
 #include <qtor/AbstractTorrentModel.hqt>
 
 namespace qtor
@@ -11,6 +12,7 @@ namespace qtor
 		QStringLiteral("DateAdded"),
 		QStringLiteral("DateCreated"),
 	};
+
 
 	QVariant AbstractTorrentModel::GetItem(torrent & t, unsigned id)
 	{

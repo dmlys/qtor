@@ -28,7 +28,7 @@ namespace qtor
 
 	QSize TorrentTableWidget::sizeHint() const
 	{
-		// maximum size - half scrren
+		// maximum size - half screen
 		QSize maxSize = QApplication::desktop()->screenGeometry().size();
 		maxSize /= 2;
 		// but no more than maximumSize()

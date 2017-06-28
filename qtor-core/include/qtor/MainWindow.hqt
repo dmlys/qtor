@@ -1,0 +1,88 @@
+#pragma once
+#include <QtCore/QTimer>
+#include <QtCore/QHash>
+#include <QtCore/QPointer>
+#include <QtWidgets/QAction>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QTreeView>
+
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QSplitter>
+
+#include <QtWidgets/QToolBar>
+#include <QtWidgets/QMenuBar>
+#include <QtWidgets/QStatusBar>
+
+#include <qtor/Application.hqt>
+
+namespace qtor
+{
+	class MainWindow : public QMainWindow
+	{
+		Q_OBJECT;
+
+	protected:
+		// toolbar
+		QToolBar * m_toolBar = nullptr;
+		QAction * m_actionOpen = nullptr;
+		QAction * m_actionStartAll = nullptr;
+		QAction * m_actionsSopAll = nullptr;
+		QAction * m_actionDelete = nullptr;
+		QAction * m_actionPreferences = nullptr;
+
+		// statusBar
+		QStatusBar * m_statusbar = nullptr;
+		QLabel * m_statusBarLabel = nullptr;
+		QPixmap m_connectedPixmap;
+		QPixmap m_disconnectedPixmap;
+	
+	protected Q_SLOTS:
+		/// обработчик отключения, вызывается в случае планового и не планового отключения, 
+		/// в том числе если подключение еще не было установлено, а только был отправлен запрос
+		/// устанавливает отображение статуса, включает/выключает некоторые действия
+		virtual void OnDisconnected();
+		/// обработчик подключения, вызывается в случае успешного подключения к серверу
+		/// устанавливает отображение статуса, включает/выключает некоторые действия
+		virtual void OnConnected();
+		/// вызывается в случае ошибки соединения(вместе с OnDisconnected)
+		/// выдает сообщение об ошибке
+		virtual void OnConnectionError(QString errMsg);
+
+	public Q_SLOTS:
+		/// выполняет запрос на приложение приложение к серверу
+		/// параметры задаются в Init, и дополнительно могут настраиваться пользователем
+		/// точка подключения выбирается combobox'ом в панели инструментов
+		/// метод вернет управление после подачи запроса, 
+		/// когда запрос будет обработан будет сгенирированы сигналы:
+		/// в случае успеха - OnConnected
+		/// в случае неудачи - OnConnectionError
+		virtual void Connect();
+		/// выполняет запрос на отключения приложения от сервера
+		/// когда запрос будет обработан будут сгенирирован сигнал OnDisconnected
+		virtual void Disconnect();
+
+	public:
+		virtual void Init(Application & app);
+
+		MainWindow(QWidget * wgt = nullptr);
+		~MainWindow();
+
+	protected:
+		virtual void setupToolBars();
+		virtual void setupStatusBar();
+		virtual void connectSignals();
+		virtual void setupUi();
+		virtual void retranslateUi();
+
+	protected:
+		/// statusbar methods
+		/// масштабирует pixmap под statusbar
+		QPixmap ScalePixmap(const QPixmap & pcx);
+		void SetConnectedStatus();
+		void SetDisconnectedStatus();
+	};
+}

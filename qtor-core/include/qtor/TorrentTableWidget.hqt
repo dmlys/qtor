@@ -1,6 +1,4 @@
 #pragma once
-#include <memory>
-
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QVBoxLayout>
@@ -49,11 +47,11 @@ namespace qtor
 		void ModelChanged();
 		void OnFilterChanged();
 
-		void ConnectModel();
-		void DisconnectModel();
+		virtual void ConnectModel();
+		virtual void DisconnectModel();
 
 		/// basic menu handler
-		void contextMenuEvent(QContextMenuEvent * ev) override;
+		virtual void contextMenuEvent(QContextMenuEvent * ev) override;
 
 	public:
 		/// returns model, serving horizontal QHeaderView.
@@ -69,14 +67,11 @@ namespace qtor
 
 	public:
 		/// opens table headers configuration widget,		
-		void OpenHeaderConfigurationWidget();
+		virtual void OpenHeaderConfigurationWidget();
 		/// opens table settings widget, for now it's OpenHeaderConfigurationWidget
-		void TableSettings();
+		virtual void TableSettings();
 		/// adjusts resizes table columns by content
-		void ResizeColumnsToContents();
-		/// copies row value into clipboard, in format:
-		/// HeaderName: ColumnValue
-		void CopyFieldsValuesToClipboard(int row);
+		virtual void ResizeColumnsToContents();
 
 	public:
 		void    SetFilter(QString newFilter);
@@ -92,18 +87,18 @@ namespace qtor
 		/// initializes widget
 		/// @Param model required, задает модель данных
 		/// if both params = nullptr - uninitializes widget
-		void Init(std::shared_ptr<AbstractTorrentModel> model);
+		virtual void Init(std::shared_ptr<AbstractTorrentModel> model);
 
 		/// initializes headers tracking, additionally sets headerConf configuration, see also QtTools::HeaderControlModel.
 		/// TorrentTableWidget must be initialized before calling this method.
-		void InitHeaderTracking(QtTools::HeaderSectionInfoList * headerConf = nullptr);
+		virtual void InitHeaderTracking(QtTools::HeaderSectionInfoList * headerConf = nullptr);
 
 		TorrentTableWidget(QWidget * parent = nullptr);
 		~TorrentTableWidget();
 
-	private:
-		void setupUi();
-		void retranslateUi();
-		void connectSignals();
+	protected:
+		virtual void setupUi();
+		virtual void retranslateUi();
+		virtual void connectSignals();
 	};
 }

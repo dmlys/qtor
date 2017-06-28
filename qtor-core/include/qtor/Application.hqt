@@ -1,0 +1,38 @@
+#pragma once
+#include <QtCore/QObject>
+#include <QtCore/QSharedPointer>
+#include <QtTools/ToolsBase.hpp>
+
+#include <qtor/abstract_data_source.hpp>
+#include <qtor/torrent_store.hpp>
+#include <qtor/AbstractTorrentModel.hqt>
+
+namespace qtor
+{
+	class Application : public QObject
+	{
+		Q_OBJECT;
+
+	public:
+		typedef std::shared_ptr<torrent_store>          torrent_store_ptr;
+		typedef std::shared_ptr<abstract_data_source>   abstract_data_source_ptr;
+		typedef std::shared_ptr<AbstractTorrentModel>   abstract_torrent_model_ptr;
+
+	protected:
+		std::shared_ptr<abstract_data_source> m_source;
+		std::shared_ptr<torrent_store> m_torrent_store;
+
+	protected:
+		virtual auto create_source() -> abstract_data_source_ptr = 0;
+
+	public:
+		virtual auto accquire_torrent_model() -> abstract_torrent_model_ptr;
+
+		virtual void connect();
+		virtual void disconnect();
+
+	public:
+		Application() = default;
+		~Application() = default;
+	};
+}
