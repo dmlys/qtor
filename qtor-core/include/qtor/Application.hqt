@@ -23,16 +23,25 @@ namespace qtor
 		std::shared_ptr<torrent_store> m_torrent_store;
 
 	protected:
-		virtual auto create_source() -> abstract_data_source_ptr = 0;
+		virtual auto CreateSource() -> abstract_data_source_ptr = 0;
+		virtual void OnEventSource(abstract_data_source::event_type ev);
+
+	protected:
+		// initializes this object, probably should be called in constructor
+		virtual void Init();
 
 	public:
-		virtual auto accquire_torrent_model() -> abstract_torrent_model_ptr;
+		virtual auto AccquireTorrentModel() -> abstract_torrent_model_ptr;
+		virtual auto GetSource() -> abstract_data_source_ptr;
 
-		virtual void connect();
-		virtual void disconnect();
-
-	public:
-		Application() = default;
-		~Application() = default;
+	public Q_SLOTS:
+		virtual void Connect();
+		virtual void Disconnect();
+		
+	Q_SIGNALS:
+		void Connected();
+		void Disconnected();
+		void ConnectionError();
+		void ConnectionLost();
 	};
 }

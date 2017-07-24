@@ -1,0 +1,16 @@
+#pragma once
+#include <qtor/Application.hqt>
+#include <qtor/transmission/data_source.hpp>
+#include <qtor/testing_data_source.hpp>
+
+namespace qtor
+{
+	class TransmissionRemoteApp : public qtor::Application
+	{
+	public:
+		virtual auto CreateSource() -> abstract_data_source_ptr override
+		{
+			return std::make_shared<qtor::testing_data_source>();
+		}
+	};
+}

@@ -1,3 +1,4 @@
+#pragma once
 #include <qtor/abstract_data_source.hpp>
 #include <ext/netlib/abstract_connection_controller.hpp>
 #include <ext/netlib/abstract_subscription_controller.hpp>

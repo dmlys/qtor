@@ -18,6 +18,8 @@
 #include <QtWidgets/QStatusBar>
 
 #include <qtor/Application.hqt>
+#include <qtor/abstract_data_source.hpp>
+#include <qtor/TorrentTableWidget.hqt>
 
 namespace qtor
 {
@@ -26,6 +28,9 @@ namespace qtor
 		Q_OBJECT;
 
 	protected:
+		qtor::Application * m_app = nullptr;
+		TorrentTableWidget * m_torrentWidget = nullptr;
+
 		// toolbar
 		QToolBar * m_toolBar = nullptr;
 		QAction * m_actionOpen = nullptr;
@@ -50,7 +55,7 @@ namespace qtor
 		virtual void OnConnected();
 		/// вызывается в случае ошибки соединения(вместе с OnDisconnected)
 		/// выдает сообщение об ошибке
-		virtual void OnConnectionError(QString errMsg);
+		virtual void OnConnectionError();
 
 	public Q_SLOTS:
 		/// выполняет запрос на приложение приложение к серверу

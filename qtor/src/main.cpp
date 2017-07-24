@@ -24,8 +24,12 @@
 #include <qtor/torrent_store.hpp>
 #include <qtor/TorrentModel.hpp>
 
-#include <QtWidgets/QApplication>
 #include <qtor/TorrentTableWidget.hqt>
+#include <qtor/MainWindow.hqt>
+#include <qtor/Application.hqt>
+#include <TransmissionRemoteApp.hqt>
+
+#include <QtWidgets/QApplication>
 
 #ifdef NDEBUG
 #pragma  comment(lib, "libfmt-mt.lib")
@@ -118,21 +122,18 @@ int main(int argc, char * argv[])
 
 	Q_INIT_RESOURCE(qtor_core_resource);
 
-	QApplication app {argc, argv};
+	QApplication qapp {argc, argv};
+	qtor::TransmissionRemoteApp app;
+	qtor::MainWindow mainWindow;
 
-	auto source = std::make_shared<qtor::testing_data_source>();
-	source->connect().get();
-
-	auto store = std::make_shared<qtor::torrent_store>(source);
-	auto model = std::make_shared<qtor::TorrentModel>(store);
-
-	qtor::TorrentTableWidget widget;
-	widget.Init(model);
-	widget.show();
+	mainWindow.Init(app);
+	mainWindow.show();
 	
-	//QTableView widget;
-	//widget.setModel(model);
-	//widget.show();
-	
-	return app.exec();
+	return qapp.exec();
+
+	//auto source = std::make_shared<qtor::testing_data_source>();
+	//source->connect().get();
+
+	//auto store = std::make_shared<qtor::torrent_store>(source);
+	//auto model = std::make_shared<qtor::TorrentModel>(store);
 }

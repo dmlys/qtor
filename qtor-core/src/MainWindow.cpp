@@ -4,37 +4,43 @@ namespace qtor
 {
 	void MainWindow::OnDisconnected()
 	{
-
+		SetDisconnectedStatus();
 	}
 
 	void MainWindow::OnConnected()
 	{
-
+		SetConnectedStatus();
 	}
 
-	void MainWindow::OnConnectionError(QString errMsg)
+	void MainWindow::OnConnectionError()
 	{
 
 	}
 
 	void MainWindow::Connect()
 	{
-
+		m_app->Connect();
 	}
 
 	void MainWindow::Disconnect()
 	{
-
+		m_app->Disconnect();
 	}
 
 	void MainWindow::Init(Application & app)
 	{
+		m_app = &app;
 
+		connect(m_app, &Application::Connected, this, &MainWindow::OnConnected);
+		connect(m_app, &Application::Disconnected, this, &MainWindow::OnDisconnected);
+		connect(m_app, &Application::ConnectionError, this, &MainWindow::OnConnectionError);
 	}
 
-	MainWindow::MainWindow(QWidget * wgt /*= nullptr*/)
+	MainWindow::MainWindow(QWidget * wgt /*= nullptr*/) : QMainWindow(wgt)
 	{
-
+		setupUi();
+		connectSignals();
+		retranslateUi();
 	}
 
 	MainWindow::~MainWindow()
@@ -59,7 +65,8 @@ namespace qtor
 
 	void MainWindow::setupUi()
 	{
-
+		m_torrentWidget = new TorrentTableWidget(this);
+		setCentralWidget(m_torrentWidget);
 	}
 
 	void MainWindow::retranslateUi()
