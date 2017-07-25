@@ -35,7 +35,7 @@ namespace qtor
 		QToolBar * m_toolBar = nullptr;
 		QAction * m_actionOpen = nullptr;
 		QAction * m_actionStartAll = nullptr;
-		QAction * m_actionsSopAll = nullptr;
+		QAction * m_actionStopAll = nullptr;
 		QAction * m_actionDelete = nullptr;
 		QAction * m_actionPreferences = nullptr;
 
@@ -78,10 +78,15 @@ namespace qtor
 
 	protected:
 		virtual void setupToolBars();
+		virtual void retranslateToolBars();
 		virtual void setupStatusBar();
-		virtual void connectSignals();
+		virtual void retranslateStatusBar();		
 		virtual void setupUi();
 		virtual void retranslateUi();
+
+		virtual void setupMenu();
+
+		virtual void connectSignals();
 
 	protected:
 		/// statusbar methods

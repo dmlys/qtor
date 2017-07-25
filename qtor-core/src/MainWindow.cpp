@@ -39,8 +39,15 @@ namespace qtor
 	MainWindow::MainWindow(QWidget * wgt /*= nullptr*/) : QMainWindow(wgt)
 	{
 		setupUi();
+		setupStatusBar();
+		setupToolBars();
+		setupMenu();
+
 		connectSignals();
+
 		retranslateUi();
+		retranslateToolBars();
+		retranslateStatusBar();
 	}
 
 	MainWindow::~MainWindow()
@@ -55,12 +62,26 @@ namespace qtor
 
 	void MainWindow::setupStatusBar()
 	{
+		m_actionOpen = new QAction(this);
+		m_actionStartAll = new QAction(this);
+		m_actionStopAll = new QAction(this);
+		m_actionDelete = new QAction(this);
+		m_actionPreferences = new QAction(this);
+		
+		m_toolBar = new QToolBar(this);
+		m_toolBar->setObjectName("main_toolbar");
 
-	}
+		m_toolBar->addAction(m_actionOpen);
+		m_toolBar->addAction(m_actionStartAll);
+		m_toolBar->addAction(m_actionStopAll);
+		m_toolBar->addAction(m_actionDelete);
+		m_toolBar->addAction(m_actionPreferences);
 
-	void MainWindow::connectSignals()
-	{
+		// http://stackoverflow.com/questions/650889/qtoolbar-is-there-a-way-to-make-toolbar-unhidable
+		// make toolbar unhidable
+		m_toolBar->setContextMenuPolicy(Qt::PreventContextMenu);
 
+		addToolBar(Qt::TopToolBarArea, m_toolBar);
 	}
 
 	void MainWindow::setupUi()
@@ -69,7 +90,56 @@ namespace qtor
 		setCentralWidget(m_torrentWidget);
 	}
 
+	void MainWindow::setupMenu()
+	{
+		QMenuBar * menuBar = new QMenuBar(this);
+		QMenu * main = menuBar->addMenu(tr("&Main"));
+		main->addAction(m_actionOpen);
+		main->addAction(m_actionStartAll);
+		main->addAction(m_actionStopAll);
+		main->addAction(m_actionDelete);
+		main->addAction(m_actionPreferences);
+
+		setMenuBar(menuBar);
+	}
+
+	void MainWindow::connectSignals()
+	{
+
+	}
+
+
 	void MainWindow::retranslateUi()
+	{
+
+	}
+
+	void MainWindow::retranslateToolBars()
+	{
+		auto text = tr("&Open");
+		m_actionOpen->setIcon(QIcon(":/icons/qtor-core/open.png"));
+		m_actionOpen->setText(text);
+		m_actionOpen->setIconText(text);
+		m_actionOpen->setShortcut(tr("Ctrl+N"));
+
+		m_actionStartAll->setIcon(QIcon(":/icons/qtor-core/start-all.png"));
+		m_actionStartAll->setText(tr("&Start all"));
+		m_actionStartAll->setShortcut(tr("Ctrl+S"));
+
+		m_actionStopAll->setIcon(QIcon(":/icons/qtor-core/stop-all.png"));
+		m_actionStopAll->setText(tr("Sto&p all"));
+		m_actionStopAll->setShortcut(tr("Ctrl+P"));
+
+		m_actionDelete->setIcon(QIcon(":/icons/qtor-core/delete-all.png"));
+		m_actionDelete->setText(tr("&Delete"));
+		//m_actionDelete->setShortcut(tr("Ctrl+D"));
+
+		m_actionPreferences->setIcon(QIcon(":/icons/qtor-core/preferences.png"));
+		m_actionPreferences->setText(tr("Pre&ferences"));
+		m_actionPreferences->setShortcut(tr("Ctrl+P"));
+	}
+
+	void MainWindow::retranslateStatusBar()
 	{
 
 	}
