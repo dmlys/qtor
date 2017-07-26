@@ -34,6 +34,9 @@ namespace qtor
 		connect(m_app, &Application::Connected, this, &MainWindow::OnConnected);
 		connect(m_app, &Application::Disconnected, this, &MainWindow::OnDisconnected);
 		connect(m_app, &Application::ConnectionError, this, &MainWindow::OnConnectionError);
+
+		auto model = m_app->AccquireTorrentModel();
+		m_torrentWidget->Init(std::move(model));
 	}
 
 	MainWindow::MainWindow(QWidget * wgt /*= nullptr*/) : QMainWindow(wgt)
@@ -57,17 +60,12 @@ namespace qtor
 
 	void MainWindow::setupToolBars()
 	{
-
-	}
-
-	void MainWindow::setupStatusBar()
-	{
 		m_actionOpen = new QAction(this);
 		m_actionStartAll = new QAction(this);
 		m_actionStopAll = new QAction(this);
 		m_actionDelete = new QAction(this);
 		m_actionPreferences = new QAction(this);
-		
+
 		m_toolBar = new QToolBar(this);
 		m_toolBar->setObjectName("main_toolbar");
 
@@ -82,6 +80,14 @@ namespace qtor
 		m_toolBar->setContextMenuPolicy(Qt::PreventContextMenu);
 
 		addToolBar(Qt::TopToolBarArea, m_toolBar);
+	}
+
+	void MainWindow::setupStatusBar()
+	{
+		m_statusbar = new QStatusBar(this);
+		m_statusBarLabel = new QLabel(this);
+		m_statusbar->addWidget(m_statusBarLabel);
+		setStatusBar(m_statusbar);
 	}
 
 	void MainWindow::setupUi()
@@ -108,7 +114,6 @@ namespace qtor
 
 	}
 
-
 	void MainWindow::retranslateUi()
 	{
 
@@ -116,18 +121,19 @@ namespace qtor
 
 	void MainWindow::retranslateToolBars()
 	{
-		auto text = tr("&Open");
 		m_actionOpen->setIcon(QIcon(":/icons/qtor-core/open.png"));
-		m_actionOpen->setText(text);
-		m_actionOpen->setIconText(text);
+		m_actionOpen->setText(tr("&Open"));
+		m_actionOpen->setToolTip("Open(Ctrl+N)");
 		m_actionOpen->setShortcut(tr("Ctrl+N"));
 
 		m_actionStartAll->setIcon(QIcon(":/icons/qtor-core/start-all.png"));
 		m_actionStartAll->setText(tr("&Start all"));
+		m_actionStartAll->setToolTip(tr("Start all(Ctrl+S)"));
 		m_actionStartAll->setShortcut(tr("Ctrl+S"));
 
 		m_actionStopAll->setIcon(QIcon(":/icons/qtor-core/stop-all.png"));
 		m_actionStopAll->setText(tr("Sto&p all"));
+		m_actionStopAll->setToolTip(tr("Stop all(Ctrl+P)"));
 		m_actionStopAll->setShortcut(tr("Ctrl+P"));
 
 		m_actionDelete->setIcon(QIcon(":/icons/qtor-core/delete-all.png"));
@@ -136,12 +142,14 @@ namespace qtor
 
 		m_actionPreferences->setIcon(QIcon(":/icons/qtor-core/preferences.png"));
 		m_actionPreferences->setText(tr("Pre&ferences"));
+		m_actionPreferences->setToolTip(tr("Preferences(Ctrl+P)"));
 		m_actionPreferences->setShortcut(tr("Ctrl+P"));
 	}
 
 	void MainWindow::retranslateStatusBar()
 	{
-
+		m_connectedPixmap = ScalePixmap({":/icons/qtor-core/connected.ico"});
+		m_disconnectedPixmap = ScalePixmap({":/icons/qtor-core/disconnected.ico"});
 	}
 
 	QPixmap MainWindow::ScalePixmap(const QPixmap & pcx)
@@ -152,12 +160,12 @@ namespace qtor
 
 	void MainWindow::SetConnectedStatus()
 	{
-		m_statusBarLabel->setPixmap(ScalePixmap({":/icons/connect_status/connected.ico"}));
+		m_statusBarLabel->setPixmap(m_connectedPixmap);
 	}
 
 	void MainWindow::SetDisconnectedStatus()
 	{
-		m_statusBarLabel->setPixmap(ScalePixmap({":/icons/connect_status/disconnected.ico"}));
+		m_statusBarLabel->setPixmap(m_disconnectedPixmap);
 	}
 
 }

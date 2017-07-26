@@ -19,8 +19,8 @@ namespace qtor
 		typedef std::shared_ptr<AbstractTorrentModel>   abstract_torrent_model_ptr;
 
 	protected:
-		std::shared_ptr<abstract_data_source> m_source;
-		std::shared_ptr<torrent_store> m_torrent_store;
+		abstract_data_source_ptr m_source;
+		torrent_store_ptr        m_torrent_store;
 
 	protected:
 		virtual auto CreateSource() -> abstract_data_source_ptr = 0;
@@ -29,6 +29,7 @@ namespace qtor
 	protected:
 		// initializes this object, probably should be called in constructor
 		virtual void Init();
+		virtual auto GetStore() -> torrent_store_ptr;
 
 	public:
 		virtual auto AccquireTorrentModel() -> abstract_torrent_model_ptr;

@@ -12,5 +12,11 @@ namespace qtor
 		{
 			return std::make_shared<qtor::testing_data_source>();
 		}
+
+	public:
+		TransmissionRemoteApp()
+		{
+			Init();
+		}
 	};
 }

@@ -46,5 +46,14 @@ namespace qtor
 	{
 		m_source = CreateSource();
 		m_source->on_event([this](auto ev) { OnEventSource(ev); });
+		m_torrent_store = std::make_shared<torrent_store>(m_source);
+	}
+
+	auto Application::GetStore() -> torrent_store_ptr
+	{
+		if (not m_torrent_store)
+			Init();
+
+		return m_torrent_store;
 	}
 }

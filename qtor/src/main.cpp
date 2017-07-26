@@ -126,9 +126,11 @@ int main(int argc, char * argv[])
 	qtor::TransmissionRemoteApp app;
 	qtor::MainWindow mainWindow;
 
+	app.Init();
 	mainWindow.Init(app);
 	mainWindow.show();
 	
+	QTimer::singleShot(100, [&app] { app.Connect(); });
 	return qapp.exec();
 
 	//auto source = std::make_shared<qtor::testing_data_source>();
