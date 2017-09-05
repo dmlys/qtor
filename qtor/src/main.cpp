@@ -31,15 +31,15 @@
 
 #include <QtWidgets/QApplication>
 
-#ifdef NDEBUG
-#pragma  comment(lib, "libfmt-mt.lib")
-#pragma  comment(lib, "openssl-crypto-mt.lib")
-#pragma  comment(lib, "openssl-ssl-mt.lib")
-#else
-#pragma  comment(lib, "libfmt-mt-gd.lib")
-#pragma  comment(lib, "openssl-crypto-mt-gd.lib")
-#pragma  comment(lib, "openssl-ssl-mt-gd.lib")
-#endif
+//#ifdef NDEBUG
+//#pragma  comment(lib, "libfmt-mt.lib")
+//#pragma  comment(lib, "openssl-crypto-mt.lib")
+//#pragma  comment(lib, "openssl-ssl-mt.lib")
+//#else
+//#pragma  comment(lib, "libfmt-mt-gd.lib")
+//#pragma  comment(lib, "openssl-crypto-mt-gd.lib")
+//#pragma  comment(lib, "openssl-ssl-mt-gd.lib")
+//#endif
 
 //class http_method
 //{
@@ -125,8 +125,7 @@ int main(int argc, char * argv[])
 	QApplication qapp {argc, argv};
 	qtor::TransmissionRemoteApp app;
 	qtor::MainWindow mainWindow;
-
-	app.Init();
+	
 	mainWindow.Init(app);
 	mainWindow.show();
 	
