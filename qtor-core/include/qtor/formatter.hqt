@@ -57,19 +57,20 @@ namespace qtor
 		virtual QString format_bool(bool val) const;
 		virtual QString format_nullopt() const;
 		
-	public:
-		virtual optional<std::tuple<unsigned, weight>> parse_suffix(const QString & str) const;
-		virtual optional<std::tuple<unsigned, double, weight>> parse_numeric(const QString & str) const;
+	//public:
+	//	virtual optional<std::tuple<unsigned, weight>> parse_suffix(const QString & str) const;
+	//	virtual optional<std::tuple<unsigned, double, weight>> parse_numeric(const QString & str) const;
 
-	public:
-		virtual optional<size_type>  parse_size(const QString & str) const;
-		virtual optional<speed_type> parse_speed(const QString & str) const;
+	//public:
+	//	virtual optional<size_type>  parse_size(const QString & str) const;
+	//	virtual optional<speed_type> parse_speed(const QString & str) const;
 
-		virtual optional<uint64_type> parse_uint64(const QString & str) const;
-		virtual optional<double>      parse_double(const QString & str) const;
+	//	virtual optional<uint64_type> parse_uint64(const QString & str) const;
+	//	virtual optional<double>      parse_double(const QString & str) const;
 
-		virtual optional<datetime_type> parse_datetime(const QString & str) const;
-		virtual optional<duration_type> parse_duration(const QString & str) const;
+	//	virtual optional<datetime_type> parse_datetime(const QString & str) const;
+	//	virtual optional<duration_type> parse_duration(const QString & str) const;
+
 
 	public:
 #define QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(NAME, TYPE)                              \
