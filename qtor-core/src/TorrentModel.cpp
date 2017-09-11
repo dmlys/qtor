@@ -13,12 +13,12 @@ namespace qtor
 		return qint(m_owner->size());
 	}
 
-	const torrent & TorrentModel::GetTorrent(int row) const
+	const torrent & TorrentModel::GetItem(int row) const
 	{
 		return *m_store.at(row);
 	}
 
-	void TorrentModel::FilterByName(QString expr)
+	void TorrentModel::FilterBy(QString expr)
 	{
 		auto search = FromQString(expr);
 
@@ -28,7 +28,7 @@ namespace qtor
 
 	void TorrentModel::sort(int column, Qt::SortOrder order)
 	{
-		m_sort_pred = create_comparator(column, order == Qt::AscendingOrder);
+		m_sort_pred = sparse_container_comparator(column, order == Qt::AscendingOrder);
 		view_type::sort_and_notify(m_store.begin(), m_store.end());
 	}
 
@@ -38,6 +38,10 @@ namespace qtor
 		assert(store);
 		m_recstore = std::move(store);
 		m_recstore->view_addref();
+
+		m_filter_pred.set_items({torrent::Name});
+		m_formatter = new torrent_formatter(this);
+		SetColumns({torrent::Id, torrent::Name});
 
 		// from view_base_type
 		connect_signals();

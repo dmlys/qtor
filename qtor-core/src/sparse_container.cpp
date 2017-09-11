@@ -2,10 +2,20 @@
 #include <boost/regex/pending/unicode_iterator.hpp>
 
 #include <QtCore/QChar>
-#include <qtor/torrent_filter.hpp>
+#include <qtor/sparse_container.hpp>
 
 namespace qtor
 {
+	const sparse_container::any_type sparse_container::ms_empty;
+
+	bool sparse_container_comparator::operator()(const sparse_container & c1, const sparse_container & c2) const noexcept
+	{
+		const auto & v1 = c1.get_item(m_key);
+		const auto & v2 = c2.get_item(m_key);
+
+		return m_ascending ? v1 < v2 : v2 < v1;
+	}
+
 	static std::uint32_t toupper(std::uint32_t ch)
 	{
 #if 0
@@ -91,26 +101,69 @@ namespace qtor
 		return res != last;
 	}
 
-	viewed::refilter_type torrent_filter::set_expr(std::string search)
+	viewed::refilter_type sparse_container_filter::set_items(index_array items)
+	{
+		viewed::refilter_type result;
+
+		auto first = items.begin();
+		auto last = items.end();
+		auto m_first = m_items.begin();
+		auto m_last = m_items.end();
+
+		auto it = std::search(first, last, m_first, m_last);
+		if (it == last)
+			result = viewed::refilter_type::full;
+		else if (it == first && last - first == m_last - m_first)
+			result = viewed::refilter_type::same;
+		else
+			result = viewed::refilter_type::incremental;
+
+		m_items = std::move(items);
+		return result;
+	}
+
+	viewed::refilter_type sparse_container_filter::set_expr(std::string search)
 	{
 		trim(search);
 		viewed::refilter_type result;
-		if (iequals(m_search, search))
+		if (iequals(m_filter, search))
 			result = viewed::refilter_type::same;
-		else if (istarts_with(m_search, search)) 
+		else if (istarts_with(m_filter, search))
 			result = viewed::refilter_type::incremental;
-				
-		m_search = std::move(search);
+
+		m_filter = std::move(search);
 		return result;
 	}
-	
-	bool torrent_filter::matches(const torrent & t) const noexcept
+
+	viewed::refilter_type sparse_container_filter::set_expr(string_type search, index_array items)
 	{
-		return icontains(t.name, m_search);
+		return std::max(
+			set_expr(std::move(search)),
+			set_items(std::move(items))
+		);
 	}
 
-	bool torrent_filter::always_matches() const noexcept
+	bool sparse_container_filter::matches(const sparse_container & c) const noexcept
 	{
-		return m_search.empty();
+		bool result = true;
+
+		for (auto idx : m_items)
+		{
+			const auto & val = c.get_item(idx);
+			if (matches(val)) return true;
+		}
+
+		return false;
+	}
+
+	bool sparse_container_filter::matches(const sparse_container::any_type & val) const noexcept
+	{
+		auto * str = any_cast<string_type>(&val);
+		return str and icontains(*str, m_filter);
+	}
+
+	bool sparse_container_filter::always_matches() const noexcept
+	{
+		return m_filter.empty() or m_items.empty();
 	}
 }

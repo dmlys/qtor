@@ -157,26 +157,6 @@ namespace transmission
 		}
 	}
 
-	class data_source::post_continuation : public ext::continuation_base
-	{
-		data_source * m_owner;
-		QtTools::GuiQueue::action_type m_action;
-
-	public:
-		post_continuation(ext::intrusive_ptr<continuation_type> cont, data_source * owner) 
-			: m_owner(owner) 
-		{
-			m_action = [cont = std::move(cont)] { cont->continuate(); };
-		}
-
-		void continuate() noexcept override;
-	};
-
-	void data_source::post_continuation::continuate() noexcept
-	{
-		m_owner->m_queue.Add(std::move(m_action));
-	}
-
 	class data_source::torrent_request : public request<torrent_list, request_base>
 	{
 		typedef data_source::request<torrent_list, request_base> base_type;
@@ -185,15 +165,6 @@ namespace transmission
 		torrent_id_list m_request_idx;
 
 	public:
-		bool add_continuation(continuation_type * continuation) noexcept override
-		{
-			auto owner = static_cast<data_source *>(m_owner);
-			ext::intrusive_ptr<continuation_type> ptr {continuation, ext::noaddref};
-
-			continuation = new post_continuation(std::move(ptr), owner);
-			return base_type::add_continuation(continuation);
-		}
-
 		auto request_command() -> std::string override
 		{ 
 			return make_request_command(constants::torrent_get, m_request_idx);

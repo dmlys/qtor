@@ -8,7 +8,7 @@
 #include <QtTools/DelayedExecutionTimer.hqt>
 #include <QtTools/HeaderControlModel.hqt>
 
-#include <qtor/AbstractTorrentModel.hqt>
+#include <qtor/AbstractSparseContainerModel.hqt>
 
 
 namespace qtor
@@ -25,7 +25,7 @@ namespace qtor
 
 	protected:
 		/// display model
-		std::shared_ptr<AbstractTorrentModel> m_model;
+		std::shared_ptr<AbstractSparseContainerModel> m_model;
 
 		/// table headers customization/tracking
 		QtTools::HeaderControlModel * m_headerModel = nullptr;
@@ -82,12 +82,12 @@ namespace qtor
 
 	public:
 		/// Returns the model that this widget displays. This model is set by calling Init
-		const std::shared_ptr<AbstractTorrentModel> & GetModel() const { return m_model; }
+		const std::shared_ptr<AbstractSparseContainerModel> & GetModel() const { return m_model; }
 
 		/// initializes widget
 		/// @Param model required, задает модель данных
 		/// if both params = nullptr - uninitializes widget
-		virtual void Init(std::shared_ptr<AbstractTorrentModel> model);
+		virtual void Init(std::shared_ptr<AbstractSparseContainerModel> model);
 
 		/// initializes headers tracking, additionally sets headerConf configuration, see also QtTools::HeaderControlModel.
 		/// TorrentTableWidget must be initialized before calling this method.

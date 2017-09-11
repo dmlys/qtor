@@ -51,10 +51,10 @@ namespace qtor
 			torrents.emplace_back();
 			auto & t = torrents.back();
 
-			t.id = ext::itoa(n++, buffer);
+			t.id(ext::itoa(n++, buffer));
 
 			auto qstr = stream.readLine();
-			FromQString(qstr, t.name);
+			t.name(FromQString(qstr));
 		}
 	}
 

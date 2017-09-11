@@ -1,50 +1,107 @@
 #pragma once
-#include <cstddef>
-#include <memory>
 #include <utility>
 #include <functional>
-#include <chrono>
-#include <string>
-#include <vector>
+#include <qtor/types.hpp>
+#include <qtor/formatter.hqt>
+#include <qtor/sparse_container.hpp>
 
 #include <QtTools/ToolsBase.hpp>
+#include <QtCore/QMetaType>
+
+
+
+#define QTOR_TORRENT_FOR_EACH_BASIC_FIELD(F)                \
+	/* Id, Name, Type, TypeName */                          \
+	F(Id,      id,      string, torrent_id_type)            \
+	F(Name,    name,    string, string_type)                \
+	F(Creator, creator, string, string_type)                \
+	F(Comment, comment, string, string_type)                \
+
+
+#define QTOR_TORRENT_FOR_EACH_STATUS_FEILD(F)               \
+	/* Id, Name, Type, TypeName */                          \
+	F(ErrorString, error_string, string, string_type)       \
+	F(Finished,    finished,     bool,   bool)              \
+	F(Stalled,     stalled,      bool,   bool)              \
+
+
+#define QTOR_TORRENT_FOR_EACH_SIZE_FIELD(F)                 \
+	/* Id, Name, Type, TypeName */                          \
+	F(TotalSize,    total_size,     size, size_type)        \
+	F(SizeWhenDone, size_when_done, size, size_type)        \
+
+
+#define QTOR_TORRENT_FOR_EACH_SPEED_FIELD(F)                \
+	/* Id, Name, Type, TypeName */                          \
+	F(DownloadSpeed, download_speed, speed, speed_type)     \
+	F(UploadSpeed,   upload_speed,   speed, speed_type)     \
+
+
+#define QTOR_TORRENT_FOR_EACH_TIME_DURATION_FIELD(F)        \
+	/* Id, Name, Type, TypeName */                          \
+	F(Eta,     eta,      duration, duration_type)           \
+	F(EtaIdle, eta_idle, duration, duration_type)           \
+
+
+#define QTOR_TORRENT_FOR_EACH_DATE_FIELD(F)                 \
+	/* Id, Name, Type, TypeName */                          \
+	F(DateAdded,   date_added,   datetime, datetime_type)   \
+	F(DateCreated, date_created, datetime, datetime_type)   \
+	F(DateStarted, date_started, datetime, datetime_type)   \
+	F(DateDone,    date_done,    datetime, datetime_type)   \
+
+
+#define QTOR_TORRENT_FOR_EACH_FIELD(F)                      \
+	QTOR_TORRENT_FOR_EACH_BASIC_FIELD(F)                    \
+	QTOR_TORRENT_FOR_EACH_STATUS_FEILD(F)                   \
+	QTOR_TORRENT_FOR_EACH_SIZE_FIELD(F)                     \
+	QTOR_TORRENT_FOR_EACH_SPEED_FIELD(F)                    \
+	QTOR_TORRENT_FOR_EACH_TIME_DURATION_FIELD(F)            \
+	QTOR_TORRENT_FOR_EACH_DATE_FIELD(F)                     \
+
+
+#define QTOR_TORRENT_DEFINE_ENUM(ID, NAME, A3, TYPE) ID,
+
+#define QTOR_TORRENT_DEFINE_PROPERTY(ID, NAME, A3, TYPE)                                                                       \
+	auto NAME(TYPE val)        -> self_type &            { return static_cast<self_type &>(set_item(ID, std::move(val))); }    \
+	auto NAME() const noexcept -> optional<const TYPE &> { return get_item<TYPE>(ID); }                                        \
+	auto NAME() noexcept       -> optional<TYPE &>       { return get_item<TYPE>(ID); }                                        \
+
 
 namespace qtor
 {
-	typedef std::string    string_type;
-	typedef std::uint64_t  speed_type;
-	typedef std::uint64_t  size_type;
-
-	typedef std::chrono::system_clock::time_point  time_point_type;
-	typedef std::chrono::system_clock::duration    duration_type;
-
-	struct torrent;
-	struct torrent_filename;
-	struct statistics;
+	class torrent;
+	class torrent_filename;
+	class statistics;
 
 	typedef string_type                      torrent_id_type;
 	typedef std::vector<torrent_id_type>     torrent_id_list;
 	typedef std::vector<torrent>             torrent_list;
 
-	struct torrent
+	class torrent : public sparse_container
 	{
-		torrent_id_type id;		
-		string_type     name;
+		using self_type = torrent;
+		using base_type = sparse_container;
 
-		size_type    total_size;
-		speed_type   download_speed;
-		speed_type   upload_speed;
-		
-		time_point_type date_added;
-		time_point_type date_created;
-		duration_type  eta;
+	public:
+		static const string_type ms_emptystr;
+
+	public:
+		enum : index_type
+		{
+			QTOR_TORRENT_FOR_EACH_FIELD(QTOR_TORRENT_DEFINE_ENUM)
+		};
+
+	public:
+		QTOR_TORRENT_FOR_EACH_FIELD(QTOR_TORRENT_DEFINE_PROPERTY)
 	};
+
 
 	struct torrent_id_hasher
 	{
 		auto operator()(const torrent & val) const noexcept
 		{
-			return std::hash<torrent_id_type>{} (val.id);
+			return std::hash<torrent_id_type>{} (val.id().value_or(torrent::ms_emptystr));
 		}
 	};
 
@@ -52,7 +109,7 @@ namespace qtor
 	{
 		bool operator()(const torrent & t1, const torrent & t2) const noexcept
 		{
-			return t1.id == t2.id;
+			return t1.id() == t2.id();
 		}
 	};
 
@@ -61,15 +118,23 @@ namespace qtor
 	{
 		bool operator()(const torrent & t1, const torrent & t2) const noexcept
 		{
-			return relation_comparator::operator() (t1.id, t2.id);
+			return relation_comparator::operator() (t1.id(), t2.id());
 		}
 	};
 
 	typedef torrent_id_comparator<std::less<>>    torrent_id_less;
 	typedef torrent_id_comparator<std::greater<>> torrent_id_greater;
-}
 
-//Q_DECLARE_METATYPE(qtor::speed_type)
-//Q_DECLARE_METATYPE(qtor::size_type)
-Q_DECLARE_METATYPE(qtor::time_point_type);
-Q_DECLARE_METATYPE(qtor::duration_type);
+
+	class torrent_formatter : public simple_sparse_container_meta<>
+	{
+		using self_type = torrent_formatter;
+		using base_type = simple_sparse_container_meta;
+
+	protected:
+		static const item_map_ptr ms_items;
+
+	public:
+		torrent_formatter(QObject * parent = nullptr);
+	};
+}

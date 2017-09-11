@@ -31,16 +31,6 @@
 
 #include <QtWidgets/QApplication>
 
-//#ifdef NDEBUG
-//#pragma  comment(lib, "libfmt-mt.lib")
-//#pragma  comment(lib, "openssl-crypto-mt.lib")
-//#pragma  comment(lib, "openssl-ssl-mt.lib")
-//#else
-//#pragma  comment(lib, "libfmt-mt-gd.lib")
-//#pragma  comment(lib, "openssl-crypto-mt-gd.lib")
-//#pragma  comment(lib, "openssl-ssl-mt-gd.lib")
-//#endif
-
 //class http_method
 //{
 //	const char * m_val;
@@ -119,6 +109,11 @@
 int main(int argc, char * argv[])
 {
 	using namespace std;
+	using namespace qtor;
+
+
+	QtTools::QtRegisterStdString();
+	QMetaType::registerComparators<string>();
 
 	Q_INIT_RESOURCE(qtor_core_resource);
 
@@ -134,7 +129,4 @@ int main(int argc, char * argv[])
 
 	//auto source = std::make_shared<qtor::testing_data_source>();
 	//source->connect().get();
-
-	//auto store = std::make_shared<qtor::torrent_store>(source);
-	//auto model = std::make_shared<qtor::TorrentModel>(store);
 }

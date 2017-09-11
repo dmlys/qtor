@@ -42,28 +42,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
+    <ClInclude Include="include\qtor\sparse_container.hpp" />
     <ClInclude Include="include\qtor\testing_data_source.hpp" />
-    <ClInclude Include="include\qtor\torrent.hpp" />
-    <ClInclude Include="include\qtor\torrent_comparator.hpp" />
-    <ClInclude Include="include\qtor\torrent_filter.hpp" />
     <ClInclude Include="include\qtor\TorrentModel.hpp" />
     <ClInclude Include="include\qtor\torrent_store.hpp" />
+    <ClInclude Include="include\qtor\torrent.hpp" />
+    <ClInclude Include="include\qtor\types.hpp" />
     <ClInclude Include="include\qtor\view_manager.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AbstractSparseContainerModel.cpp" />
     <ClCompile Include="src\MainWindow.cpp" />
-    <ClCompile Include="src\AbstractTorrentModel.cpp" />
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\Application.cpp" />
+    <ClCompile Include="src\sparse_container.cpp" />
     <ClCompile Include="src\testing_data_source.cpp" />
+    <ClCompile Include="src\torrent.cpp" />
     <ClCompile Include="src\TorrentModel.cpp" />
     <ClCompile Include="src\TorrentTableWidget.cpp" />
-    <ClCompile Include="src\torrent_filter.cpp" />
     <ClCompile Include="src\torrent_store.cpp" />
     <ClCompile Include="src\view_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <QtMOCCompile Include="include\qtor\AbstractTorrentModel.hqt" />
+    <QtMOCCompile Include="include\qtor\AbstractSparseContainerModel.hqt" />
     <QtMOCCompile Include="include\qtor\formatter.hqt" />
     <QtMOCCompile Include="include\qtor\MainWindow.hqt" />
     <QtMOCCompile Include="include\qtor\Application.hqt" />

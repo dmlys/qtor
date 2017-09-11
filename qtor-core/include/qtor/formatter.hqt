@@ -1,11 +1,14 @@
 #pragma once
 #include <cstddef>
 #include <array>
-#include <qtor/torrent.hpp>
+#include <unordered_map>
+#include <qtor/types.hpp>
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QLocale>
+
+#include <qtor/sparse_container.hpp>
 
 namespace qtor
 {
@@ -13,7 +16,7 @@ namespace qtor
 	{
 		Q_OBJECT;
 
-	protected:
+	public:
 		// weights
 		enum weight : unsigned
 		{
@@ -21,16 +24,21 @@ namespace qtor
 		};
 
 	protected:
-		static const std::array<std::uint64_t, 5> ms_weights;
+		static const std::array<uint64_type, 5> ms_weights;
 		static const char * ms_size_strings[5];
 		static const char * ms_speed_strings[5];
 		static const char * ms_duration_strings[4];
 
 		QLocale m_locale;
 
-	protected:
-		virtual weight weigh(std::uint64_t val) const;
-		virtual QString format_item(std::uint64_t val, const char *strings[5]) const;
+	public:
+		void set_locale(QLocale loc) { m_locale = std::move(loc); }
+		auto get_locale() const noexcept { return m_locale; }
+
+	public:
+		virtual auto weigh(double val) const noexcept -> weight;
+		virtual auto weigh(double val, weight w) const noexcept -> double;
+		virtual QString format_item(uint64_type val, const char *strings[5]) const;
 
 	public:
 		// more specialized formatters
@@ -38,18 +46,154 @@ namespace qtor
 		virtual QString format_speed(speed_type val) const;
 		
 		// more generic formatters
-		virtual QString format_uint64(std::uint64_t val) const;
+		virtual QString format_uint64(uint64_type val) const;
 		virtual QString format_double(double val) const;
 		virtual QString format_string(string_type val) const;
 		virtual QString format_short_string(string_type val) const;
-
-		virtual QString format_datetime(time_point_type val) const;
+		
+		virtual QString format_datetime(datetime_type val) const;
 		virtual QString format_duration(duration_type val) const;
+
+		virtual QString format_bool(bool val) const;
+		virtual QString format_nullopt() const;
+		
+	public:
+		virtual optional<std::tuple<unsigned, weight>> parse_suffix(const QString & str) const;
+		virtual optional<std::tuple<unsigned, double, weight>> parse_numeric(const QString & str) const;
+
+	public:
+		virtual optional<size_type>  parse_size(const QString & str) const;
+		virtual optional<speed_type> parse_speed(const QString & str) const;
+
+		virtual optional<uint64_type> parse_uint64(const QString & str) const;
+		virtual optional<double>      parse_double(const QString & str) const;
+
+		virtual optional<datetime_type> parse_datetime(const QString & str) const;
+		virtual optional<duration_type> parse_duration(const QString & str) const;
+
+	public:
+#define QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(NAME, TYPE)                              \
+		template <class Type>                                                         \
+		std::enable_if_t<std::is_convertible_v<std::decay_t<Type>, TYPE>, QString>    \
+		NAME(const optional<Type> & val) const                                        \
+		{                                                                             \
+			return val ? NAME(val.value()) : format_nullopt();                        \
+		}                                                                             \
+		                                                                              \
+		QString NAME(const any & val) const                                           \
+		{                                                                             \
+			const auto * ptr = any_cast<TYPE>(&val);                                  \
+			return ptr ? NAME(*ptr) : format_nullopt();                               \
+		}                                                                             \
+
+
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_speed,  speed_type);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_size,   size_type);
+		
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_bool, bool);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_uint64, uint64_type);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_double, double);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_string, string_type);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_short_string, string_type);
+
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_datetime, datetime_type);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_duration, duration_type);
+
+#undef QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD
 
 	public:
 		using QObject::QObject;
 
 	public:
-		static const formatter default_formatter;
+		virtual ~formatter() = default;
 	};
+
+
+	template <class formatter = qtor::formatter>
+	class simple_sparse_container_meta : 
+		public virtual sparse_container_meta,
+		public virtual formatter
+	{
+		using base_type = sparse_container_meta;
+		using self_type = simple_sparse_container_meta;
+
+	public:
+		using formatter_type = formatter;
+		using format_method  = QString(formatter_type::*)(const any_type &) const;
+
+		struct item
+		{
+			unsigned type;
+			QString name;
+			format_method method;
+		};
+
+		using item_map     = std::unordered_map<index_type, item>;
+		using item_map_ptr = std::shared_ptr<const item_map>;
+
+	protected:
+		item_map_ptr m_items;
+
+	public:
+		virtual unsigned item_type(index_type key) const noexcept override;
+		virtual  QString item_name(index_type key) const override;
+		virtual  QString format_item(index_type key, const any_type & val) const override;
+		virtual  QString format_item_short(index_type key, const any_type & val) const override;
+
+	protected:
+		simple_sparse_container_meta(QObject * parent = nullptr)
+			: formatter_type(parent) {}
+
+	public:
+		simple_sparse_container_meta(item_map_ptr items)
+			: m_items(std::move(items)) {}
+
+		virtual ~simple_sparse_container_meta() = default;
+	};
+
+	template <class formatter>
+	unsigned simple_sparse_container_meta<formatter>::item_type(index_type key) const noexcept
+	{
+		auto it = m_items->find(key);
+		if (it == m_items->end())
+			return Unknown;
+
+		return it->second.type;
+	}
+
+	template <class formatter>
+	QString simple_sparse_container_meta<formatter>::item_name(index_type key) const
+	{
+		auto it = m_items->find(key);
+		if (it == m_items->end())
+			return QString::null;
+
+		return it->second.name;
+	}
+
+	template <class formatter>
+	QString simple_sparse_container_meta<formatter>::format_item(index_type key, const any_type & val) const
+	{
+		auto it = m_items->find(key);
+		if (it == m_items->end()) 
+			return this->format_nullopt();
+
+		auto method = it->second.method;
+		return (this->*method)(val);
+	}
+
+	template <class formatter>
+	QString simple_sparse_container_meta<formatter>::format_item_short(index_type key, const any_type & val) const
+	{
+		auto it = m_items->find(key);
+		if (it == m_items->end())
+			return this->format_nullopt();
+
+		auto method = it->second.method;
+		decltype(method) short_string = &formatter_type::format_short_string;
+		if (method == short_string)
+			return (this->*short_string)(val);
+
+		return (this->*method)(val);
+	}
 }

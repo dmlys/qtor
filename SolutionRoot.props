@@ -20,6 +20,13 @@
       
       <!-- warning C4250: inherits via dominance -->
       <AdditionalOptions>/wd4250 %(AdditionalOptions)</AdditionalOptions>
+      
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        _HAS_AUTO_PTR_ETC;
+        <!-- _HAS_OLD_IOSTREAMS_MEMBERS; -->
+      </PreprocessorDefinitions>
     </ClCompile>
     <Link>
     </Link>

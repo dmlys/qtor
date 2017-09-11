@@ -23,7 +23,7 @@ namespace qtor
 		m_filterString = std::move(newFilter);
 		//m_delegate->SetSearchWord(m_filterString);
 
-		if (m_model) m_model->FilterByName(m_filterString);
+		if (m_model) m_model->FilterBy(m_filterString);
 	}
 
 	QSize TorrentTableWidget::sizeHint() const
@@ -145,7 +145,7 @@ namespace qtor
 		m_sizeHint = m_defMinSizeHint;
 	}
 
-	void TorrentTableWidget::Init(std::shared_ptr<AbstractTorrentModel> model)
+	void TorrentTableWidget::Init(std::shared_ptr<AbstractSparseContainerModel> model)
 	{
 		// both null or valid
 		if (m_model) m_model->disconnect(this);

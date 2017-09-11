@@ -5,11 +5,9 @@
 
 namespace qtor
 {
-	const formatter formatter::default_formatter;
-
-	const std::array<std::uint64_t, 5> formatter::ms_weights = 
+	const std::array<uint64_type, 5> formatter::ms_weights =
 	{
-		0,                                // none
+		1,                                // none
 		1'000ull,                         // kilo
 		1'000ull * 1'000,                 // mega
 		1'000ull * 1'000 * 1'000,         // giga
@@ -39,10 +37,10 @@ namespace qtor
 		QT_TRANSLATE_NOOP("formatter", "%Ln day(s)"),
 		QT_TRANSLATE_NOOP("formatter", "%Ln hour(s)"),
 		QT_TRANSLATE_NOOP("formatter", "%Ln minute(s)"),
-		QT_TRANSLATE_NOOP("formatter", "%Ln second(s)"),		
+		QT_TRANSLATE_NOOP("formatter", "%Ln second(s)"),
 	};
 
-	auto formatter::weigh(std::uint64_t val) const -> weight
+	auto formatter::weigh(double  val) const noexcept -> weight
 	{
 		auto first = ms_weights.begin();
 		auto last  = ms_weights.end();
@@ -50,7 +48,12 @@ namespace qtor
 		return static_cast<weight>(it - first - 1);
 	}
 
-	QString formatter::format_item(std::uint64_t val, const char * strings[5]) const
+	auto formatter::weigh(double val, weight w) const noexcept -> double
+	{
+		return val * ms_weights[w];
+	}
+
+	QString formatter::format_item(uint64_type val, const char * strings[5]) const
 	{
 		auto w = weigh(val);
 		auto fmt = strings[w];
@@ -72,7 +75,7 @@ namespace qtor
 		return format_item(val, ms_speed_strings);
 	}
 
-	QString formatter::format_uint64(std::uint64_t val) const
+	QString formatter::format_uint64(uint64_type val) const
 	{
 		return m_locale.toString(val);
 	}
@@ -92,7 +95,7 @@ namespace qtor
 		return ToQString(val);
 	}
 
-	QString formatter::format_datetime(time_point_type val) const
+	QString formatter::format_datetime(datetime_type val) const
 	{
 		auto dt = QtTools::ToQDateTime(val);
 		return m_locale.toString(dt);
@@ -100,13 +103,13 @@ namespace qtor
 
 	QString formatter::format_duration(duration_type val) const
 	{
-		std::uint64_t secs = std::chrono::duration_cast<std::chrono::seconds>(val).count();
+		uint64_type secs = std::chrono::duration_cast<std::chrono::seconds>(val).count();
 
 		constexpr auto min_sec = 60;
 		constexpr auto hour_sec = min_sec * 60;
 		constexpr auto day_sec = hour_sec * 24;
 
-		std::uint64_t vals[4] = 
+		uint64_type vals[4] =
 		{
 			secs / day_sec,             // days
 			secs % day_sec  / hour_sec, // hours
@@ -128,5 +131,67 @@ namespace qtor
 			  tr(ms_duration_strings[idx], nullptr, *it)
 			% QStringLiteral(", ")
 			% tr(ms_duration_strings[idx + 1], nullptr, *(it + 1));
+	}
+
+	QString formatter::format_bool(bool val) const
+	{
+		return m_locale.toString(val);
+	}
+
+	QString formatter::format_nullopt() const
+	{
+		return QStringLiteral("N/A");
+	}
+
+	auto formatter::parse_suffix(const QString & str) const
+		-> optional<std::tuple<unsigned, weight>>
+	{
+		return nullopt;
+	}
+
+	auto formatter::parse_numeric(const QString & str) const
+		-> optional<std::tuple<unsigned, double, weight>>
+	{
+		return nullopt;
+	}
+
+	optional<size_type> formatter::parse_size(const QString & str) const
+	{
+		return nullopt;
+	}
+
+	optional<speed_type> formatter::parse_speed(const QString & str) const
+	{
+		return nullopt;
+	}
+
+	optional<uint64_type> formatter::parse_uint64(const QString & str) const
+	{
+		bool ok;
+		uint64_type val = m_locale.toULongLong(str, &ok);
+		
+		if (ok) return val;
+		else return nullopt;
+	}
+
+	optional<double> formatter::parse_double(const QString & str) const
+	{
+		bool ok;
+		double val = m_locale.toDouble(str, &ok);
+
+		if (ok) return val;
+		else    return nullopt;
+	}
+
+	optional<datetime_type> formatter::parse_datetime(const QString & str) const
+	{
+		auto dt = m_locale.toDateTime(str, QLocale::ShortFormat);
+		if (dt.isValid()) return QtTools::ToStdChrono(dt);
+		else              return nullopt;
+	}
+
+	optional<duration_type> formatter::parse_duration(const QString & str) const
+	{
+		return nullopt;
 	}
 }

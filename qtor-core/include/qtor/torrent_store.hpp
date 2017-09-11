@@ -1,7 +1,7 @@
 #pragma once
-#include <qtor/torrent.hpp>
 #include <qtor/abstract_data_source.hpp>
 #include <qtor/view_manager.hpp>
+#include <qtor/torrent.hpp>
 #include <viewed/hash_container_base.hpp>
 
 namespace qtor

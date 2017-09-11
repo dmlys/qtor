@@ -25,7 +25,6 @@ namespace transmission
 		class subscription_base;
 		class torrent_subscription;
 		class torrent_request;
-		class post_continuation;
 
 	//protected:
 	//	void emit_signal(event_sig & sig, event_type ev) override;
