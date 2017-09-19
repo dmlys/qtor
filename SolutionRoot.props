@@ -8,9 +8,11 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)externals\extlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)externals\netlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)externals\sqlite3yaw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)externals\QtTools\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       
       <AdditionalIncludeDirectories>$(SolutionDir)qtor-core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)qtor-sqlite\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)transmission-remote\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       
       <PreprocessorDefinitions>

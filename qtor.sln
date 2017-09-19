@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "externals", "externals", "{3C030C81-9D0F-4953-B38F-190525FF4B81}"
 EndProject
@@ -16,6 +16,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qtor-core", "qtor-core\qtor-core.vcxproj", "{2AD66701-0517-4784-828F-40DAA66C822A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "transmission-remote", "transmission-remote\transmission-remote.vcxproj", "{D94D4828-FF42-4E26-A659-C3B02CA9AB43}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qtor-sqlite", "qtor-sqlite\qtor-sqlite.vcxproj", "{A138B9DD-F942-4014-84EA-7946FCCD5BFD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite3yaw", "externals\sqlite3yaw\sqlite3yaw.vcxproj", "{0345E35B-E79E-4FD5-BC71-23645E004636}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -99,6 +103,30 @@ Global
 		{D94D4828-FF42-4E26-A659-C3B02CA9AB43}.UnitTests|Win32.Build.0 = Release|Win32
 		{D94D4828-FF42-4E26-A659-C3B02CA9AB43}.UnitTests|x64.ActiveCfg = Release|x64
 		{D94D4828-FF42-4E26-A659-C3B02CA9AB43}.UnitTests|x64.Build.0 = Release|x64
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Debug|Win32.Build.0 = Debug|Win32
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Debug|x64.ActiveCfg = Debug|x64
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Debug|x64.Build.0 = Debug|x64
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Release|Win32.ActiveCfg = Release|Win32
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Release|Win32.Build.0 = Release|Win32
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Release|x64.ActiveCfg = Release|x64
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.Release|x64.Build.0 = Release|x64
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.UnitTests|Win32.ActiveCfg = Release|Win32
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.UnitTests|Win32.Build.0 = Release|Win32
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.UnitTests|x64.ActiveCfg = Release|x64
+		{A138B9DD-F942-4014-84EA-7946FCCD5BFD}.UnitTests|x64.Build.0 = Release|x64
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Debug|Win32.Build.0 = Debug|Win32
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Debug|x64.ActiveCfg = Debug|x64
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Debug|x64.Build.0 = Debug|x64
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Release|Win32.ActiveCfg = Release|Win32
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Release|Win32.Build.0 = Release|Win32
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Release|x64.ActiveCfg = Release|x64
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.Release|x64.Build.0 = Release|x64
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.UnitTests|Win32.ActiveCfg = Release|Win32
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.UnitTests|Win32.Build.0 = Release|Win32
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.UnitTests|x64.ActiveCfg = Release|x64
+		{0345E35B-E79E-4FD5-BC71-23645E004636}.UnitTests|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,5 +135,9 @@ Global
 		{1C5A8C14-535D-44DF-9A69-B5D2BD44F774} = {3C030C81-9D0F-4953-B38F-190525FF4B81}
 		{3B471441-8DD5-4867-B6A9-909474E9E844} = {3C030C81-9D0F-4953-B38F-190525FF4B81}
 		{A0CF8DB4-824A-4C7B-98D5-77E83548AC1E} = {3C030C81-9D0F-4953-B38F-190525FF4B81}
+		{0345E35B-E79E-4FD5-BC71-23645E004636} = {3C030C81-9D0F-4953-B38F-190525FF4B81}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A47261A-FCB0-4364-933C-A7283DE67062}
 	EndGlobalSection
 EndGlobal

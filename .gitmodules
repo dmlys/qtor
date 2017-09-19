@@ -10,3 +10,6 @@
 [submodule "netlib"]
 	path = externals/netlib
 	url = ../netlib.git
+[submodule "sqlite3yaw"]
+	path = externals/sqlite3yaw
+	url = ../sqlite3yaw.git
