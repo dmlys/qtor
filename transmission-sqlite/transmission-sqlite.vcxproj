@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{000860DD-16CA-48F4-95BB-093FB3F82765}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)SolutionRoot.props" Condition="exists('$(SolutionDir)SolutionRoot.props')" />
+    <Import Project="$(SolutionDir)externals\msbuild-def\RelativeSources.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- precompiled -->
+      <!--       <PrecompiledHeader>Use</PrecompiledHeader>
+      <ForcedIncludeFiles>precompiled.h; %(ForcedIncludeFiles);</ForcedIncludeFiles>
+      <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile> -->
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <!-- ws2_32.lib; Crypt32.lib   are needed by openssl -->
+      <AdditionalDependencies>ws2_32.lib; Crypt32.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">libfmt-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">libfmt-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">openssl-crypto-mt.lib; openssl-ssl-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">openssl-crypto-mt-gd.lib; openssl-ssl-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">zlib-mt.lib;   %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">yaml-cpp-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">yaml-cpp-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">sqlite3-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">sqlite3-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <!-- <AdditionalDependencies>sqlite3.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
+      <!-- Qt -->
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">Qt5Widgets.lib; Qt5Core.lib; Qt5Gui.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">Qt5Widgetsd.lib; Qt5Cored.lib; Qt5Guid.lib; %(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\externals\extlib\extlib.vcxproj">
+      <Project>{1c5a8c14-535d-44df-9a69-b5d2bd44f774}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\externals\netlib\netlib.vcxproj">
+      <Project>{a0cf8db4-824a-4c7b-98d5-77e83548ac1e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\externals\QtTools\QtTools.vcxproj">
+      <Project>{3b471441-8dd5-4867-b6a9-909474e9e844}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\externals\sqlite3yaw\sqlite3yaw.vcxproj">
+      <Project>{0345e35b-e79e-4fd5-bc71-23645e004636}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\qtor-core\qtor-core.vcxproj">
+      <Project>{2ad66701-0517-4784-828f-40daa66c822a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\qtor-sqlite\qtor-sqlite.vcxproj">
+      <Project>{a138b9dd-f942-4014-84ea-7946fccd5bfd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\transmission-remote\transmission-remote.vcxproj">
+      <Project>{d94d4828-ff42-4e26-a659-c3b02ca9ab43}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -40,7 +40,7 @@ namespace qtor
 		m_recstore->view_addref();
 
 		m_filter_pred.set_items({torrent::Name});
-		m_formatter = new torrent_formatter(this);
+		m_formatter = new torrent_meta(this);
 		SetColumns({torrent::Id, torrent::Name});
 
 		// from view_base_type

@@ -90,6 +90,9 @@ namespace qtor
 		enum : index_type
 		{
 			QTOR_TORRENT_FOR_EACH_FIELD(QTOR_TORRENT_DEFINE_ENUM)
+
+			LastField,
+			FirstField = 0,
 		};
 
 	public:
@@ -126,15 +129,15 @@ namespace qtor
 	typedef torrent_id_comparator<std::greater<>> torrent_id_greater;
 
 
-	class torrent_formatter : public simple_sparse_container_meta<>
+	class torrent_meta : public simple_sparse_container_meta<>
 	{
-		using self_type = torrent_formatter;
+		using self_type = torrent_meta;
 		using base_type = simple_sparse_container_meta;
 
 	protected:
 		static const item_map_ptr ms_items;
 
 	public:
-		torrent_formatter(QObject * parent = nullptr);
+		torrent_meta(QObject * parent = nullptr);
 	};
 }
