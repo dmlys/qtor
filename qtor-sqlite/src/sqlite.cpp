@@ -25,6 +25,56 @@ namespace qtor::sqlite
 		return info;
 	}
 
+	const char * get_type(unsigned type)
+	{
+		switch (type)
+		{
+			case sparse_container_meta::Speed:
+			case sparse_container_meta::Size:
+			case sparse_container_meta::Uint64: return "INT";
+			case sparse_container_meta::Double: return "REAL";
+			case sparse_container_meta::String: return "TEXT";
+
+			case sparse_container_meta::DateTime:
+			case sparse_container_meta::Duration:
+			case sparse_container_meta::Unknown:
+			default:
+				return "TEXT";
+		}
+	}
+
+	void create_table(sqlite3yaw::session & ses, const std::string & name, const column_info & columns)
+	{
+		std::string cmd;
+		cmd.resize(1024);
+
+		auto out = std::back_inserter(cmd);
+		cmd = "create table ";
+		out = sqlite3yaw::copy_sql_name(name, out);
+		cmd += '(';
+
+		for (auto & col : columns)
+		{
+			auto & name = std::get<0>(col);
+			auto & type = std::get<1>(col);
+			out = sqlite3yaw::copy_sql_name(name, out);
+			
+			cmd += ' ';
+			cmd += get_type(type);
+			cmd += ',';
+		}
+
+		cmd.pop_back();
+		cmd += ')';
+
+		ses.exec(cmd);
+	}
+
+	void create_torrents_table(sqlite3yaw::session & ses)
+	{
+		return create_table(ses, torrents_table_name, torrents_column_info());
+	}
+
 	void save_torrents(sqlite3yaw::session & ses, const torrent_list & torrents)
 	{
 		qtor::torrent_meta meta;
