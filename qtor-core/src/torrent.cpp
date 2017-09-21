@@ -20,6 +20,7 @@ namespace qtor
 			std::unordered_map<string_type, unsigned> type_map =
 			{
 				{"uint64"s, Uint64},
+				{"bool"s, Bool},
 				{"double"s, Double},
 				{"string"s, String},
 				

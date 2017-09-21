@@ -4,6 +4,10 @@
 namespace qtor {
 namespace transmission
 {
+	// for simplicity of macros
+	using double_type = double;
+	using bool_type   = bool;
+
 	inline namespace constants
 	{
 		const std::string request_template = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ], "ids": [ {} ] }} }})";
@@ -113,33 +117,102 @@ namespace transmission
 		};
 	}
 
-
-	template <class Type>
-	static void convert(const YAML::Node & node, Type & target)
+	
+	static void parse_string(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(string_type val))
 	{
-		target = node.as<Type>(target);
+		if (not node) return;
+
+		(t.*pmf)(node.as<string_type>());
 	}
 
-	template <class Type>
-	static void convert(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(Type val))
-	{
-		Type val;
-		convert(node, val);
+	static void parse_uint64(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(uint64_type val))
+	{		
+		if (not node) return;
 
-		(t.*pmf)(val);
+		long long i = node.as<long long>(-1);
+		if (i >= 0) (t.*pmf)(static_cast<uint64_type>(i));
 	}
 
-	struct conv_type
+	static void parse_double(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(double val))
 	{
-		torrent * torr;
+		if (not node) return;
 
-		template <class Type>
-		void operator()(const YAML::Node & node, torrent & (torrent::*pmf)(Type val))
-		{
-			convert(node, *torr, pmf);
-		}
+		double d = node.as<double>(NAN);
+		if (not std::isnan(d)) (t.*pmf)(d);
+	}
+
+	static void parse_bool(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(bool val))
+	{
+		if (not node) return;
+
+		int i = 2;
+		bool def = reinterpret_cast<bool &>(i);
+		bool b = node.as<bool>(def);
+		if (b != def) (t.*pmf)(b);
+	}
+
+	static void parse_speed(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(speed_type val))
+	{
+		return parse_uint64(node, t, pmf);
+	}
+
+	static void parse_size(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(size_type val))
+	{
+		return parse_uint64(node, t, pmf);
+	}
+
+	static void parse_datetime(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(datetime_type val))
+	{
+		if (not node) return;
+
+		long long seconds = node.as<long long>(-1);
+		if (seconds >= 0) (t.*pmf)(datetime_type::clock::from_time_t(seconds));
+	}
+	
+	static void parse_duration(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(duration_type val))
+	{
+		if (not node) return;
+
+		long long seconds = node.as<long long>(-1);
+		if (seconds >= 0) (t.*pmf)(std::chrono::seconds(seconds));
+	}
+
+	
+	
+#define TYPE_CONV(TYPE)                                                                            \
+	struct TYPE##_conv_type                                                                        \
+	{                                                                                              \
+		torrent * torr;                                                                            \
+		                                                                                           \
+		void operator()(const YAML::Node & node, torrent & (torrent::*pmf)(TYPE##_type val)) const \
+		{                                                                                          \
+			parse_##TYPE(node, *torr, pmf);                                                        \
+		}                                                                                          \
 	};
 
+#define DECLARE_CONVS(torr_val)                                                                    \
+	string_conv_type string_conv     = {&torr_val};                                                \
+	uint64_conv_type uint64_conv     = {&torr_val};                                                \
+	double_conv_type double_conv     = {&torr_val};                                                \
+	bool_conv_type bool_conv         = {&torr_val};                                                \
+	size_conv_type size_conv         = {&torr_val};                                                \
+	speed_conv_type speed_conv       = {&torr_val};                                                \
+	datetime_conv_type datetime_conv = {&torr_val};                                                \
+	duration_conv_type duration_conv = {&torr_val};                                                \
+	
+	
+	TYPE_CONV(string);
+	TYPE_CONV(uint64);
+	TYPE_CONV(double);
+	TYPE_CONV(bool);
+	TYPE_CONV(size);
+	TYPE_CONV(speed);
+	TYPE_CONV(datetime);
+	TYPE_CONV(duration);
+
+
+	
+	
 	static torrent_list parse_torrent_list(const YAML::Node & node)
 	{
 		torrent_list result;
@@ -154,30 +227,31 @@ namespace transmission
 			result.emplace_back();
 			auto & torr = result.back();
 
-			conv_type conv = {&torr};
-			conv(tnode[Id], &torrent::id);
-			conv(tnode[Name], &torrent::name);
-			conv(tnode[Comment], &torrent::comment);
-			conv(tnode[Creator], &torrent::creator);
-
-			conv(tnode[ErrorString], &torrent::error_string);
-			conv(tnode[IsFinished], &torrent::finished);
-			conv(tnode[IsStalled], &torrent::stalled);
-
-			conv(tnode[TotalSize], &torrent::total_size);
-			conv(tnode[SizeWhenDone], &torrent::size_when_done);
-
-			//conv(tnode[Eta], &torrent::eta);
-			//conv(tnode[EtaIdle], &torrent::eta_idle);
+			DECLARE_CONVS(torr);
 			
-			//conv(tnode[DowloadSpeed], &torrent::download_speed);
-			//conv(tnode[UploadSpeed], &torrent::upload_speed);
+			string_conv(tnode[Id], &torrent::id);
+			string_conv(tnode[Name], &torrent::name);
+			string_conv(tnode[Comment], &torrent::comment);
+			string_conv(tnode[Creator], &torrent::creator);
 
-			//conv(tnode[DateCreated], &torrent::date_created);
-			//conv(tnode[AddedDate], &torrent::date_added);
-			//conv(tnode[StartDate], &torrent::date_started);
-			//conv(tnode[DoneDate], &torrent::date_done);
-			//conv(tnode[ActivityDate], &torrent::date_last_activity);
+			string_conv(tnode[ErrorString], &torrent::error_string);
+			bool_conv(tnode[IsFinished], &torrent::finished);
+			bool_conv(tnode[IsStalled], &torrent::stalled);
+
+			size_conv(tnode[TotalSize], &torrent::total_size);
+			size_conv(tnode[SizeWhenDone], &torrent::size_when_done);
+
+			duration_conv(tnode[Eta], &torrent::eta);
+			duration_conv(tnode[EtaIdle], &torrent::eta_idle);
+			
+			//speed_conv(tnode[DowloadSpeed], &torrent::download_speed);
+			//speed_conv(tnode[UploadSpeed], &torrent::upload_speed);
+
+			datetime_conv(tnode[DateCreated], &torrent::date_created);
+			datetime_conv(tnode[AddedDate], &torrent::date_added);
+			datetime_conv(tnode[StartDate], &torrent::date_started);
+			datetime_conv(tnode[DoneDate], &torrent::date_done);
+			//datetime_conv(tnode[ActivityDate], &torrent::date_last_activity);
 		}
 
 		return result;
@@ -195,46 +269,3 @@ namespace transmission
 		return parse_torrent_list(doc);
 	}
 }}
-
-//namespace YAML
-//{
-//	template <>
-//	struct convert<qtor::datetime_type>
-//	{
-//		static bool decode(const Node & node, qtor::datetime_type & rhs)
-//		{
-//			if (!node.IsScalar())
-//				return false;
-//			auto val = node.Scalar();
-//			rhs.assign(val.data(), val.length());
-//			return true;
-//		}
-//
-//		static Node encode(const qtor::datetime_type & rhs)
-//		{
-//			Node node;
-//			node = std::string(rhs.data(), rhs.length());
-//			return node;
-//		}
-//	};
-//
-//	template <>
-//	struct convert<qtor::duration_type>
-//	{
-//		static bool decode(const Node & node, qtor::duration_type & rhs)
-//		{
-//			if (!node.IsScalar())
-//				return false;
-//			auto val = node.Scalar();
-//			rhs.assign(val.data(), val.length());
-//			return true;
-//		}
-//
-//		static Node encode(const qtor::duration_type & rhs)
-//		{
-//			Node node;
-//			node = std::string(rhs.data(), rhs.length());
-//			return node;
-//		}
-//	};
-//}

@@ -43,6 +43,7 @@
   <ItemGroup>
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
     <ClInclude Include="include\qtor\sparse_container.hpp" />
+    <ClInclude Include="include\qtor\sparse_container_iterator.hpp" />
     <ClInclude Include="include\qtor\testing_data_source.hpp" />
     <ClInclude Include="include\qtor\TorrentModel.hpp" />
     <ClInclude Include="include\qtor\torrent_store.hpp" />

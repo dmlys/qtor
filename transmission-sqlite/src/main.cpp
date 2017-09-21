@@ -12,7 +12,6 @@
 #include <boost/program_options.hpp>
 
 #include <qtor/sqlite.hpp>
-#include <qtor/utils.hpp>
 #include <qtor/transmission/data_source.hpp>
 
 
@@ -35,51 +34,35 @@ qtor::torrent_list load_torrents()
 	{
 		std::exit(EXIT_FAILURE);
 	}
-
-	qtor::torrent_list torrents;
+	
 	try
 	{
-		torrents = source.torrent_get({}).get();
+		auto torrents = source.torrent_get({}).get();
 		source.disconnect().get();
+		return torrents;
 	}
 	catch (std::exception & ex)
 	{
 		std::cerr << ex.what() << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
-	
-	return torrents;
 }
 
 void save_torrents(qtor::torrent_list torrents)
 {
-	using namespace qtor;
-
-	sqlite3yaw::session ses;
-	ses.open(g_sqlite_path);
-
-	torrent_meta meta;
-	torrent::index_type first = torrent::FirstField;
-	torrent::index_type last = torrent::LastField;
-	sqlite::column_info info;
-
-	info.resize(last - first);
-
-	for (; first != last; ++first)
+	try
 	{
-		auto & val = info[first];
-		auto name = meta.item_name(first);
-		auto type = meta.item_type(first);
-		val = std::make_tuple(FromQString(name), type);
+		sqlite3yaw::session ses;
+		ses.open(g_sqlite_path);
+
+		qtor::sqlite::create_torrents_table(ses);
+		qtor::sqlite::save_torrents(ses, torrents);
 	}
-		
-	sqlite::create_table(ses, "torrents", info);	
-	sqlite3yaw::table_meta tmeta;
-
-	auto names = info | ext::firsts;
-	auto batch_range = make_batch_range(meta, names, torrents);
-
-	sqlite3yaw::batch_insert(batch_range, ses, tmeta);
+	catch (std::exception & ex)
+	{
+		std::cerr << "sqlite failure: " << ex.what() << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
 }
 
 
@@ -113,5 +96,5 @@ int main(int argc, char ** argv)
 	ext::init_future_library();
 	ext::socket_stream_init();
 	auto torrents = load_torrents();
-	//save_torrents(std::move(torrents));
+	save_torrents(std::move(torrents));
 }

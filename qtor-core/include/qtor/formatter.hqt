@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <array>
+#include <vector>
 #include <unordered_map>
 #include <qtor/types.hpp>
 
@@ -136,6 +137,7 @@ namespace qtor
 		item_map_ptr m_items;
 
 	public:
+		virtual index_type items_count() const noexcept override;
 		virtual unsigned item_type(index_type key) const noexcept override;
 		virtual  QString item_name(index_type key) const override;
 		virtual  QString format_item(index_type key, const any_type & val) const override;
@@ -151,6 +153,12 @@ namespace qtor
 
 		virtual ~simple_sparse_container_meta() = default;
 	};
+
+	template <class formatter>
+	auto simple_sparse_container_meta<formatter>::items_count() const noexcept -> index_type
+	{
+		return static_cast<index_type>(m_items->size());
+	}
 
 	template <class formatter>
 	unsigned simple_sparse_container_meta<formatter>::item_type(index_type key) const noexcept

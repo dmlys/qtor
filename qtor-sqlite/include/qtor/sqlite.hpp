@@ -8,10 +8,11 @@
 
 namespace qtor::sqlite
 {
-	extern const std::string torrents_table_name;
-
 	using column_info = std::vector<std::tuple<std::string, unsigned>>;
-	auto torrents_column_info() -> column_info;
+
+	extern const std::string torrents_table_name;
+	extern const torrent_meta & torrents_meta();
+	extern const column_info & torrents_column_info();
 
 	void create_table(sqlite3yaw::session & ses, const std::string & name, const column_info & columns);
 	void create_torrents_table(sqlite3yaw::session & ses);
@@ -19,4 +20,3 @@ namespace qtor::sqlite
 	void save_torrents(sqlite3yaw::session & ses, const torrent_list & torrents);
 	auto load_torrents(sqlite3yaw::session & ses) -> torrent_list;
 }
-

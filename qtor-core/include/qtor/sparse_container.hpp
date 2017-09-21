@@ -54,17 +54,19 @@ namespace qtor
 		// currently supported types,
 		// it's not enum to allow user custom extension
 		static constexpr unsigned Uint64 = 0;
-		static constexpr unsigned Double = 1;
-		static constexpr unsigned String = 2;
+		static constexpr unsigned Bool   = 1;
+		static constexpr unsigned Double = 2;
+		static constexpr unsigned String = 3;
 
-		static constexpr unsigned Speed = 3;
-		static constexpr unsigned Size = 4;
-		static constexpr unsigned DateTime = 5;
-		static constexpr unsigned Duration = 6;
+		static constexpr unsigned Speed  = 4;
+		static constexpr unsigned Size   = 5;
+		static constexpr unsigned DateTime = 6;
+		static constexpr unsigned Duration = 7;
 
 		static constexpr unsigned Unknown = -1;
 
 	public:
+		virtual index_type items_count() const noexcept = 0;
 		virtual unsigned item_type(index_type key) const noexcept = 0;
 		virtual  QString item_name(index_type key) const = 0;
 		virtual  QString format_item(index_type key, const any_type & val) const = 0;
