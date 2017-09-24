@@ -12,6 +12,7 @@
 #include <boost/program_options.hpp>
 
 #include <qtor/sqlite.hpp>
+#include <qtor/sqlite-datasource.hpp>
 #include <qtor/transmission/data_source.hpp>
 
 
@@ -97,4 +98,6 @@ int main(int argc, char ** argv)
 	ext::socket_stream_init();
 	auto torrents = load_torrents();
 	save_torrents(std::move(torrents));
+
+	return EXIT_SUCCESS;
 }

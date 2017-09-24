@@ -1,19 +1,20 @@
 #pragma once
-#include <qtor/abstract_data_source.hpp>
 #include <ext/netlib/abstract_connection_controller.hpp>
 #include <ext/netlib/abstract_subscription_controller.hpp>
+#include <qtor/abstract_data_source.hpp>
 
-namespace qtor
+
+namespace qtor::sqlite
 {
-	class testing_data_source : 
+	class sqlite_datasource :
 		public abstract_data_source,
 		public ext::netlib::abstract_connection_controller
 	{
 	protected:
 		class subscription : public ext::netlib::abstract_subscription_controller
 		{
-			friend testing_data_source;
-			testing_data_source * m_owner;
+			friend sqlite_datasource;
+			sqlite_datasource * m_owner;
 			torrent_handler m_handler;
 
 		protected:
@@ -29,12 +30,12 @@ namespace qtor
 
 	protected:
 		void * m_timer = nullptr;
-		std::string m_name = ":/testing-data-source-data.txt";
+		void * m_ses = nullptr;
+		std::string m_path;
 		torrent_list m_torrents;
 		std::vector<subscription_ptr> m_subs;
 
 	protected:
-		void read_torrents(torrent_list & torrents);
 		void emit_subs();
 
 	protected:
@@ -50,7 +51,7 @@ namespace qtor
 		void set_logger(ext::library_logger::logger * logger) override {}
 
 	public:
-		testing_data_source();
-		~testing_data_source();
+		sqlite_datasource();
+		~sqlite_datasource();
 	};
 }

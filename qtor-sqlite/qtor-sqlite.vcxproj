@@ -19,8 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\sqlite-datasource.cpp" />
     <ClCompile Include="src\utils.cpp" />
     <ClInclude Include="include\qtor\sqlite-conv-qtor.hpp" />
+    <ClInclude Include="include\qtor\sqlite-datasource.hpp" />
     <ClInclude Include="include\qtor\sqlite.hpp" />
     <ClCompile Include="src\sqlite.cpp" />
   </ItemGroup>

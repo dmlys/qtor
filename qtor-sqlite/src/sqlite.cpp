@@ -61,7 +61,7 @@ namespace qtor::sqlite
 		cmd.resize(1024);
 
 		auto out = std::back_inserter(cmd);
-		cmd = "create table ";
+		cmd = "create table if not exists ";
 		out = sqlite3yaw::copy_sql_name(name, out);
 		cmd += "( ";
 
@@ -73,6 +73,9 @@ namespace qtor::sqlite
 			
 			cmd += ' ';
 			cmd += get_type(type);
+			if (name == "Id")
+				cmd += " PRIMARY KEY";
+
 			cmd += ',';
 		}
 
@@ -95,19 +98,72 @@ namespace qtor::sqlite
 
 		auto names = info | ext::firsts;
 		auto batch_range = make_batch_range(meta, names, torrents);
+		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
 
-		sqlite3yaw::batch_insert(batch_range, ses, tmeta);
+	}
+
+	struct conv_type
+	{
+		unsigned idx = 0;
+		sqlite3yaw::statement * stmt;
+		torrent * torr;
+
+		template <class Type>
+		void operator()(torrent & (torrent::*pmf)(Type val))
+		{
+			Type val;
+			sqlite3yaw::get(*stmt, idx++, val);
+			(torr->*pmf)(std::move(val));
+		}
+
+		conv_type(sqlite3yaw::statement & stmt, torrent & torr)
+			: stmt(&stmt), torr(&torr) {}
+	};
+
+	static torrent load_torrent(sqlite3yaw::statement & stmt)
+	{
+		torrent torr;
+
+		conv_type conv {stmt, torr};
+		
+		conv(&torrent::id);
+		conv(&torrent::name);
+		conv(&torrent::comment);
+		conv(&torrent::creator);
+
+		conv(&torrent::error_string);
+		conv(&torrent::finished);
+		conv(&torrent::stalled);
+
+		conv(&torrent::total_size);
+		conv(&torrent::size_when_done);
+
+		conv(&torrent::eta);
+		conv(&torrent::eta_idle);
+
+		//conv(&torrent::download_speed);
+		//conv(&torrent::upload_speed);
+
+		conv(&torrent::date_created);
+		conv(&torrent::date_added);
+		conv(&torrent::date_started);
+		conv(&torrent::date_done);
+		//conv(&torrent::date_last_activity);
+
+		return torr;
 	}
 
 	auto load_torrents(sqlite3yaw::session & ses) -> torrent_list
 	{
-		torrent_list result;
 		qtor::torrent_meta meta;
 		auto & info = torrents_column_info();
 
 		auto names = info | ext::firsts;
 		auto cmd = sqlite3yaw::select_command(torrents_table_name, names);
+		auto stmt = ses.prepare(cmd);
 
+		auto recs = sqlite3yaw::make_record_range(stmt, load_torrent);
+		torrent_list result(recs.begin(), recs.end());
 		return result;
 	}
 }

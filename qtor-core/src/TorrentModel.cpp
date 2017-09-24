@@ -41,7 +41,30 @@ namespace qtor
 
 		m_filter_pred.set_items({torrent::Name});
 		m_formatter = new torrent_meta(this);
-		SetColumns({torrent::Id, torrent::Name});
+		SetColumns({
+			torrent::Id,
+			torrent::Name,
+			torrent::Creator,
+			torrent::Comment,
+
+			torrent::ErrorString,
+			torrent::Finished,
+			torrent::Stalled,
+
+			torrent::TotalSize,
+			torrent::SizeWhenDone,
+
+			torrent::DownloadSpeed,
+			torrent::UploadSpeed,
+
+			torrent::Eta,
+			torrent::EtaIdle,
+
+			torrent::DateAdded,
+			torrent::DateCreated,
+			torrent::DateStarted,
+			torrent::DateDone,
+		});
 
 		// from view_base_type
 		connect_signals();

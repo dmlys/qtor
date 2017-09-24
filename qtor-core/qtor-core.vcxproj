@@ -44,7 +44,6 @@
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
     <ClInclude Include="include\qtor\sparse_container.hpp" />
     <ClInclude Include="include\qtor\sparse_container_iterator.hpp" />
-    <ClInclude Include="include\qtor\testing_data_source.hpp" />
     <ClInclude Include="include\qtor\TorrentModel.hpp" />
     <ClInclude Include="include\qtor\torrent_store.hpp" />
     <ClInclude Include="include\qtor\torrent.hpp" />
@@ -57,7 +56,6 @@
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\sparse_container.cpp" />
-    <ClCompile Include="src\testing_data_source.cpp" />
     <ClCompile Include="src\torrent.cpp" />
     <ClCompile Include="src\TorrentModel.cpp" />
     <ClCompile Include="src\TorrentTableWidget.cpp" />
@@ -72,10 +70,9 @@
     <QtMOCCompile Include="include\qtor\TorrentTableWidget.hqt" />
   </ItemGroup>
   <ItemGroup>
-    <QtRCCCompile Include="resources\qtor-core-resource.qrc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="resources\testing-data-source-data.txt" />
+    <QtRCCCompile Include="resources\qtor-core-resource.qrc">
+      <SubType>Designer</SubType>
+    </QtRCCCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

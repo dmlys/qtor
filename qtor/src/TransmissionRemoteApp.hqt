@@ -1,21 +1,26 @@
 #pragma once
 #include <qtor/Application.hqt>
 #include <qtor/transmission/data_source.hpp>
-#include <qtor/testing_data_source.hpp>
+#include <qtor/sqlite-datasource.hpp>
 
 namespace qtor
 {
 	class TransmissionRemoteApp : public qtor::Application
 	{
+		std::string m_path;
+
 	public:
 		virtual auto CreateSource() -> abstract_data_source_ptr override
 		{
-			return std::make_shared<qtor::testing_data_source>();
+			auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+			source->set_address(m_path);
+			return source;
 		}
 
 	public:
-		TransmissionRemoteApp()
+		TransmissionRemoteApp(std::string path)
 		{
+			m_path = std::move(path);
 			Init();
 		}
 	};

@@ -46,9 +46,18 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies Condition="$(Configuration) == 'Release'">yaml-cpp-mt.lib; zlib-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="$(Configuration) != 'Release'">yaml-cpp-mt-gd.lib; zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
-      <!-- <AdditionalDependencies>sqlite3.lib; %(AdditionalDependencies)</AdditionalDependencies> -->
+      <!-- ws2_32.lib; Crypt32.lib   are needed by openssl -->
+      <AdditionalDependencies>ws2_32.lib; Crypt32.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">libfmt-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">libfmt-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">openssl-crypto-mt.lib; openssl-ssl-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">openssl-crypto-mt-gd.lib; openssl-ssl-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">zlib-mt.lib;   %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">zlib-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">yaml-cpp-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">yaml-cpp-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) == 'Release'">sqlite3-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="$(Configuration) != 'Release'">sqlite3-mt-gd.lib; %(AdditionalDependencies)</AdditionalDependencies>
       <!-- Qt -->
       <AdditionalDependencies Condition="$(Configuration) == 'Release'">Qt5Widgets.lib; Qt5Core.lib; Qt5Gui.lib; %(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="$(Configuration) != 'Release'">Qt5Widgetsd.lib; Qt5Cored.lib; Qt5Guid.lib; %(AdditionalDependencies)</AdditionalDependencies>
@@ -64,8 +73,14 @@
     <ProjectReference Include="..\externals\QtTools\QtTools.vcxproj">
       <Project>{3b471441-8dd5-4867-b6a9-909474e9e844}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\externals\sqlite3yaw\sqlite3yaw.vcxproj">
+      <Project>{0345e35b-e79e-4fd5-bc71-23645e004636}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\qtor-core\qtor-core.vcxproj">
       <Project>{2ad66701-0517-4784-828f-40daa66c822a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\qtor-sqlite\qtor-sqlite.vcxproj">
+      <Project>{a138b9dd-f942-4014-84ea-7946fccd5bfd}</Project>
     </ProjectReference>
     <ProjectReference Include="..\transmission-remote\transmission-remote.vcxproj">
       <Project>{d94d4828-ff42-4e26-a659-c3b02ca9ab43}</Project>

@@ -18,7 +18,6 @@
 #include <ext/library_logger/logging_macros.hpp>
 
 #include <qtor/abstract_data_source.hpp>
-#include <qtor/testing_data_source.hpp>
 #include <qtor/transmission/data_source.hpp>
 
 #include <qtor/torrent_store.hpp>
@@ -118,7 +117,7 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(qtor_core_resource);
 
 	QApplication qapp {argc, argv};
-	qtor::TransmissionRemoteApp app;
+	qtor::TransmissionRemoteApp app {"bin/data.db"s};
 	qtor::MainWindow mainWindow;
 	
 	mainWindow.Init(app);
