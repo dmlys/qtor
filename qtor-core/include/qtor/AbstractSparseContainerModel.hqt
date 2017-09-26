@@ -4,6 +4,19 @@
 
 namespace qtor
 {
+	class sparse_container_model_meta : public virtual sparse_container_meta
+	{
+	public:
+		virtual QString item_name(index_type key) const = 0;
+		virtual QString format_item(index_type key, const any_type & val) const = 0;
+		virtual QString format_item_short(index_type key, const any_type & val) const = 0;
+
+	public:
+		~sparse_container_model_meta() = default;
+	};
+
+
+
 	class AbstractSparseContainerModel : public QAbstractTableModel
 	{
 		Q_OBJECT;
@@ -14,14 +27,15 @@ namespace qtor
 
 	protected:
 		std::vector<unsigned> m_columns;
-		const sparse_container_meta * m_formatter = nullptr;
+		const sparse_container_model_meta * m_meta = nullptr;
 
 	protected:
 		void SetColumns(std::vector<unsigned> columns);
 
 	public:
-		auto GetFormatter() { return m_formatter; }
+		auto GetTableMeta() { return m_meta; }
 
+		virtual int FindColumn(unsigned name) const;
 		virtual QString FieldName(int section) const;
 		virtual QString GetValue(int row, int column) const;
 		virtual QString GetValueShort(int row, int column) const;

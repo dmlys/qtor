@@ -40,15 +40,15 @@ namespace qtor
 		typedef boost::u8_to_u32_iterator<const char *, std::uint32_t> utf_iter;
 		utf_iter first {pfirst}, last {plast};
 
-		auto space = [](auto ch) { return QChar::isSpace(ch); };
-		auto new_first = std::find_if(first, last, space);
+		auto notspace = [](auto ch) { return not QChar::isSpace(ch); };
+		auto new_first = std::find_if(first, last, notspace);
 
 		auto new_last = std::find_if(
 			std::make_reverse_iterator(last),
 			std::make_reverse_iterator(new_first),
-			space).base();
+			notspace).base();
 
-		auto stopped = std::move(new_last.base(), new_last.base(), pfirst);
+		auto stopped = std::move(new_first.base(), new_last.base(), pfirst);
 		str.erase(stopped - pfirst, plast - stopped);
 	}
 
@@ -126,10 +126,12 @@ namespace qtor
 	{
 		trim(search);
 		viewed::refilter_type result;
-		if (iequals(m_filter, search))
+		if (iequals(search, m_filter))
 			result = viewed::refilter_type::same;
-		else if (istarts_with(m_filter, search))
+		else if (istarts_with(search, m_filter))
 			result = viewed::refilter_type::incremental;
+		else
+			result = viewed::refilter_type::full;
 
 		m_filter = std::move(search);
 		return result;

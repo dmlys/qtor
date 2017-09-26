@@ -1,21 +1,22 @@
 #include <qtor/TorrentTableWidget.hqt>
+#include <qtor/torrent.hpp>
+
 #include <QtWidgets/QShortcut>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
 
-#include <QtGui/QClipboard>
-#include <QtGui/QContextMenuEvent>
-
-#include <QtTools/HeaderConfigurationWidget.hqt>
 #include <QtTools/TableViewUtils.hpp>
+#include <QtTools/HeaderConfigurationWidget.hqt>
 
 namespace qtor
 {
 	void TorrentTableWidget::OnFilterChanged()
 	{
-		SetFilter(m_rowFilter->text());
+		auto filter = m_rowFilter->text();
+		SetFilter(filter);
+		m_nameDelegate->SetFilterText(filter);
 	}
 
 	void TorrentTableWidget::SetFilter(QString newFilter)
@@ -127,7 +128,9 @@ namespace qtor
 		auto * model = m_model.get();
 		m_tableView->setModel(model);
 		m_rowFilter->clear();
-
+		
+		int nameCol = model->FindColumn(torrent::Name);
+		m_tableView->setItemDelegateForColumn(nameCol, m_nameDelegate);
 
 		//connect(model, &QAbstractItemModel::layoutChanged, this, &TorrentTableWidget::ModelChanged);
 		//connect(model, &QAbstractItemModel::modelReset, this, &TorrentTableWidget::ModelChanged);
@@ -216,6 +219,8 @@ namespace qtor
 		m_tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 		m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 		m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+
+		m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);
 
 		auto * vertHeader = m_tableView->verticalHeader();
 		vertHeader->setDefaultSectionSize(QtTools::CalculateDefaultRowHeight(m_tableView));

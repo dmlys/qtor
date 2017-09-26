@@ -10,6 +10,7 @@
 #include <QtCore/QLocale>
 
 #include <qtor/sparse_container.hpp>
+#include <qtor/AbstractSparseContainerModel.hqt>
 
 namespace qtor
 {
@@ -113,10 +114,11 @@ namespace qtor
 
 	template <class formatter = qtor::formatter>
 	class simple_sparse_container_meta : 
-		public virtual sparse_container_meta,
+		//public virtual sparse_container_meta,
+		public virtual sparse_container_model_meta,
 		public virtual formatter
 	{
-		using base_type = sparse_container_meta;
+		using base_type = sparse_container_model_meta;
 		using self_type = simple_sparse_container_meta;
 
 	public:

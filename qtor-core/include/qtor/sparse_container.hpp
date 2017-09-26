@@ -68,14 +68,10 @@ namespace qtor
 	public:
 		virtual index_type items_count() const noexcept = 0;
 		virtual unsigned item_type(index_type key) const noexcept = 0;
-		virtual  QString item_name(index_type key) const = 0;
-		virtual  QString format_item(index_type key, const any_type & val) const = 0;
-		virtual  QString format_item_short(index_type key, const any_type & val) const = 0;
 
 	public:
 		virtual ~sparse_container_meta() = default;
 	};
-
 
 
 	/************************************************************************/
@@ -118,7 +114,7 @@ namespace qtor
 		bool always_matches() const noexcept;
 
 		bool operator()(const sparse_container & c) const noexcept { return matches(c); }
-		explicit operator bool() const noexcept { return always_matches(); }
+		explicit operator bool() const noexcept { return not always_matches(); }
 	};
 
 

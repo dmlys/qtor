@@ -3,6 +3,15 @@
 
 namespace qtor
 {
+	int AbstractSparseContainerModel::FindColumn(unsigned name) const
+	{
+		auto first = m_columns.begin();
+		auto last = m_columns.end();
+		auto it = std::find(first, last, name);
+
+		return it == last ? -1 : it - first;
+	}
+
 	auto AbstractSparseContainerModel::GetItem(int row, int column) const 
 		-> const sparse_container::any_type & 
 	{
@@ -21,7 +30,7 @@ namespace qtor
 			return QString::null;
 
 		unsigned column = m_columns[section];
-		return m_formatter->item_name(column);
+		return m_meta->item_name(column);
 	}
 
 
@@ -31,7 +40,7 @@ namespace qtor
 			return QString::null;
 
 		const auto & item = GetItem(row, column);
-		return m_formatter->format_item_short(column, item);
+		return m_meta->format_item_short(column, item);
 	}
 
 	QString AbstractSparseContainerModel::GetValue(int row, int column) const
@@ -40,7 +49,7 @@ namespace qtor
 			return QString::null;
 
 		const auto & item = GetItem(row, column);
-		return m_formatter->format_item(column, item);
+		return m_meta->format_item(column, item);
 	}
 
 	QVariant AbstractSparseContainerModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const

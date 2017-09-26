@@ -5,8 +5,9 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QTableView>
 
-#include <QtTools/DelayedExecutionTimer.hqt>
 #include <QtTools/HeaderControlModel.hqt>
+#include <QtTools/DelayedExecutionTimer.hqt>
+#include <QtTools/Delegates/SearchDelegate.hpp>
 
 #include <qtor/AbstractSparseContainerModel.hqt>
 
@@ -30,6 +31,8 @@ namespace qtor
 		/// table headers customization/tracking
 		QtTools::HeaderControlModel * m_headerModel = nullptr;
 		QtTools::HeaderSectionInfoList * m_headerConfig = nullptr;
+
+		QtTools::Delegates::SearchDelegate * m_nameDelegate = nullptr;
 
 		/// child widgets/graphical objects
 		QVBoxLayout * m_verticalLayout = nullptr;
