@@ -87,10 +87,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp" />
+    <QtMOCCompile Include="src\TransmissionRemoteApp.hqt" />
   </ItemGroup>
   <ItemGroup>
-    <QtMOCCompile Include="src\TransmissionRemoteApp.hqt" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
