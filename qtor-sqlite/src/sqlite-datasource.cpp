@@ -68,6 +68,12 @@ namespace qtor::sqlite
 		return ext::make_ready_future(m_torrents);
 	}
 
+	auto sqlite_datasource::torrent_get()
+		-> ext::future<torrent_list>
+	{
+		return ext::make_ready_future(m_torrents);
+	}
+
 	sqlite_datasource::sqlite_datasource()
 	{
 		using namespace std;

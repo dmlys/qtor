@@ -37,6 +37,7 @@ namespace qtor
 
 		auto model = m_app->AccquireTorrentModel();
 		m_torrentWidget->Init(std::move(model));
+		m_torrentWidget->InitHeaderTracking(nullptr);
 	}
 
 	MainWindow::MainWindow(QWidget * wgt /*= nullptr*/) : QMainWindow(wgt)
@@ -77,7 +78,7 @@ namespace qtor
 
 		// http://stackoverflow.com/questions/650889/qtoolbar-is-there-a-way-to-make-toolbar-unhidable
 		// make toolbar unhidable
-		m_toolBar->setContextMenuPolicy(Qt::PreventContextMenu);
+		//m_toolBar->setContextMenuPolicy(Qt::PreventContextMenu);
 
 		addToolBar(Qt::TopToolBarArea, m_toolBar);
 	}
@@ -98,15 +99,12 @@ namespace qtor
 
 	void MainWindow::setupMenu()
 	{
-		QMenuBar * menuBar = new QMenuBar(this);
-		QMenu * main = menuBar->addMenu(tr("&Main"));
+		QMenu * main = menuBar()->addMenu(tr("&Main"));	
 		main->addAction(m_actionOpen);
 		main->addAction(m_actionStartAll);
 		main->addAction(m_actionStopAll);
 		main->addAction(m_actionDelete);
 		main->addAction(m_actionPreferences);
-
-		setMenuBar(menuBar);
 	}
 
 	void MainWindow::connectSignals()
@@ -121,6 +119,8 @@ namespace qtor
 
 	void MainWindow::retranslateToolBars()
 	{
+		m_toolBar->setWindowTitle(tr("Main Toolbar"));
+
 		m_actionOpen->setIcon(QIcon(":/icons/qtor-core/open.png"));
 		m_actionOpen->setText(tr("&Open"));
 		m_actionOpen->setToolTip("Open(Ctrl+N)");

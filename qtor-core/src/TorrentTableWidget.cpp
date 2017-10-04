@@ -74,15 +74,25 @@ namespace qtor
 	/************************************************************************/
 	void TorrentTableWidget::OpenHeaderConfigurationWidget()
 	{
+		if (not m_headerModel)
+		{
+			m_headerModel = new QtTools::HeaderControlModel(this);
+			m_headerModel->Track(m_tableView->horizontalHeader());
+
+			if (m_headerConfig)
+				m_headerModel->Configurate(*m_headerConfig);
+		}
+
+
 		auto * confWgt = findChild<QtTools::HeaderConfigurationWidget *>("ConfigurationWidget");
-		if (confWgt && confWgt->isVisible()) {
+		if (confWgt)
+		{
+			confWgt->show();
 			confWgt->activateWindow();
 			return;
 		}
 	
-		delete confWgt;
 		confWgt = new QtTools::HeaderConfigurationWidget(*m_headerModel, this);
-		confWgt->setAttribute(Qt::WA_DeleteOnClose);
 		confWgt->setObjectName("ConfigurationWidget");
 		confWgt->show();
 		confWgt->activateWindow();
@@ -111,7 +121,7 @@ namespace qtor
 			if (not header->isSectionHidden(i))
 			{
 				// for some unknown reason virtual method sizeHintForColumn is declared as protected in QTableView,
-				// through it's public QAbstractItemView. call thruogh base class
+				// through it's public QAbstractItemView. call through base class
 				auto hint = static_cast<QAbstractItemView *>(m_tableView)->sizeHintForColumn(li);
 				header->resizeSection(li, std::max(hint, minimum));
 			}
@@ -209,11 +219,13 @@ namespace qtor
 
 		m_tableView = new QTableView(this);
 		m_tableView->setSortingEnabled(true);
+		m_tableView->setAlternatingRowColors(true);
+		m_tableView->setTabKeyNavigation(false);
+
 		m_tableView->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
 		m_tableView->horizontalHeader()->setSectionsMovable(true);
 		m_tableView->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
 		m_tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-		m_tableView->setTabKeyNavigation(false);
 		//m_tableView->horizontalHeader()->setTextElideMode(Qt::ElideRight);
 
 		m_tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);

@@ -39,8 +39,8 @@ namespace qtor
 		if (column >= m_columns.size())
 			return QString::null;
 
-		const auto & item = GetItem(row, column);
-		return m_meta->format_item_short(column, item);
+		const auto & cont = GetItem(row);
+		return m_meta->format_item_short(cont, column);
 	}
 
 	QString AbstractSparseContainerModel::GetValue(int row, int column) const
@@ -48,8 +48,8 @@ namespace qtor
 		if (column >= m_columns.size())
 			return QString::null;
 
-		const auto & item = GetItem(row, column);
-		return m_meta->format_item(column, item);
+		const auto & cont = GetItem(row);
+		return m_meta->format_item(cont, column);
 	}
 
 	QVariant AbstractSparseContainerModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const

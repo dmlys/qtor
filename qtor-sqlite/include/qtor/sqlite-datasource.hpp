@@ -44,6 +44,8 @@ namespace qtor::sqlite
 
 	public:
 		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
+		
+		auto torrent_get() -> ext::future<torrent_list> override;
 		auto torrent_get(torrent_id_list ids) -> ext::future<torrent_list> override;
 
 		void set_address(std::string addr) override;

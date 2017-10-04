@@ -142,8 +142,8 @@ namespace qtor
 		virtual index_type items_count() const noexcept override;
 		virtual unsigned item_type(index_type key) const noexcept override;
 		virtual  QString item_name(index_type key) const override;
-		virtual  QString format_item(index_type key, const any_type & val) const override;
-		virtual  QString format_item_short(index_type key, const any_type & val) const override;
+		virtual  QString format_item(const sparse_container & cont, index_type key) const override;
+		virtual  QString format_item_short(const sparse_container & cont, index_type key) const override;
 
 	protected:
 		simple_sparse_container_meta(QObject * parent = nullptr)
@@ -183,27 +183,30 @@ namespace qtor
 	}
 
 	template <class formatter>
-	QString simple_sparse_container_meta<formatter>::format_item(index_type key, const any_type & val) const
+	QString simple_sparse_container_meta<formatter>::format_item(const sparse_container & cont, index_type key) const
 	{
 		auto it = m_items->find(key);
 		if (it == m_items->end()) 
 			return this->format_nullopt();
 
 		auto method = it->second.method;
+		const auto & val = cont.get_item(key);
 		return (this->*method)(val);
 	}
 
 	template <class formatter>
-	QString simple_sparse_container_meta<formatter>::format_item_short(index_type key, const any_type & val) const
+	QString simple_sparse_container_meta<formatter>::format_item_short(const sparse_container & cont, index_type key) const
 	{
 		auto it = m_items->find(key);
 		if (it == m_items->end())
 			return this->format_nullopt();
 
 		auto method = it->second.method;
+		const auto & val = cont.get_item(key);
+
 		decltype(method) short_string = &formatter_type::format_short_string;
 		if (method == short_string)
-			return (this->*short_string)(val);
+			return (this->*short_string)(cont.get_item(key));
 
 		return (this->*method)(val);
 	}

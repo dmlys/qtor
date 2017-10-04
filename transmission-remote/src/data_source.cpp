@@ -196,6 +196,10 @@ namespace transmission
 		}
 	};
 
+	auto data_source::torrent_get() -> ext::future<torrent_list>
+	{
+		return torrent_get({});
+	}
 
 	auto data_source::torrent_get(torrent_id_list idx) -> ext::future<torrent_list>
 	{

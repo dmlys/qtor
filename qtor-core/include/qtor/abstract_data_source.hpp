@@ -20,6 +20,8 @@ namespace qtor
 
 	public:
 		virtual auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle = 0;
+
+		virtual auto torrent_get() -> ext::future<torrent_list> = 0;
 		virtual auto torrent_get(torrent_id_list ids) -> ext::future<torrent_list> = 0;
 
 		virtual void set_address(std::string addr) = 0;

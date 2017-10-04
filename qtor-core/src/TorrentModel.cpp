@@ -42,10 +42,10 @@ namespace qtor
 		m_filter_pred.set_items({torrent::Name});
 		m_meta = new torrent_meta(this);
 		SetColumns({
-			torrent::Id,
+			//torrent::Id,
 			torrent::Name,
-			torrent::Creator,
-			torrent::Comment,
+			//torrent::Creator,
+			//torrent::Comment,
 
 			torrent::ErrorString,
 			torrent::Finished,

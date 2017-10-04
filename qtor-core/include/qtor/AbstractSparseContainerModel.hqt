@@ -8,8 +8,8 @@ namespace qtor
 	{
 	public:
 		virtual QString item_name(index_type key) const = 0;
-		virtual QString format_item(index_type key, const any_type & val) const = 0;
-		virtual QString format_item_short(index_type key, const any_type & val) const = 0;
+		virtual QString format_item(const sparse_container & cont, index_type key) const = 0;
+		virtual QString format_item_short(const sparse_container & cont, index_type key) const = 0;
 
 	public:
 		~sparse_container_model_meta() = default;

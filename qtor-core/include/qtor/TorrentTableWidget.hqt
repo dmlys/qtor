@@ -40,7 +40,7 @@ namespace qtor
 		QTableView * m_tableView = nullptr;
 
 		/// hints for initial widget size
-		const QSize m_defMinSizeHint = QSize(300, 150);
+		const QSize m_defMinSizeHint = QSize(640, 480);
 		QSize m_sizeHint = m_defMinSizeHint;
 
 		/// current filter string
