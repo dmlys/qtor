@@ -119,6 +119,6 @@ namespace transmission
 	torrent_list parse_torrent_list(const std::string & json);
 	torrent_list parse_torrent_list(std::istream & json_stream);
 
-	statistics parse_statistics(const std::string & json);
-	statistics parse_statistics(std::istream & json_stream);
+	session_stat parse_statistics(const std::string & json);
+	session_stat parse_statistics(std::istream & json_stream);
 }}

@@ -71,12 +71,22 @@
 namespace qtor
 {
 	class torrent;
-	class torrent_filename;
-	class statistics;
+	struct torrent_file;
+	struct torrent_peer;
 
-	typedef string_type                      torrent_id_type;
-	typedef std::vector<torrent_id_type>     torrent_id_list;
-	typedef std::vector<torrent>             torrent_list;
+	struct tracker_stat;
+	struct session_stat;
+
+	using torrent_id_type = string_type;
+	using torrent_id_list = std::vector<torrent_id_type>;
+	using torrent_list    = std::vector<torrent>;
+
+	using torrent_peer_list = std::vector<torrent_peer>;
+	using torrent_file_list = std::vector<torrent_file>;
+	using tracker_list = std::vector<tracker_stat>;
+
+
+
 
 	class torrent : public sparse_container
 	{

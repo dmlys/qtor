@@ -113,6 +113,8 @@ int main(int argc, char * argv[])
 
 	QtTools::QtRegisterStdString();
 	QMetaType::registerComparators<string>();
+	QMetaType::registerComparators<datetime_type>();
+	QMetaType::registerComparators<duration_type>();
 
 	Q_INIT_RESOURCE(qtor_core_resource);
 
@@ -125,7 +127,4 @@ int main(int argc, char * argv[])
 	
 	QTimer::singleShot(100, [&app] { app.Connect(); });
 	return qapp.exec();
-
-	//auto source = std::make_shared<qtor::testing_data_source>();
-	//source->connect().get();
 }

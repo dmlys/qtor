@@ -28,7 +28,7 @@ namespace qtor
 
 	void TorrentModel::sort(int column, Qt::SortOrder order)
 	{
-		m_sort_pred = sparse_container_comparator(column, order == Qt::AscendingOrder);
+		m_sort_pred = sparse_container_comparator(m_columns[column], order == Qt::AscendingOrder);
 		view_type::sort_and_notify(m_store.begin(), m_store.end());
 	}
 
