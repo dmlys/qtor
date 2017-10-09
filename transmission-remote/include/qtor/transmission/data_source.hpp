@@ -18,7 +18,7 @@ namespace transmission
 		std::string m_encoded_uri;
 		std::string m_xtransmission_session;		
 		
-		QtTools::GuiQueue m_queue;
+		QtTools::GuiQueue * m_queue;
 
 	protected:
 		class request_base;
@@ -26,13 +26,14 @@ namespace transmission
 		class torrent_subscription;
 		class torrent_request;
 
-	//protected:
-	//	void emit_signal(event_sig & sig, event_type ev) override;
+	protected:
+		void emit_signal(event_sig & sig, event_type ev) override;
 
 	public:
 		void set_address(std::string addr) override;
 		void set_timeout(std::chrono::steady_clock::duration timeout) override;
 		void set_logger(ext::library_logger::logger * logger) override;
+		void set_gui_queue(QtTools::GuiQueue * queue) override;
 
 		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
 

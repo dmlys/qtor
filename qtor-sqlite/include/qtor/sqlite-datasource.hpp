@@ -51,6 +51,7 @@ namespace qtor::sqlite
 		void set_address(std::string addr) override;
 		void set_timeout(std::chrono::steady_clock::duration timeout) override {}
 		void set_logger(ext::library_logger::logger * logger) override {}
+		void set_gui_queue(QtTools::GuiQueue * queue) override {}
 
 	public:
 		sqlite_datasource();

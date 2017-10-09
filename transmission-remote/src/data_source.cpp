@@ -8,6 +8,14 @@
 namespace qtor {
 namespace transmission
 {
+	void data_source::emit_signal(event_sig & sig, event_type ev)
+	{
+		if (m_queue)
+			m_queue->Add([&sig, ev] { sig(ev); });
+		else
+			sig(ev);
+	}
+
 	void data_source::set_address(std::string addr)
 	{
 		auto parsed = ext::netlib::parse_url(addr);
@@ -25,6 +33,11 @@ namespace transmission
 	void data_source::set_logger(ext::library_logger::logger * logger)
 	{
 		base_type::set_logger(logger);
+	}
+
+	void data_source::set_gui_queue(QtTools::GuiQueue * queue)
+	{
+		m_queue = queue;
 	}
 	
 	class data_source::request_base : public base_type::request_base
@@ -191,8 +204,18 @@ namespace transmission
 
 		void parse_response(std::string body) override
 		{
+			auto owner = static_cast<data_source *>(m_owner);
 			auto tlist = parse_torrent_list(body);
-			m_handler(tlist);
+			auto * queue = owner->m_queue;
+			if (not queue)
+				m_handler(tlist);
+			else
+			{
+				queue->Add([that = ext::intrusive_ptr<torrent_subscription>(this), tlist = std::move(tlist)]() mutable
+				{
+					that->m_handler(tlist);
+				});
+			}
 		}
 	};
 
