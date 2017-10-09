@@ -2,6 +2,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QSharedPointer>
 #include <QtTools/ToolsBase.hpp>
+#include <QtTools/GuiQueue.hqt>
 
 #include <qtor/abstract_data_source.hpp>
 #include <qtor/torrent_store.hpp>
@@ -22,6 +23,8 @@ namespace qtor
 	protected:
 		abstract_data_source_ptr m_source;
 		torrent_store_ptr        m_torrent_store;
+
+		QtTools::GuiQueue * m_queue = new QtTools::GuiQueue(this);
 
 	protected:
 		virtual auto CreateSource() -> abstract_data_source_ptr = 0;

@@ -234,7 +234,6 @@ namespace transmission
 	auto data_source::subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle
 	{
 		auto obj = ext::make_intrusive<torrent_subscription>();
-		obj->m_request_idx;
 		obj->m_handler = std::move(handler);
 		return this->add_subscription(obj);
 	}

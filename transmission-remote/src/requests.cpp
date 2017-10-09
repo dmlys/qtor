@@ -54,7 +54,9 @@ namespace transmission
 		static const std::string DoneDate = "doneDate";
 		static const std::string ActivityDate = "activityDate";
 
-
+		// speeds
+		static const std::string RateDownload = "rateDownload";
+		static const std::string RateUpload = "rateUpload";
 
 		//static const std::string BandwidthPriority = "bandwidthPriority";
 		//static const std::string CorruptEver = "corruptEver";
@@ -86,8 +88,6 @@ namespace transmission
 		//static const std::string PieceSize = "pieceSize";
 		//static const std::string Priorities = "priorities";
 		//static const std::string QueuePosition = "queuePosition";
-		//static const std::string RateDownload = "rateDownload";
-		//static const std::string RateUpload = "rateUpload";
 		//static const std::string RecheckProgress = "recheckProgress";
 		//static const std::string SecondsDownloading = "secondsDownloading";
 		//static const std::string SecondsSeeding = "secondsSeeding";
@@ -113,6 +113,7 @@ namespace transmission
 			Status, Error, ErrorString, IsFinished, IsStalled,
 			TotalSize, SizeWhenDone,
 			Eta, EtaIdle,
+			RateDownload, RateUpload,
 			AddedDate, DateCreated, StartDate, DoneDate, ActivityDate,
 		};
 	}
@@ -244,8 +245,8 @@ namespace transmission
 			duration_conv(tnode[Eta], &torrent::eta);
 			duration_conv(tnode[EtaIdle], &torrent::eta_idle);
 			
-			//speed_conv(tnode[DowloadSpeed], &torrent::download_speed);
-			//speed_conv(tnode[UploadSpeed], &torrent::upload_speed);
+			speed_conv(tnode[RateDownload], &torrent::download_speed);
+			speed_conv(tnode[RateUpload], &torrent::upload_speed);
 
 			datetime_conv(tnode[DateCreated], &torrent::date_created);
 			datetime_conv(tnode[AddedDate], &torrent::date_added);

@@ -104,12 +104,15 @@
 //	}
 //}
 
+#include <QtTools/ListModel.hqt>
+#include <ext/range/pretty_printers.hpp>
 
 int main(int argc, char * argv[])
 {
 	using namespace std;
 	using namespace qtor;
 
+	ext::winsock2_stream_init();
 
 	QtTools::QtRegisterStdString();
 	QMetaType::registerComparators<string>();
@@ -119,7 +122,8 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(qtor_core_resource);
 
 	QApplication qapp {argc, argv};
-	qtor::TransmissionRemoteApp app {"bin/data.db"s};
+	//qtor::TransmissionRemoteApp app {"bin/data.db"s};
+	qtor::TransmissionRemoteApp app {"http://melkiy:9091/transmission/rpc"s};
 	qtor::MainWindow mainWindow;
 	
 	mainWindow.Init(app);

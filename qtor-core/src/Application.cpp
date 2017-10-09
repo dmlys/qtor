@@ -46,6 +46,7 @@ namespace qtor
 	{
 		m_source = CreateSource();
 		m_source->on_event([this](auto ev) { OnEventSource(ev); });
+		m_source->set_gui_queue(m_queue);
 		m_torrent_store = std::make_shared<torrent_store>(m_source);
 	}
 

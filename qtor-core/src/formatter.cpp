@@ -45,7 +45,7 @@ namespace qtor
 		auto first = ms_weights.begin();
 		auto last  = ms_weights.end();
 		auto it = std::upper_bound(first, last, val);
-		return static_cast<weight>(it - first - 1);
+		return static_cast<weight>(std::max<std::ptrdiff_t>(it - first - 1, 0));
 	}
 
 	auto formatter::weigh(double val, weight w) const noexcept -> double
