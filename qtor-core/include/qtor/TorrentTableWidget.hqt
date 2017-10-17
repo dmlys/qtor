@@ -4,6 +4,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QTableView>
+#include <QtWidgets/QListView>
 
 #include <QtTools/HeaderControlModel.hqt>
 #include <QtTools/DelayedExecutionTimer.hqt>
@@ -24,6 +25,8 @@ namespace qtor
 	{
 		Q_OBJECT;
 
+		using base_type = QFrame;
+
 	protected:
 		/// display model
 		std::shared_ptr<AbstractSparseContainerModel> m_model;
@@ -38,6 +41,7 @@ namespace qtor
 		QVBoxLayout * m_verticalLayout = nullptr;
 		QLineEdit * m_rowFilter = nullptr;
 		QTableView * m_tableView = nullptr;
+		QListView * m_listView = nullptr;
 
 		/// hints for initial widget size
 		const QSize m_defMinSizeHint = QSize(640, 480);

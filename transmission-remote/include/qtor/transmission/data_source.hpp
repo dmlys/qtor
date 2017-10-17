@@ -18,7 +18,7 @@ namespace transmission
 		std::string m_encoded_uri;
 		std::string m_xtransmission_session;		
 		
-		QtTools::GuiQueue * m_queue;
+		QtTools::GuiQueue * m_queue = nullptr;
 
 	protected:
 		class request_base;

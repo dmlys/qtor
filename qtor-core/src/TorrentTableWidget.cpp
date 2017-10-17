@@ -1,4 +1,5 @@
 #include <qtor/TorrentTableWidget.hqt>
+#include <qtor/TorrentListDelegate.hqt>
 #include <qtor/torrent.hpp>
 
 #include <QtWidgets/QShortcut>
@@ -29,6 +30,7 @@ namespace qtor
 
 	QSize TorrentTableWidget::sizeHint() const
 	{
+		return m_defMinSizeHint;
 		// maximum size - half screen
 		QSize maxSize = QApplication::desktop()->screenGeometry().size();
 		maxSize /= 2;
@@ -54,6 +56,8 @@ namespace qtor
 
 	void TorrentTableWidget::contextMenuEvent(QContextMenuEvent * ev)
 	{
+		return base_type::contextMenuEvent(ev);
+
 		ev->accept();
 		auto pos = ev->globalPos();
 
@@ -136,24 +140,26 @@ namespace qtor
 	void TorrentTableWidget::ConnectModel()
 	{
 		auto * model = m_model.get();
-		m_tableView->setModel(model);
+		//m_tableView->setModel(model);
+		m_listView->setModel(model);
 		m_rowFilter->clear();
 		
 		int nameCol = model->FindColumn(torrent::Name);
-		m_tableView->setItemDelegateForColumn(nameCol, m_nameDelegate);
+		//m_tableView->setItemDelegateForColumn(nameCol, m_nameDelegate);
 
 		//connect(model, &QAbstractItemModel::layoutChanged, this, &TorrentTableWidget::ModelChanged);
 		//connect(model, &QAbstractItemModel::modelReset, this, &TorrentTableWidget::ModelChanged);
 
-		connect(m_tableView->horizontalHeader(), &QHeaderView::customContextMenuRequested,
-		        this, &TorrentTableWidget::OpenHeaderConfigurationWidget);
+		//connect(m_tableView->horizontalHeader(), &QHeaderView::customContextMenuRequested,
+		//        this, &TorrentTableWidget::OpenHeaderConfigurationWidget);
 	}
 
 	void TorrentTableWidget::DisconnectModel()
 	{
 		delete m_headerModel;
 		m_headerModel = nullptr;
-		m_tableView->setModel(nullptr);
+		//m_tableView->setModel(nullptr);
+		m_listView->setModel(nullptr);
 
 		m_sizeHint = m_defMinSizeHint;
 	}
@@ -177,15 +183,15 @@ namespace qtor
 
 	void TorrentTableWidget::InitHeaderTracking(QtTools::HeaderSectionInfoList * headerConf /* = nullptr */)
 	{
-		m_headerConfig = headerConf;
-		if (not m_headerModel)
-		{
-			m_headerModel = new QtTools::HeaderControlModel(this);
-			m_headerModel->Track(m_tableView->horizontalHeader());
-		}
+		//m_headerConfig = headerConf;
+		//if (not m_headerModel)
+		//{
+		//	m_headerModel = new QtTools::HeaderControlModel(this);
+		//	m_headerModel->Track(m_tableView->horizontalHeader());
+		//}
 
-		if (m_headerConfig)
-			m_headerModel->Configurate(*m_headerConfig);
+		//if (m_headerConfig)
+		//	m_headerModel->Configurate(*m_headerConfig);
 	}
 
 	TorrentTableWidget::TorrentTableWidget(QWidget * parent /* = nullptr */) : QFrame(parent)
@@ -217,29 +223,42 @@ namespace qtor
 		m_rowFilter = new QLineEdit(this);
 		m_rowFilter->setClearButtonEnabled(true);
 
-		m_tableView = new QTableView(this);
-		m_tableView->setSortingEnabled(true);
-		m_tableView->setAlternatingRowColors(true);
-		m_tableView->setTabKeyNavigation(false);
+		//m_tableView = new QTableView(this);
+		//m_tableView->setSortingEnabled(true);
+		//m_tableView->setAlternatingRowColors(true);
+		//m_tableView->setTabKeyNavigation(false);
 
-		m_tableView->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
-		m_tableView->horizontalHeader()->setSectionsMovable(true);
-		m_tableView->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
-		m_tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-		//m_tableView->horizontalHeader()->setTextElideMode(Qt::ElideRight);
+		//m_tableView->horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
+		//m_tableView->horizontalHeader()->setSectionsMovable(true);
+		//m_tableView->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
+		//m_tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
+		////m_tableView->horizontalHeader()->setTextElideMode(Qt::ElideRight);
 
-		m_tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-		m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-		m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+		//m_tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+		//m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+		//m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
 
-		m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);
+		//m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);
 
-		auto * vertHeader = m_tableView->verticalHeader();
-		vertHeader->setDefaultSectionSize(QtTools::CalculateDefaultRowHeight(m_tableView));
-		vertHeader->hide();
+		//auto * vertHeader = m_tableView->verticalHeader();
+		//vertHeader->setDefaultSectionSize(QtTools::CalculateDefaultRowHeight(m_tableView));
+		//vertHeader->hide();
+
+
+		m_listView = new QListView(this);
+		m_listView->setAlternatingRowColors(true);
+		m_listView->setTabKeyNavigation(false);
+		m_listView->setModelColumn(1);
+		m_listView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+		m_listView->setSelectionBehavior(QAbstractItemView::SelectRows);
+		m_listView->setSelectionMode(QAbstractItemView::SingleSelection);
+
+		auto * delegate = new TorrentListDelegate(m_listView);
+		m_listView->setItemDelegate(delegate);
 
 		m_verticalLayout->addWidget(m_rowFilter);
-		m_verticalLayout->addWidget(m_tableView);
+		m_verticalLayout->addWidget(m_listView);
+		//m_verticalLayout->addWidget(m_tableView);
 
 		setFocusProxy(m_tableView);
 		QWidget::setTabOrder(m_rowFilter, m_tableView);

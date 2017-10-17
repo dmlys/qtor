@@ -1,0 +1,61 @@
+#pragma once
+#include <qtor/torrent.hpp>
+#include <qtor/formatter.hqt>
+#include <QtWidgets/QAbstractItemDelegate>
+
+namespace qtor
+{
+	class TorrentListDelegate : public QAbstractItemDelegate
+	{
+	protected:
+		struct LaidoutItem
+		{
+			QModelIndex index;
+			const QStyleOptionViewItem * option = nullptr;
+			const torrent * tor = nullptr;
+			
+			QFont baseFont;
+			QFont nameFont;
+			QFont progressFont;
+			QFont statusFont;
+
+			QString name;
+			QString progress;
+			QString status;
+
+			QRect totalRect;
+			QRect nameRect;
+			QRect statusRect;
+			QRect barRect;
+			QRect progressRect;
+		};
+
+		mutable LaidoutItem m_cachedItem;
+		mutable formatter * m_fmt = new formatter(this);
+
+		static const QMargins ms_OutterMargins;
+		static const QMargins ms_InnerMargins;
+
+	protected:
+		virtual QString TittleText(const torrent & tor) const;
+		virtual QString StatusText(const torrent & tor) const;
+		virtual QString ProgressText(const torrent & tor) const;
+		//virtual QString ShortStatusText(const torrent & tor) const;
+		//virtual QString ShortTransferText(const torrent & tor) const;
+
+	protected:
+		virtual void LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index, LaidoutItem & cache) const;
+
+		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
+		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;
+		virtual void DrawText(QPainter * painter, const LaidoutItem & item) const;
+		virtual void DrawProgressBar(QPainter * painter, const LaidoutItem & item) const;
+
+	public:
+		QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+		void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+
+	public:
+		using QAbstractItemDelegate::QAbstractItemDelegate;
+	};
+}

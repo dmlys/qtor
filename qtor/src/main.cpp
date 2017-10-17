@@ -115,7 +115,6 @@ int main(int argc, char * argv[])
 	ext::winsock2_stream_init();
 
 	QtTools::QtRegisterStdString();
-	QMetaType::registerComparators<string>();
 	QMetaType::registerComparators<datetime_type>();
 	QMetaType::registerComparators<duration_type>();
 
