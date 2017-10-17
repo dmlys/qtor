@@ -8,7 +8,7 @@
 
 namespace qtor::sqlite
 {
-	using column_info = std::vector<std::tuple<std::string, unsigned>>;
+	using column_info = std::vector<std::tuple<sparse_container::index_type, unsigned, std::string>>;
 
 	extern const std::string torrents_table_name;
 	extern const torrent_meta & torrents_meta();

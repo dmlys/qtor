@@ -1,22 +1,10 @@
 #pragma once
 #include <QtCore/QAbstractTableModel>
 #include <qtor/sparse_container.hpp>
+#include <qtor/formatter.hqt>
 
 namespace qtor
 {
-	class sparse_container_model_meta : public virtual sparse_container_meta
-	{
-	public:
-		virtual QString item_name(index_type key) const = 0;
-		virtual QString format_item(const sparse_container & cont, index_type key) const = 0;
-		virtual QString format_item_short(const sparse_container & cont, index_type key) const = 0;
-
-	public:
-		~sparse_container_model_meta() = default;
-	};
-
-
-
 	class AbstractSparseContainerModel : public QAbstractTableModel
 	{
 		Q_OBJECT;

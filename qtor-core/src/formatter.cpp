@@ -133,6 +133,17 @@ namespace qtor
 			% tr(ms_duration_strings[idx + 1], nullptr, *(it + 1));
 	}
 
+	QString formatter::format_ratio(double val) const
+	{
+		return format_double(val);
+	}
+
+	QString formatter::format_percent(double val) const
+	{
+		//assert(0.0 <= val and val <= 1.0);
+		return format_double(val * 100) + m_locale.percent();
+	}
+
 	QString formatter::format_bool(bool val) const
 	{
 		return m_locale.toString(val);

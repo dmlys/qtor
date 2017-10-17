@@ -10,7 +10,6 @@
 #include <QtCore/QLocale>
 
 #include <qtor/sparse_container.hpp>
-#include <qtor/AbstractSparseContainerModel.hqt>
 
 namespace qtor
 {
@@ -56,6 +55,8 @@ namespace qtor
 		virtual QString format_datetime(datetime_type val) const;
 		virtual QString format_duration(duration_type val) const;
 
+		virtual QString format_ratio(double val) const;
+		virtual QString format_percent(double val) const;
 		virtual QString format_bool(bool val) const;
 		virtual QString format_nullopt() const;
 		
@@ -102,6 +103,9 @@ namespace qtor
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_datetime, datetime_type);
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_duration, duration_type);
 
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_percent, double);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_ratio,   double);
+
 #undef QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD
 
 	public:
@@ -109,6 +113,20 @@ namespace qtor
 
 	public:
 		virtual ~formatter() = default;
+	};
+
+
+
+
+	class sparse_container_model_meta : public virtual sparse_container_meta
+	{
+	public:
+		virtual QString item_name(index_type key) const = 0;
+		virtual QString format_item(const sparse_container & cont, index_type key) const = 0;
+		virtual QString format_item_short(const sparse_container & cont, index_type key) const = 0;
+
+	public:
+		~sparse_container_model_meta() = default;
 	};
 
 

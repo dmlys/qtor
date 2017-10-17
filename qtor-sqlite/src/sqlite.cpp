@@ -27,7 +27,7 @@ namespace qtor::sqlite
 				auto & val = info[first];
 				auto name = torrents_meta().item_name(first);
 				auto type = torrents_meta().item_type(first);
-				val = std::make_tuple(FromQString(name), type);
+				val = std::make_tuple(first, type, FromQString(name));
 			}
 
 			return info;
@@ -67,8 +67,8 @@ namespace qtor::sqlite
 
 		for (auto & col : columns)
 		{
-			auto & name = std::get<0>(col);
 			auto & type = std::get<1>(col);
+			auto & name = std::get<2>(col);
 			out = sqlite3yaw::copy_sql_name(name, out);
 			
 			cmd += ' ';
@@ -96,73 +96,105 @@ namespace qtor::sqlite
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 		auto & info  = torrents_column_info();
 
-		auto names = info | ext::firsts;
+		auto names = info | ext::getted<2>;
 		auto batch_range = make_batch_range(meta, names, torrents);
 		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
 
 	}
 
-	struct conv_type
-	{
-		unsigned idx = 0;
-		sqlite3yaw::statement * stmt;
-		torrent * torr;
+//	struct conv_type
+//	{
+//		unsigned idx = 0;
+//		sqlite3yaw::statement * stmt;
+//		torrent * torr;
+//
+//#define OPERATOR(Type)                                              \
+//		void operator()(torrent & (torrent::*pmf)(Type val))        \
+//		{                                                           \
+//			Type val;                                               \
+//			sqlite3yaw::get(*stmt, idx++, val);                     \
+//			(torr->*pmf)(std::move(val));                           \
+//		}                                                           \
+//		
+//		OPERATOR(string_type);
+//		OPERATOR(uint64_type);
+//		OPERATOR(double);
+//		OPERATOR(bool);
+//		OPERATOR(datetime_type);
+//		OPERATOR(duration_type);
+//		
+//#undef OPERATOR
+//
+//		conv_type(sqlite3yaw::statement & stmt, torrent & torr)
+//			: stmt(&stmt), torr(&torr) {}
+//	};
 
-		template <class Type>
-		void operator()(torrent & (torrent::*pmf)(Type val))
-		{
-			Type val;
-			sqlite3yaw::get(*stmt, idx++, val);
-			(torr->*pmf)(std::move(val));
-		}
-
-		conv_type(sqlite3yaw::statement & stmt, torrent & torr)
-			: stmt(&stmt), torr(&torr) {}
-	};
-
-	static torrent load_torrent(sqlite3yaw::statement & stmt)
+	static torrent load_torrent(sqlite3yaw::statement & stmt, const column_info & info)
 	{
 		torrent torr;
+		//conv_type conv {stmt, torr};
 
-		conv_type conv {stmt, torr};
-		
-		conv(&torrent::id);
-		conv(&torrent::name);
-		conv(&torrent::comment);
-		conv(&torrent::creator);
+		int count = stmt.column_count();
+		for (int i = 0; i < count; ++i)
+		{ 
+			unsigned key  = std::get<0>(info[i]);
+			unsigned type = std::get<1>(info[i]);
 
-		conv(&torrent::error_string);
-		conv(&torrent::finished);
-		conv(&torrent::stalled);
+			switch (type)
+			{
+				case sparse_container_meta::Uint64:
+				case sparse_container_meta::Speed:
+				case sparse_container_meta::Size:
+					torr.set_item(key, sqlite3yaw::get<uint64_type>(stmt, i));
+					break;
 
-		conv(&torrent::total_size);
-		conv(&torrent::size_when_done);
+				case sparse_container_meta::Bool:
+					torr.set_item(key, sqlite3yaw::get<bool>(stmt, i));
+					break;
 
-		conv(&torrent::eta);
-		conv(&torrent::eta_idle);
+				case sparse_container_meta::Double:
+				case sparse_container_meta::Percent:
+				case sparse_container_meta::Ratio:
+					torr.set_item(key, sqlite3yaw::get<double>(stmt, i));
+					break;
 
-		//conv(&torrent::download_speed);
-		//conv(&torrent::upload_speed);
+				case sparse_container_meta::String:
+					torr.set_item(key, sqlite3yaw::get<string_type>(stmt, i));
+					break;
 
-		conv(&torrent::date_created);
-		conv(&torrent::date_added);
-		conv(&torrent::date_started);
-		conv(&torrent::date_done);
-		//conv(&torrent::date_last_activity);
+				case sparse_container_meta::DateTime:
+					torr.set_item(key, sqlite3yaw::get<datetime_type>(stmt, i));
+					break;
+
+				case sparse_container_meta::Duration:
+					torr.set_item(key, sqlite3yaw::get<duration_type>(stmt, i));
+					break;
+
+				default:
+					break;
+			}
+		}
 
 		return torr;
 	}
 
 	auto load_torrents(sqlite3yaw::session & ses) -> torrent_list
 	{
-		qtor::torrent_meta meta;
-		auto & info = torrents_column_info();
+		auto meta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
+		auto info = torrents_column_info();
 
-		auto names = info | ext::firsts;
-		auto cmd = sqlite3yaw::select_command(torrents_table_name, names);
+		boost::remove_erase_if(info, [&meta](auto & val) 
+		{
+			auto & name = std::get<2>(val);
+			auto it = boost::find_if(meta.fields, [&name](auto & v) { return v.name == name; });
+			return it == meta.fields.end();
+		});
+
+		auto cmd = sqlite3yaw::select_command(torrents_table_name, info | ext::getted<2>);
 		auto stmt = ses.prepare(cmd);
 
-		auto recs = sqlite3yaw::make_record_range(stmt, load_torrent);
+		auto loader = [&info](auto & stmt) { return load_torrent(stmt, info); };
+		auto recs = sqlite3yaw::make_record_range(stmt, loader);
 		torrent_list result(recs.begin(), recs.end());
 		return result;
 	}

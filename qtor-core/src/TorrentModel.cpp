@@ -51,8 +51,9 @@ namespace qtor
 			torrent::Finished,
 			torrent::Stalled,
 
+			torrent::CurrentSize,
+			torrent::RequestedSize,
 			torrent::TotalSize,
-			torrent::SizeWhenDone,
 
 			torrent::DownloadSpeed,
 			torrent::UploadSpeed,

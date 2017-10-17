@@ -8,47 +8,80 @@
 #include <QtTools/ToolsBase.hpp>
 #include <QtCore/QMetaType>
 
+namespace qtor
+{
+	namespace torrent_status
+	{		
+		constexpr unsigned stopped = 0;
+		constexpr unsigned download = 1;
+		constexpr unsigned seed = 2;
+		constexpr unsigned check = 3;
+		constexpr unsigned check_wait = 4;
+		constexpr unsigned download_wait = 5;
+		constexpr unsigned seed_wait = 6;
+	}
 
 
-#define QTOR_TORRENT_FOR_EACH_BASIC_FIELD(F)                \
-	/* Id, Name, Type, TypeName */                          \
-	F(Id,      id,      string, torrent_id_type)            \
-	F(Name,    name,    string, string_type)                \
-	F(Creator, creator, string, string_type)                \
-	F(Comment, comment, string, string_type)                \
+	constexpr bool REQ = true;
+	constexpr bool OPT = false;
 
 
-#define QTOR_TORRENT_FOR_EACH_STATUS_FEILD(F)               \
-	/* Id, Name, Type, TypeName */                          \
-	F(ErrorString, error_string, string, string_type)       \
-	F(Finished,    finished,     bool,   bool)              \
-	F(Stalled,     stalled,      bool,   bool)              \
+#define QTOR_TORRENT_FOR_EACH_BASIC_FIELD(F)              \
+    /*opt, Id, Name, Type, TypeName */                    \
+	F(REQ,   Id,      id,      string, torrent_id_type)   \
+	F(REQ,   Name,    name,    string, string_type)       \
+	F(OPT,   Creator, creator, string, string_type)       \
+	F(OPT,   Comment, comment, string, string_type)       \
 
 
-#define QTOR_TORRENT_FOR_EACH_SIZE_FIELD(F)                 \
-	/* Id, Name, Type, TypeName */                          \
-	F(TotalSize,    total_size,     size, size_type)        \
-	F(SizeWhenDone, size_when_done, size, size_type)        \
+#define QTOR_TORRENT_FOR_EACH_STATUS_FEILD(F)                       \
+	/*opt, Id, Name, Type, TypeName */                              \
+	F(REQ, Status,      status,       uint64, uint64_type)          \
+	F(OPT, ErrorString, error_string, string, string_type)          \
+	F(OPT, Ratio,       ratio,        ratio,  double)               \
+	F(OPT, SeedLimit,   seed_limit,   ratio,  double)               \
+	                                                                \
+	F(OPT, RequestedProgress, requested_progress,  percent, double) \
+	F(OPT, TotalProgress,     total_progress,      percent, double) \
+	F(OPT, RecheckProgress,   recheck_progress,    percent, double) \
+	F(OPT, MetadataProgress,  metadata_progress,   percent, double) \
+	                                                                \
+	F(OPT, Finished,    finished,     bool,   bool)                 \
+	F(OPT, Completed,   completed,    bool,   bool)                 \
+	F(OPT, Stalled,     stalled,      bool,   bool)                 \
 
 
-#define QTOR_TORRENT_FOR_EACH_SPEED_FIELD(F)                \
-	/* Id, Name, Type, TypeName */                          \
-	F(DownloadSpeed, download_speed, speed, speed_type)     \
-	F(UploadSpeed,   upload_speed,   speed, speed_type)     \
+#define QTOR_TORRENT_FOR_EACH_SIZE_FIELD(F)                      \
+	/* Id, Name, Type, TypeName */                               \
+	F(OPT, CurrentSize,     current_size,      size, size_type)  \
+	F(OPT, LeftSize,        left_size,         size, size_type)  \
+	F(OPT, RequestedSize,   requested_size,    size, size_type)  \
+	F(OPT, TotalSize,       total_size,        size, size_type)  \
+	                                                             \
+	F(OPT, EverUploaded,    ever_uploaded,     size, size_type)  \
+	F(OPT, EverDownloaded,  ever_downloaded,   size, size_type)  \
+	F(OPT, EverCurrupted,   ever_currupted,    size, size_type)  \
 
 
-#define QTOR_TORRENT_FOR_EACH_TIME_DURATION_FIELD(F)        \
-	/* Id, Name, Type, TypeName */                          \
-	F(Eta,     eta,      duration, duration_type)           \
-	F(EtaIdle, eta_idle, duration, duration_type)           \
+
+#define QTOR_TORRENT_FOR_EACH_SPEED_FIELD(F)                   \
+	/* Id, Name, Type, TypeName */                             \
+	F(OPT, DownloadSpeed, download_speed, speed, speed_type)   \
+	F(OPT, UploadSpeed,   upload_speed,   speed, speed_type)   \
 
 
-#define QTOR_TORRENT_FOR_EACH_DATE_FIELD(F)                 \
-	/* Id, Name, Type, TypeName */                          \
-	F(DateAdded,   date_added,   datetime, datetime_type)   \
-	F(DateCreated, date_created, datetime, datetime_type)   \
-	F(DateStarted, date_started, datetime, datetime_type)   \
-	F(DateDone,    date_done,    datetime, datetime_type)   \
+#define QTOR_TORRENT_FOR_EACH_TIME_DURATION_FIELD(F)         \
+	/* Id, Name, Type, TypeName */                           \
+	F(OPT, Eta,     eta,      duration, duration_type)       \
+	F(OPT, EtaIdle, eta_idle, duration, duration_type)       \
+
+
+#define QTOR_TORRENT_FOR_EACH_DATE_FIELD(F)                      \
+	/* Id, Name, Type, TypeName */                               \
+	F(OPT, DateAdded,   date_added,   datetime, datetime_type)   \
+	F(OPT, DateCreated, date_created, datetime, datetime_type)   \
+	F(OPT, DateStarted, date_started, datetime, datetime_type)   \
+	F(OPT, DateDone,    date_done,    datetime, datetime_type)   \
 
 
 #define QTOR_TORRENT_FOR_EACH_FIELD(F)                      \
@@ -60,16 +93,22 @@
 	QTOR_TORRENT_FOR_EACH_DATE_FIELD(F)                     \
 
 
-#define QTOR_TORRENT_DEFINE_ENUM(ID, NAME, A3, TYPE) ID,
+#define QTOR_TORRENT_DEFINE_ENUM(AO, ID, NAME, A3, TYPE) ID,
 
-#define QTOR_TORRENT_DEFINE_PROPERTY(ID, NAME, A3, TYPE)                                                                       \
+#define QTOR_TORRENT_DEFINE_PROPERTY(AO, ID, NAME, A3, TYPE)                                                                   \
 	auto NAME(TYPE val)        -> self_type &            { return static_cast<self_type &>(set_item(ID, std::move(val))); }    \
 	auto NAME() const noexcept -> optional<const TYPE &> { return get_item<TYPE>(ID); }                                        \
 	auto NAME() noexcept       -> optional<TYPE &>       { return get_item<TYPE>(ID); }                                        \
+	                                                                                                                           \
+	template <class Type>                                                                                                      \
+	std::enable_if_t<std::is_convertible_v<std::decay_t<Type>, TYPE>, self_type &>                                             \
+	NAME(optional<Type> val)                                                                                                   \
+	{                                                                                                                          \
+		return static_cast<self_type &>(set_item(ID, std::move(val)));                                                         \
+	}                                                                                                                          \
 
 
-namespace qtor
-{
+
 	class torrent;
 	struct torrent_file;
 	struct torrent_peer;

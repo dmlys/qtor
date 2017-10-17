@@ -6,7 +6,7 @@ namespace qtor
 	const string_type torrent::ms_emptystr;
 
 
-#define QTOR_TORRENT_FORMATTER_ITEM(ID, NAME, TYPE, TYPENAME) \
+#define QTOR_TORRENT_FORMATTER_ITEM(A0, ID, NAME, TYPE, TYPENAME) \
 		(*types)[torrent::ID] = item {                        \
 			type_map[BOOST_PP_STRINGIZE(TYPE)],               \
 			QString(BOOST_PP_STRINGIZE(ID)),                  \
@@ -24,8 +24,11 @@ namespace qtor
 				{"double"s, Double},
 				{"string"s, String},
 				
+				{"percent"s, Percent},
+				{"ratio"s, Ratio},
 				{"speed"s, Speed},
 				{"size"s, Size},
+
 				{"datetime"s, DateTime},
 				{"Duration"s, Duration},
 			};

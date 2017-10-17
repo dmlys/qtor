@@ -39,9 +39,20 @@ namespace transmission
 		static const std::string IsPrivate = "isPrivate";
 		static const std::string IsStalled = "isStalled";
 
+		static const std::string PercentDone = "percentDone";
+		static const std::string TotalProgress = "";
+		static const std::string RecheckProgress = "recheckProgress";
+		static const std::string MetadataPercentComplete = "metadataPercentComplete";		
+
+
 		// size
 		static const std::string TotalSize = "totalSize";
+		static const std::string LeftUntilDone = "leftUntilDone";
 		static const std::string SizeWhenDone = "sizeWhenDone";
+		static const std::string UploadedEver = "uploadedEver";
+		static const std::string DownloadedEver = "downloadedEver";
+		static const std::string CorruptEver = "curruptEver";
+
 
 		// times
 		static const std::string Eta = "eta";
@@ -111,7 +122,9 @@ namespace transmission
 		{
 			Id, Name, Comment, Creator,
 			Status, Error, ErrorString, IsFinished, IsStalled,
-			TotalSize, SizeWhenDone,
+			LeftUntilDone, SizeWhenDone, TotalSize,
+			DownloadedEver, UploadedEver, CorruptEver,
+			RecheckProgress, MetadataPercentComplete,
 			Eta, EtaIdle,
 			RateDownload, RateUpload,
 			AddedDate, DateCreated, StartDate, DoneDate, ActivityDate,
@@ -212,7 +225,26 @@ namespace transmission
 	TYPE_CONV(duration);
 
 
-	
+	template <class Type>
+	static optional<std::decay_t<Type>> operator -(optional<Type> opt1, optional<Type> opt2)
+	{
+		if (not opt1 or not opt2) return nullopt;
+
+		if (std::is_integral_v<Type> and opt2.get() == 0)
+		{
+			return nullopt;
+		}
+
+		return opt1.get() - opt2.get();
+	}
+
+	template <class Type>
+	static optional<double> operator /(optional<Type> opt1, optional<Type> opt2)
+	{
+		if (not opt1 or not opt2) return nullopt;
+
+		return static_cast<double>(opt1.get()) / static_cast<double>(opt2.get());
+	}
 	
 	static torrent_list parse_torrent_list(const YAML::Node & node)
 	{
@@ -229,22 +261,37 @@ namespace transmission
 			auto & torr = result.back();
 
 			DECLARE_CONVS(torr);
-			
+
 			string_conv(tnode[Id], &torrent::id);
 			string_conv(tnode[Name], &torrent::name);
 			string_conv(tnode[Comment], &torrent::comment);
 			string_conv(tnode[Creator], &torrent::creator);
 
+			uint64_conv(tnode[Status], &torrent::status);
 			string_conv(tnode[ErrorString], &torrent::error_string);
+
 			bool_conv(tnode[IsFinished], &torrent::finished);
 			bool_conv(tnode[IsStalled], &torrent::stalled);
 
-			size_conv(tnode[TotalSize], &torrent::total_size);
-			size_conv(tnode[SizeWhenDone], &torrent::size_when_done);
+			size_conv(tnode[LeftUntilDone], &torrent::left_size);
+			size_conv(tnode[SizeWhenDone], &torrent::requested_size);
+			size_conv(tnode[TotalSize], &torrent::total_size);			
+			torr.current_size(torr.requested_size() - torr.left_size());
+
+			size_conv(tnode[UploadedEver], &torrent::ever_uploaded);
+			size_conv(tnode[DownloadedEver], &torrent::ever_downloaded);
+			size_conv(tnode[CorruptEver], &torrent::ever_currupted);
+
+			torr.ratio(torr.ever_uploaded() / torr.ever_downloaded());
+
+			double_conv(tnode[RecheckProgress], &torrent::recheck_progress);
+			double_conv(tnode[MetadataPercentComplete], &torrent::metadata_progress);
+			torr.requested_progress(torr.current_size() / torr.requested_size());
+			torr.total_progress(torr.current_size() / torr.total_size());
 
 			duration_conv(tnode[Eta], &torrent::eta);
 			duration_conv(tnode[EtaIdle], &torrent::eta_idle);
-			
+
 			speed_conv(tnode[RateDownload], &torrent::download_speed);
 			speed_conv(tnode[RateUpload], &torrent::upload_speed);
 

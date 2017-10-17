@@ -29,9 +29,9 @@ namespace qtor
 
 		void remove_item(index_type key) noexcept;
 		
-		template <class Type>
-		auto set_item(index_type key, Type val)      -> sparse_container &;
 		auto set_item(index_type key, any_type val)  -> sparse_container &;
+		template <class Type> auto set_item(index_type key, Type val)           -> sparse_container &;
+		template <class Type> auto set_item(index_type key, optional<Type> val) -> sparse_container &;
 		
 		auto get_item(index_type key) noexcept       -> any_type &;
 		auto get_item(index_type key) const noexcept -> const any_type &;
@@ -62,6 +62,8 @@ namespace qtor
 		static constexpr unsigned Size   = 5;
 		static constexpr unsigned DateTime = 6;
 		static constexpr unsigned Duration = 7;
+		static constexpr unsigned Percent  = 8;
+		static constexpr unsigned Ratio    = 9;
 
 		static constexpr unsigned Unknown = -1;
 
@@ -131,6 +133,18 @@ namespace qtor
 	inline auto sparse_container::set_item(index_type key, Type val) -> sparse_container &
 	{
 		return set_item(key, any_type::fromValue(std::move(val)));
+	}
+
+	template <class Type>
+	inline auto sparse_container::set_item(index_type key, optional<Type> val) -> sparse_container &
+	{
+		if (val)
+			return set_item(key, any_type::fromValue(std::move(val).value()));
+		else
+		{
+			remove_item(key);
+			return *this;
+		}
 	}
 
 	inline auto sparse_container::set_item(index_type key, any_type val) -> sparse_container &
