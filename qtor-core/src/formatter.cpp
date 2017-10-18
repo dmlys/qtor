@@ -127,10 +127,9 @@ namespace qtor
 
 		if (*it >= 4) return tr(ms_duration_strings[idx], nullptr, *it);
 		
-		return 
-			  tr(ms_duration_strings[idx], nullptr, *it)
-			% QStringLiteral(", ")
-			% tr(ms_duration_strings[idx + 1], nullptr, *(it + 1));
+		return tr(ms_duration_strings[idx], nullptr, *it)
+		     % QStringLiteral(", ")
+		     % tr(ms_duration_strings[idx + 1], nullptr, *(it + 1));
 	}
 
 	QString formatter::format_ratio(double val) const

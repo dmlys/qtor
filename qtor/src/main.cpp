@@ -21,9 +21,9 @@
 #include <qtor/transmission/data_source.hpp>
 
 #include <qtor/torrent_store.hpp>
-#include <qtor/TorrentModel.hpp>
+#include <qtor/TorrentsModel.hpp>
 
-#include <qtor/TorrentTableWidget.hqt>
+#include <qtor/TorrentsView.hqt>
 #include <qtor/MainWindow.hqt>
 #include <qtor/Application.hqt>
 #include <TransmissionRemoteApp.hqt>
@@ -79,7 +79,7 @@
 //		++first;
 //
 //		write_http_header(
-//			sink, 
+//			sink,
 //			std::forward<decltype(name)>(name),
 //			std::forward<decltype(val)>(val)
 //		);

@@ -45,7 +45,7 @@
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile> -->
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <!-- <SubSystem>Console</SubSystem> -->
       <!-- ws2_32.lib; Crypt32.lib   are needed by openssl -->
       <AdditionalDependencies>ws2_32.lib; Crypt32.lib; %(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="$(Configuration) == 'Release'">libfmt-mt.lib; %(AdditionalDependencies)</AdditionalDependencies>

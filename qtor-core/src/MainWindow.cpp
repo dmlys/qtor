@@ -93,13 +93,13 @@ namespace qtor
 
 	void MainWindow::setupUi()
 	{
-		m_torrentWidget = new TorrentTableWidget(this);
+		m_torrentWidget = new TorrentsView(this);
 		setCentralWidget(m_torrentWidget);
 	}
 
 	void MainWindow::setupMenu()
 	{
-		QMenu * main = menuBar()->addMenu(tr("&Main"));	
+		QMenu * main = menuBar()->addMenu(tr("&Main"));
 		main->addAction(m_actionOpen);
 		main->addAction(m_actionStartAll);
 		main->addAction(m_actionStopAll);

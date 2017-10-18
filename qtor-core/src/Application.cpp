@@ -1,4 +1,4 @@
-#include <qtor/TorrentModel.hpp>
+#include <qtor/TorrentsModel.hpp>
 #include <qtor/Application.hqt>
 
 namespace qtor
@@ -19,7 +19,7 @@ namespace qtor
 	auto Application::AccquireTorrentModel() -> abstract_torrent_model_ptr
 	{
 		assert(m_source);
-		return std::make_shared<TorrentModel>(m_torrent_store);
+		return std::make_shared<TorrentsModel>(m_torrent_store);
 	}
 
 	void Application::Connect()
@@ -36,7 +36,7 @@ namespace qtor
 
 	auto Application::GetSource() -> abstract_data_source_ptr
 	{
-		if (not m_source) 
+		if (not m_source)
 			Init();
 
 		return m_source;

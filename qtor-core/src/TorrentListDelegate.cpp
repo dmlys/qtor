@@ -1,17 +1,18 @@
 #pragma once
 #include <qtor/TorrentListDelegate.hqt>
-#include <qtor/TorrentModel.hpp>
+#include <qtor/TorrentsModel.hpp>
 
 #include <QtCore/QStringBuilder>
 #include <QtGui/QPainter>
 #include <QtWidgets/QAbstractItemView>
+#include <QtCore/QDebug>
 
-//#include <QtTools/Delegates/StyledParts.hpp>
-//#include <QtTools/Delegates/DrawFormattedText.hpp>
+#include <QtTools/Delegates/StyledParts.hpp>
+#include <QtTools/Delegates/SearchDelegate.hpp>
 
 namespace qtor
 {
-	const QMargins TorrentListDelegate::ms_InnerMargins = {1, 1, 1, 1};
+	const QMargins TorrentListDelegate::ms_InnerMargins = {0, 1, 0, 1};
 	const QMargins TorrentListDelegate::ms_OutterMargins = {4, 4, 4, 4};
 
 	template <class Type>
@@ -134,11 +135,23 @@ namespace qtor
 	{
 		item.option = &option;
 		if (item.index == index)
+		{
+			auto newTopLeft = option.rect.topLeft();
+			auto diff = option.rect.topLeft() - item.hintTopLeft;
+			item.hintTopLeft = option.rect.topLeft();
+
+			item.nameRect.translate(diff);
+			item.progressRect.translate(diff);
+			item.barRect.translate(diff);
+			item.statusRect.translate(diff);
+
 			return;
+		}
 		
+		item.hintTopLeft = option.rect.topLeft();
 		item.index = index;
 
-		const auto * model = dynamic_cast<const TorrentModel *>(item.index.model());
+		const auto * model = dynamic_cast<const TorrentsModel *>(item.index.model());
 		const auto & tor = model->GetItem(item.index.row());
 
 		item.tor = &tor;
@@ -159,35 +172,36 @@ namespace qtor
 		QFontMetrics progressFM {item.progressFont, device};
 		QFontMetrics statusFM {item.statusFont, device};
 
+		QRect rect = item.option->rect - ms_OutterMargins;
 		QSize nameSize = nameFM.size(0, item.name);
 		QSize progresSize = progressFM.size(0, item.progress);
 		QSize statusSize = statusFM.size(0, item.status);
-		QSize progressBarSize = QSize(0, baseFM.height() * 10 / 10);
 
-		QPoint topLeft = {0, 0};
+		//auto barWidth = std::max({nameSize.width(), progresSize.width(), statusSize.width(), rect.size().width()});
+		QSize progressBarSize = QSize(0, baseFM.height());
 
-		auto hintRect = option.rect;
+		QPoint topLeft = rect.topLeft();
+
 		item.nameRect = {topLeft, nameSize};
 		item.progressRect = {topLeft, progresSize};
 		item.statusRect = {topLeft, statusSize};
 		item.barRect = {topLeft, progressBarSize};
 
 		// layout rectangles vertically in that order
-		auto & totalRect = item.totalRect = {};
 		auto rects = {&item.nameRect, &item.progressRect, &item.barRect, &item.statusRect};
 
 		auto dy = 0;
 		for (auto * rect : rects)
 		{
-			*rect += ms_InnerMargins;
+			dy += ms_InnerMargins.top();
 			rect->translate(0, dy);
 			dy += rect->height();
-
-			totalRect |= *rect;
+			dy += ms_InnerMargins.bottom();
 		}
-		
-		// expand to hint width
-		totalRect.setWidth(std::max(totalRect.width(), hintRect.width()));
+
+		auto & totalRect = item.totalRect = {};
+		totalRect = item.nameRect | item.progressRect | item.barRect | item.statusRect;
+		totalRect += ms_InnerMargins;
 		totalRect += ms_OutterMargins;
 	}
 
@@ -205,9 +219,13 @@ namespace qtor
 
 		if (selected)
 		{
-			auto rect = item.option->rect;
-			rect.moveTo(0, 0);
-			painter->fillRect(rect, option.palette.brush(cg, QPalette::Highlight));
+			painter->fillRect(item.option->rect, option.palette.brush(cg, QPalette::Highlight));
+		}
+
+		using namespace QtTools::Delegates;
+		if (HasFocusFrame(option))
+		{
+			DrawFocusFrame(painter, item.option->rect, option);
 		}
 	}
 
@@ -231,40 +249,33 @@ namespace qtor
 
 		QPalette::ColorRole cr = selected ? QPalette::HighlightedText : QPalette::Text;
 
-		qDebug("cg = %d, cr = %d", cg, cr);
-
 		static const QColor red {"red"};
 		painter->setPen(error and not selected ? red : option.palette.color(cg, cr));
 
-		auto flags = Qt::AlignLeft | Qt::AlignVCenter;
-		//const auto flags = 0;
-
 		painter->setFont(item.nameFont);
-		painter->drawText(item.nameRect - ms_InnerMargins, flags, item.name);
+		QList<QTextLayout::FormatRange> formats;
+		QtTools::Delegates::FormatSearchText(item.name, m_searchText, m_searchFormat, formats);
+		QtTools::Delegates::DrawSearchFormatedText(painter, item.name, item.nameRect, option, formats);
+
+		QPaintDevice * device = const_cast<QWidget *>(option.widget);
+		QFontMetrics nameFM {item.nameFont, device};
+		QFontMetrics progressFM {item.progressFont, device};
+		QFontMetrics statusFM {item.statusFont, device};
+
+		auto mode = option.textElideMode;
+		auto alignment = QStyle::visualAlignment(option.direction, option.displayAlignment);
+
+		auto progressText = progressFM.elidedText(item.progress, mode, item.progressRect.width());
+		auto statusText = statusFM.elidedText(item.status, mode, item.statusRect.width());
+
 		painter->setFont(item.progressFont);
-		painter->drawText(item.progressRect - ms_InnerMargins, flags, item.progress);
+		painter->drawText(item.progressRect, alignment, progressText);
 		painter->setFont(item.statusFont);
-		painter->drawText(item.statusRect - ms_InnerMargins, flags, item.status);
+		painter->drawText(item.statusRect, alignment, statusText);
 	}
 
 	void TorrentListDelegate::Draw(QPainter * painter, const LaidoutItem & item) const
 	{
-		//QIcon::State qs = paused ? QIcon::Off : QIcon::On;
-		//QIcon::Mode im = paused or not enabled ? QIcon::Disabled :
-		//                              selected ? QIcon::Selected
-		//                                       : QIcon::Normal;
-
-		//const QIcon::Mode emblemIm = selected ? QIcon::Selected : QIcon::Normal;
-		//const QIcon emblemIcon = error ? QIcon::fromTheme(QStringLiteral("emblem-important"), style->standardIcon(QStyle::SP_MessageBoxWarning)) : QIcon();
-
-		// render
-		//tor.getMimeTypeIcon().paint(painter, layout.iconRect, Qt::AlignCenter, im, qs);
-
-		//if (not emblemIcon.isNull())
-		//	emblemIcon.paint(painter, item.emblemRect, Qt::AlignCenter, emblemIm, qs);
-
-		//auto flags = Qt::AlignLeft | Qt::AlignVCenter;
-
 		DrawBackground(painter, item);
 		DrawText(painter, item);
 		DrawProgressBar(painter, item);
@@ -291,7 +302,7 @@ namespace qtor
 		QStyleOptionProgressBar option;
 		option.QStyleOption::operator =(*item.option);
 
-		const auto * listView = qobject_cast<const QAbstractItemView *>(item.option->widget);		
+		const auto * listView = qobject_cast<const QAbstractItemView *>(item.option->widget);
 		option.styleObject = listView->viewport();
 
 		option.progress = 0;
@@ -300,12 +311,12 @@ namespace qtor
 		
 		if (paused) option.state = QStyle::State_None;
 		option.state |= QStyle::State_Small;
-
+		
+		auto barWidth = item.option->rect.width();
+		barWidth -= ms_InnerMargins.right() + ms_InnerMargins.left() + ms_OutterMargins.right() + ms_OutterMargins.left();
+		
 		option.rect = item.barRect;
-		option.rect.setWidth(item.option->rect.width());
-		option.rect -= ms_InnerMargins;
-
-		auto & palette = option.palette;
+		option.rect.setWidth(barWidth);
 
 		if (seeding and seed_limit)
 		{
@@ -318,7 +329,7 @@ namespace qtor
 			option.progress = static_cast<int>(option.minimum + progress.value_or(ZERO) * (option.maximum - option.minimum));
 		}
 	
-
+		auto & palette = option.palette;
 		if (downloading)
 		{
 			static const QColor front = QColor("forestgreen");
@@ -359,10 +370,9 @@ namespace qtor
 	void TorrentListDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
 	{
 		LayoutItem(option, index, m_cachedItem);
-		auto area = (option.rect - ms_OutterMargins).topLeft();
 
 		painter->save();
-		painter->translate(area);
+		//painter->setClipRect(option.rect);
 		Draw(painter, m_cachedItem);
 		painter->restore();
 	}

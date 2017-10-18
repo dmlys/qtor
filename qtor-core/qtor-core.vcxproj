@@ -44,7 +44,7 @@
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
     <ClInclude Include="include\qtor\sparse_container.hpp" />
     <ClInclude Include="include\qtor\sparse_container_iterator.hpp" />
-    <ClInclude Include="include\qtor\TorrentModel.hpp" />
+    <ClInclude Include="include\qtor\TorrentsModel.hpp" />
     <ClInclude Include="include\qtor\torrent_store.hpp" />
     <ClInclude Include="include\qtor\torrent.hpp" />
     <ClInclude Include="include\qtor\types.hpp" />
@@ -58,8 +58,8 @@
     <ClCompile Include="src\sparse_container.cpp" />
     <ClCompile Include="src\torrent.cpp" />
     <ClCompile Include="src\TorrentListDelegate.cpp" />
-    <ClCompile Include="src\TorrentModel.cpp" />
-    <ClCompile Include="src\TorrentTableWidget.cpp" />
+    <ClCompile Include="src\TorrentsModel.cpp" />
+    <ClCompile Include="src\TorrentsView.cpp" />
     <ClCompile Include="src\torrent_store.cpp" />
     <ClCompile Include="src\view_manager.cpp" />
   </ItemGroup>
@@ -69,7 +69,7 @@
     <QtMOCCompile Include="include\qtor\MainWindow.hqt" />
     <QtMOCCompile Include="include\qtor\Application.hqt" />
     <QtMOCCompile Include="include\qtor\TorrentListDelegate.hqt" />
-    <QtMOCCompile Include="include\qtor\TorrentTableWidget.hqt" />
+    <QtMOCCompile Include="include\qtor\TorrentsView.hqt" />
   </ItemGroup>
   <ItemGroup>
     <QtRCCCompile Include="resources\qtor-core-resource.qrc">

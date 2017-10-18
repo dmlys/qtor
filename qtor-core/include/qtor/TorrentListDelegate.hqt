@@ -1,6 +1,8 @@
 #pragma once
 #include <qtor/torrent.hpp>
 #include <qtor/formatter.hqt>
+
+#include <QtGui/QTextFormat>
 #include <QtWidgets/QAbstractItemDelegate>
 
 namespace qtor
@@ -11,8 +13,9 @@ namespace qtor
 		struct LaidoutItem
 		{
 			QModelIndex index;
-			const QStyleOptionViewItem * option = nullptr;
 			const torrent * tor = nullptr;
+			const QStyleOptionViewItem * option = nullptr;
+			QPoint hintTopLeft;
 			
 			QFont baseFont;
 			QFont nameFont;
@@ -22,16 +25,19 @@ namespace qtor
 			QString name;
 			QString progress;
 			QString status;
-
-			QRect totalRect;
+			
 			QRect nameRect;
 			QRect statusRect;
 			QRect barRect;
 			QRect progressRect;
+			QRect totalRect;
 		};
 
 		mutable LaidoutItem m_cachedItem;
 		mutable formatter * m_fmt = new formatter(this);
+
+		QString m_searchText;
+		QTextCharFormat m_searchFormat;
 
 		static const QMargins ms_OutterMargins;
 		static const QMargins ms_InnerMargins;
@@ -56,6 +62,19 @@ namespace qtor
 		void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 
 	public:
-		using QAbstractItemDelegate::QAbstractItemDelegate;
+		QString GetFilterText() const             { return m_searchText; }
+		void    SetFilterText(const QString text) { m_searchText = text; }
+
+		decltype(auto) GetFormat() const                         { return m_searchFormat; }
+		void           SetFormat(const QTextCharFormat & format) { m_searchFormat = format; }
+
+	public:
+		Q_DISABLE_COPY(TorrentListDelegate);
+
+		TorrentListDelegate(QObject * parent = nullptr) : QAbstractItemDelegate(parent)
+		{
+			m_searchFormat.setForeground(Qt::GlobalColor::red);
+			m_searchFormat.setBackground(Qt::GlobalColor::green);
+		}
 	};
 }
