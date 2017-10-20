@@ -9,21 +9,19 @@ namespace qtor
 	{
 		std::string m_path;
 		ext::library_logger::stream_logger m_logger {std::clog};
+		abstract_data_source_ptr m_data_source;
 
 	public:
 		virtual auto CreateSource() -> abstract_data_source_ptr override
 		{
-			//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-			auto source = std::make_shared<qtor::transmission::data_source>();
-			source->set_address(m_path);
-			source->set_logger(&m_logger);
-			return source;
+			m_data_source->set_logger(&m_logger);
+			return m_data_source;
 		}
 
 	public:
-		TransmissionRemoteApp(std::string path)
+		TransmissionRemoteApp(abstract_data_source_ptr source)
 		{
-			m_path = std::move(path);
+			m_data_source = std::move(source);
 			Init();
 		}
 

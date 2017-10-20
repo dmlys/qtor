@@ -191,7 +191,32 @@ namespace transmission
 		if (seconds >= 0) (t.*pmf)(std::chrono::seconds(seconds));
 	}
 
-	
+	static void parse_status(const YAML::Node & node, torrent & t)
+	{
+		auto status = node.as<unsigned>(UINT_MAX);
+		switch (status)
+		{
+			// as defined in transmission.h
+			// TR_STATUS_STOPPED = 0, /* Torrent is stopped */
+			case 0: status = torrent_status::stopped; break; 
+			// TR_STATUS_CHECK_WAIT = 1, /* Queued to check files */
+			case 1: status = torrent_status::checking_queued; break;
+			// TR_STATUS_CHECK = 2, /* Checking files */
+			case 2: status = torrent_status::checking; break;
+			// TR_STATUS_DOWNLOAD_WAIT = 3, /* Queued to download */
+			case 3: status = torrent_status::downloading_queued; break;
+			// TR_STATUS_DOWNLOAD = 4, /* Downloading */
+			case 4: status = torrent_status::downloading; break;
+			// TR_STATUS_SEED_WAIT = 5, /* Queued to seed */
+			case 5: status = torrent_status::seeding_queued; break;
+			// TR_STATUS_SEED = 6  /* Seeding */
+			case 6: status = torrent_status::seeding; break;
+			
+			default: return;
+		}
+		
+		t.status(status);
+	}
 	
 #define TYPE_CONV(TYPE)                                                                            \
 	struct TYPE##_conv_type                                                                        \
@@ -230,12 +255,12 @@ namespace transmission
 	{
 		if (not opt1 or not opt2) return nullopt;
 
-		if (std::is_integral_v<Type> and opt2.get() == 0)
+		if (std::is_integral_v<Type> and opt2.value() == 0)
 		{
 			return nullopt;
 		}
 
-		return opt1.get() - opt2.get();
+		return opt1.value() - opt2.value();
 	}
 
 	template <class Type>
@@ -243,7 +268,7 @@ namespace transmission
 	{
 		if (not opt1 or not opt2) return nullopt;
 
-		return static_cast<double>(opt1.get()) / static_cast<double>(opt2.get());
+		return static_cast<double>(opt1.value()) / static_cast<double>(opt2.value());
 	}
 	
 	static torrent_list parse_torrent_list(const YAML::Node & node)
@@ -262,14 +287,13 @@ namespace transmission
 
 			DECLARE_CONVS(torr);
 
+			parse_status(tnode[Status], torr);
 			string_conv(tnode[Id], &torrent::id);
 			string_conv(tnode[Name], &torrent::name);
 			string_conv(tnode[Comment], &torrent::comment);
 			string_conv(tnode[Creator], &torrent::creator);
-
-			uint64_conv(tnode[Status], &torrent::status);
+			
 			string_conv(tnode[ErrorString], &torrent::error_string);
-
 			bool_conv(tnode[IsFinished], &torrent::finished);
 			bool_conv(tnode[IsStalled], &torrent::stalled);
 

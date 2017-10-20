@@ -48,4 +48,57 @@ namespace sqlite3yaw::convert
 			val = q.get_int();
 		}
 	};
+
+	template <>
+	struct conv<std::nullopt_t>
+	{
+		static void put(std::nullopt_t val, bool temp, ibind & b)
+		{
+			conv<std::nullptr_t>::put(nullptr, false, b);
+		}
+	};
+
+	template <class Type>
+	struct conv<std::optional<Type>>
+	{
+		typedef std::optional<Type> optional;
+
+		static void put(const optional & val, bool temp, ibind & b)
+		{
+			if (val)
+				conv<Type>::put(val.value(), temp, b);
+			else
+				conv<std::nullptr_t>::put(nullptr, false, b);
+		}
+
+		static void get(optional & val, iquery & q)
+		{
+			if (q.get_type() == SQLITE_NULL)
+				val = nullopt;
+			else
+			{
+				Type v;
+				conv<Type>::get(q, v);
+				val = std::move(v);
+			}
+		}
+	};
+
+
+	template <class ... Type>
+	struct conv<std::variant<Type...>>
+	{
+		typedef std::variant<Type...> variant;
+
+		static void put(const variant & val, bool temp, ibind & b)
+		{
+			auto vis = [&b, temp](const auto & val) 
+			{
+				conv<std::decay_t<decltype(val)>>::put(val, temp, b);
+			};
+
+			std::visit(vis, val);
+		}
+	};
+
 }

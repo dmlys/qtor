@@ -39,6 +39,7 @@ namespace qtor
 		std::shared_ptr<torrent_store> m_recstore;
 
 	public:
+		static QString StatusString(unsigned status);
 		const torrent & GetItem(int row) const override;
 
 		void FilterBy(QString expr) override;

@@ -36,8 +36,8 @@ namespace qtor
 		auto get_item(index_type key) noexcept       -> any_type &;
 		auto get_item(index_type key) const noexcept -> const any_type &;
 
-		template <class Type> optional<Type &>       get_item(index_type key) noexcept;
-		template <class Type> optional<const Type &> get_item(index_type key) const noexcept;
+		//template <class Type> optional<Type &>       get_item(index_type key) noexcept;
+		template <class Type> optional<Type> get_item(index_type key) const noexcept;
 	};
 
 
@@ -165,21 +165,21 @@ namespace qtor
 		else                     return it->second;
 	}
 
+	//template <class Type>
+	//optional<Type &> sparse_container::get_item(index_type key) noexcept
+	//{
+	//	auto it = m_items.find(key);
+	//	if (it == m_items.end()) return nullopt;
+
+	//	auto & item = it->second;
+	//	auto * val = any_cast<Type>(&item);
+
+	//	if (val == nullptr) return nullopt;
+	//	else                return *val;
+	//}
+
 	template <class Type>
-	optional<Type &> sparse_container::get_item(index_type key) noexcept
-	{
-		auto it = m_items.find(key);
-		if (it == m_items.end()) return nullopt;
-
-		auto & item = it->second;
-		auto * val = any_cast<Type>(&item);
-
-		if (val == nullptr) return nullopt;
-		else                return *val;
-	}
-
-	template <class Type>
-	optional<const Type &> sparse_container::get_item(index_type key) const noexcept
+	optional<Type> sparse_container::get_item(index_type key) const noexcept
 	{
 		auto it = m_items.find(key);
 		if (it == m_items.end()) return nullopt;

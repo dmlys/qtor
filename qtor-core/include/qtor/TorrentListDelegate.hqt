@@ -36,8 +36,8 @@ namespace qtor
 		mutable LaidoutItem m_cachedItem;
 		mutable formatter * m_fmt = new formatter(this);
 
-		QString m_searchText;
 		QTextCharFormat m_searchFormat;
+		QString m_searchText;
 
 		static const QMargins ms_OutterMargins;
 		static const QMargins ms_InnerMargins;
@@ -46,6 +46,7 @@ namespace qtor
 		virtual QString TittleText(const torrent & tor) const;
 		virtual QString StatusText(const torrent & tor) const;
 		virtual QString ProgressText(const torrent & tor) const;
+
 		//virtual QString ShortStatusText(const torrent & tor) const;
 		//virtual QString ShortTransferText(const torrent & tor) const;
 

@@ -13,12 +13,12 @@ namespace qtor
 	namespace torrent_status
 	{		
 		constexpr unsigned stopped = 0;
-		constexpr unsigned download = 1;
-		constexpr unsigned seed = 2;
-		constexpr unsigned check = 3;
-		constexpr unsigned check_wait = 4;
-		constexpr unsigned download_wait = 5;
-		constexpr unsigned seed_wait = 6;
+		constexpr unsigned checking = 1;
+		constexpr unsigned checking_queued = 2;
+		constexpr unsigned downloading = 3;
+		constexpr unsigned downloading_queued = 4;
+		constexpr unsigned seeding = 5;
+		constexpr unsigned seeding_queued = 6;
 	}
 
 
@@ -34,10 +34,25 @@ namespace qtor
 	F(OPT,   Comment, comment, string, string_type)       \
 
 
-#define QTOR_TORRENT_FOR_EACH_STATUS_FEILD(F)                       \
-	/*opt, Id, Name, Type, TypeName */                              \
-	F(REQ, Status,      status,       uint64, uint64_type)          \
-	F(OPT, ErrorString, error_string, string, string_type)          \
+#define QTOR_TORRENT_FOR_EACH_STATUS_FEILD(F)                              \
+	/*opt, Id, Name, Type, TypeName */                                     \
+	F(REQ, Status,      status,       uint64, uint64_type)                 \
+	F(OPT, ErrorString, error_string, string, string_type)                 \
+	                                                                       \
+	F(OPT, Finished,    finished,     bool,   bool)                        \
+	F(OPT, Completed,   completed,    bool,   bool)                        \
+	F(OPT, Stalled,     stalled,      bool,   bool)                        \
+	                                                                       \
+	F(OPT, UploadingPeers,   uploading_peers,   uint64, uint64_type)       \
+	F(OPT, DownloadingPeers, downloading_peers, uint64, uint64_type)       \
+	F(OPT, ConnectedPeers,   connected_peers,   uint64, uint64_type)       \
+	                                                                       \
+	F(OPT, DownloadingWebseeds, downloading_webseeds, uint64, uint64_type) \
+	F(OPT, ConnectedWebseeds,   connected_webseeds,   uint64, uint64_type) \
+
+
+
+#define QTOR_TORRENT_FOR_EACH_PROGRESS_FIELD(F)                     \
 	F(OPT, Ratio,       ratio,        ratio,  double)               \
 	F(OPT, SeedLimit,   seed_limit,   ratio,  double)               \
 	                                                                \
@@ -45,10 +60,8 @@ namespace qtor
 	F(OPT, TotalProgress,     total_progress,      percent, double) \
 	F(OPT, RecheckProgress,   recheck_progress,    percent, double) \
 	F(OPT, MetadataProgress,  metadata_progress,   percent, double) \
-	                                                                \
-	F(OPT, Finished,    finished,     bool,   bool)                 \
-	F(OPT, Completed,   completed,    bool,   bool)                 \
-	F(OPT, Stalled,     stalled,      bool,   bool)                 \
+
+
 
 
 #define QTOR_TORRENT_FOR_EACH_SIZE_FIELD(F)                      \
@@ -87,6 +100,7 @@ namespace qtor
 #define QTOR_TORRENT_FOR_EACH_FIELD(F)                      \
 	QTOR_TORRENT_FOR_EACH_BASIC_FIELD(F)                    \
 	QTOR_TORRENT_FOR_EACH_STATUS_FEILD(F)                   \
+	QTOR_TORRENT_FOR_EACH_PROGRESS_FIELD(F)                 \
 	QTOR_TORRENT_FOR_EACH_SIZE_FIELD(F)                     \
 	QTOR_TORRENT_FOR_EACH_SPEED_FIELD(F)                    \
 	QTOR_TORRENT_FOR_EACH_TIME_DURATION_FIELD(F)            \
@@ -97,8 +111,8 @@ namespace qtor
 
 #define QTOR_TORRENT_DEFINE_PROPERTY(AO, ID, NAME, A3, TYPE)                                                                   \
 	auto NAME(TYPE val)        -> self_type &            { return static_cast<self_type &>(set_item(ID, std::move(val))); }    \
-	auto NAME() const noexcept -> optional<const TYPE &> { return get_item<TYPE>(ID); }                                        \
-	auto NAME() noexcept       -> optional<TYPE &>       { return get_item<TYPE>(ID); }                                        \
+	auto NAME() const noexcept -> optional<TYPE>         { return get_item<TYPE>(ID); }                                        \
+	/*auto NAME() noexcept       -> optional<TYPE &>       { return get_item<TYPE>(ID); }  */                                  \
 	                                                                                                                           \
 	template <class Type>                                                                                                      \
 	std::enable_if_t<std::is_convertible_v<std::decay_t<Type>, TYPE>, self_type &>                                             \

@@ -20,7 +20,7 @@ namespace qtor
 	{
 		if (not opt1 or not opt2) return nullopt;
 
-		return static_cast<double>(opt1.get()) / static_cast<double>(opt2.get());
+		return static_cast<double>(opt1.value()) / static_cast<double>(opt2.value());
 	}
 
 
@@ -32,7 +32,7 @@ namespace qtor
 	QString TorrentListDelegate::ProgressText(const torrent & tor) const
 	{
 		const auto metadata_progress = tor.metadata_progress();
-		const bool magnet = not metadata_progress or metadata_progress.get() < 1.0;
+		const bool magnet = metadata_progress.value() < 1.0;
 
 		const auto requested_size = tor.requested_size();
 		const auto current_size = tor.current_size();
@@ -107,9 +107,8 @@ namespace qtor
 		auto upload_speed = tor.upload_speed();
 		auto download_speed = tor.download_speed();
 
-		const speed_type zero = 0;
 		// add time when downloading
-		if ((seed_ratio and upload_speed.value_or(zero) > zero) or download_speed.value_or(zero) > zero)
+		if ((seed_ratio and upload_speed > 0) or download_speed > 0)
 		{
 			auto eta = tor.eta();
 			if (eta)
@@ -126,9 +125,113 @@ namespace qtor
 		return str.trimmed();
 	}
 
+	//QString TorrentListDelegate::ShortTransferText(const torrent & tor) const
+	//{
+	//	auto metadata = tor.metadata_progress();
+	//	bool downloading = metadata and (tor.downloading_peers() > 0 or tor.downloading_webseeds() > 0);
+	//	bool uploading = metadata and (tor.uploading_peers() > 0);
+
+	//	if (downloading)
+	//	{
+	//		return m_fmt->format_speed(tor.download_speed()) % " " % m_fmt->format_speed(tor.upload_speed());
+	//	}
+	//	else if (uploading)
+	//	{
+	//		return m_fmt->format_speed(tor.upload_speed());
+	//	}
+	//	else
+	//	{
+	//		return {};
+	//	}
+	//}
+
+	//QString TorrentListDelegate::ShortStatusText(const torrent & tor) const
+	//{
+	//	auto status = tor.status().value();
+	//	switch (status)
+	//	{
+	//		case torrent_status::checking:
+	//			return tr("Verifying local data (%1 tested)").arg(m_fmt->format_percent(tor.recheck_progress()));
+
+	//		case torrent_status::downloading:
+	//		case torrent_status::seeding:
+	//			return ShortTransferText(tor) % "    " % tr("Ratio: %1").arg(m_fmt->format_percent(tor.ratio()));
+	//			
+	//		default:
+	//			return TorrentsModel::StatusString(status);
+	//	}
+	//}
+
 	QString TorrentListDelegate::StatusText(const torrent & tor) const
 	{
-		return "dummy status";
+		QString str;
+		
+		auto status = tor.status().value();
+		auto metadata_progress = tor.metadata_progress();
+		bool metadata_finished = metadata_progress >= 1.0;
+
+		switch (status)
+		{
+			case torrent_status::checking:
+				str = tr("Verifying local data (%1 tested)").arg(m_fmt->format_percent(tor.recheck_progress()));
+				break;
+
+			case torrent_status::seeding:
+			{
+				auto connected = tor.connected_peers().value_or(0);
+				auto uploading = tor.uploading_peers().value_or(0);
+				if (connected == 0)
+				{
+					str = tr("Seeding to %Ln peer(s)", 0, uploading);
+				}
+				else
+				{
+					str = tr("Seeding to %1 of %Ln connected peer(s)", 0, connected)
+						.arg(m_fmt->format_uint64(uploading));
+				}
+
+				str += " - " % m_fmt->format_speed(tor.upload_speed());
+				break;
+			}
+
+			case torrent_status::downloading:
+			{
+				if (not metadata_finished)
+				{
+					auto peers = tor.downloading_peers().value_or(0);
+					str = tr("Downloading metadata from %Ln peer(s) (%1 done)", 0, peers)
+						.arg(m_fmt->format_percent(metadata_progress));
+				}
+				else
+				{
+					auto peers = tor.connected_peers().value_or(0);
+					auto webseeds = tor.connected_webseeds().value_or(0);
+					auto connected = peers + webseeds;
+					/* it would be nicer for translation if this was all one string, but I don't see how to do multiple %n's in tr() */
+					str = tr("Downloading from %1 of %Ln connected peer(s)", 0, connected)
+							 .arg(m_fmt->format_uint64(tor.downloading_peers()));
+					
+					if (webseeds)
+						//: Second (optional) part of phrase "Downloading from ... of ... connected peer(s) and ... web seed(s)";
+						//: notice that leading space (before "and") is included here
+						str += tr(" and %Ln web seed(s)", 0, webseeds);
+
+					str += " - " % m_fmt->format_speed(tor.download_speed()) % "  " % m_fmt->format_speed(tor.upload_speed());
+				}
+
+				break;
+			}
+
+			case torrent_status::stopped:
+			case torrent_status::checking_queued:
+			case torrent_status::downloading_queued:
+			case torrent_status::seeding_queued:
+			default:
+				str = TorrentsModel::StatusString(status);
+				break;
+		}
+
+		return str;
 	}
 
 	void TorrentListDelegate::LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index, LaidoutItem & item) const
@@ -234,7 +337,7 @@ namespace qtor
 		const QStyleOptionViewItem & option = *item.option;
 		auto * style = item.option->widget->style();
 
-		const auto status = item.tor->status().get();
+		const auto status = item.tor->status().value();
 		const bool paused = status == torrent_status::stopped;
 		const bool error = false;
 
@@ -252,10 +355,17 @@ namespace qtor
 		static const QColor red {"red"};
 		painter->setPen(error and not selected ? red : option.palette.color(cg, cr));
 
-		painter->setFont(item.nameFont);
-		QList<QTextLayout::FormatRange> formats;
-		QtTools::Delegates::FormatSearchText(item.name, m_searchText, m_searchFormat, formats);
+
+		QTextCharFormat fmt, searchFmt = m_searchFormat;
+		fmt.setFont(item.nameFont);
+		searchFmt.setFont(item.nameFont);
+
+		QVector<QTextLayout::FormatRange> formats;		
+		formats.push_back({0, item.name.length(), fmt});
+
+		QtTools::Delegates::FormatSearchText(item.name, m_searchText, searchFmt, formats);
 		QtTools::Delegates::DrawSearchFormatedText(painter, item.name, item.nameRect, option, formats);
+
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		QFontMetrics nameFM {item.nameFont, device};
@@ -286,14 +396,14 @@ namespace qtor
 		auto * style = item.option->widget->style();
 		auto & tor = *item.tor;
 
-		const auto status = tor.status().get();
-		const bool seeding = status == torrent_status::seed;
-		const bool downloading = status == torrent_status::download;
+		const auto status = tor.status().value();
+		const bool seeding = status == torrent_status::seeding;
+		const bool downloading = status == torrent_status::downloading;
 		const bool paused = status == torrent_status::stopped;
 
 		const auto metadata_progress = tor.metadata_progress();
 		const auto requested_progress = tor.requested_progress();
-		const bool magnet = not metadata_progress or metadata_progress.get() < 1.0;
+		const bool magnet = not metadata_progress or metadata_progress.value() < 1.0;
 
 		const auto ratio = tor.ratio();
 		const auto seed_limit = tor.seed_limit();

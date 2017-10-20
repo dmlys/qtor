@@ -3,6 +3,22 @@
 
 namespace qtor
 {
+	QString TorrentsModel::StatusString(unsigned status)
+	{
+		switch (status)
+		{
+			case torrent_status::stopped:          return tr("stopped");
+			case torrent_status::downloading:      return tr("downloading");
+			case torrent_status::seeding:          return tr("seeding");
+			case torrent_status::checking:         return tr("checking");
+			case torrent_status::downloading_queued: return tr("downloading_queued");
+			case torrent_status::seeding_queued:     return tr("seeding_queued");
+			case torrent_status::checking_queued:    return tr("checking_queued");
+
+			default: return tr("unknown torrent status");
+		}
+	}
+
 	int TorrentsModel::rowCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
 		return qint(m_store.size());

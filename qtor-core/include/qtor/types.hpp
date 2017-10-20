@@ -5,11 +5,11 @@
 #include <chrono>
 
 //#include <any>
-//#include <optional>
-//#include <variant>
+#include <optional>
+#include <variant>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
+//#include <boost/optional.hpp>
+//#include <boost/variant.hpp>
 
 #include <QtCore/QString>
 #include <QtCore/QVariant>
@@ -32,19 +32,20 @@ namespace qtor
 		// using any, optional, variant classes from boost
 		// std is ok, but i need optional with references, and std does not support them yet
 		template <class type>
-		using optional = boost::optional<type>;
+		using optional = std::optional<type>;
 
-		using nullopt_t = boost::none_t;
-		const nullopt_t nullopt = boost::none;
-		using boost::make_optional;
-		using boost::get;
+		using nullopt_t = std::nullopt_t;
+		const nullopt_t nullopt = std::nullopt;
+		using std::make_optional;
+		using std::get;
+		//using boost::get;
 
 		//using any = boost::any;
 		//using boost::any_cast;
 		//using bad_any_cast = boost::bad_any_cast;
 
 		template <class ... types>
-		using variant = boost::variant<types...>;
+		using variant = std::variant<types...>;
 	
 
 		class bad_any_cast : public std::bad_cast
