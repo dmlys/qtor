@@ -255,11 +255,6 @@ namespace transmission
 	{
 		if (not opt1 or not opt2) return nullopt;
 
-		if (std::is_integral_v<Type> and opt2.value() == 0)
-		{
-			return nullopt;
-		}
-
 		return opt1.value() - opt2.value();
 	}
 

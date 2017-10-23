@@ -90,6 +90,14 @@ namespace qtor::sqlite
 		return create_table(ses, torrents_table_name, torrents_column_info());
 	}
 
+	void drop_torrents_table(sqlite3yaw::session & ses)
+	{
+		std::string cmd = "drop table ";
+		sqlite3yaw::copy_sql_name(torrents_table_name, std::back_inserter(cmd));
+
+		ses.exec(cmd);
+	}
+
 	void save_torrents(sqlite3yaw::session & ses, const torrent_list & torrents)
 	{
 		qtor::torrent_meta meta;

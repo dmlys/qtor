@@ -16,6 +16,7 @@ namespace qtor::sqlite
 
 	void create_table(sqlite3yaw::session & ses, const std::string & name, const column_info & columns);
 	void create_torrents_table(sqlite3yaw::session & ses);
+	void drop_torrents_table(sqlite3yaw::session & ses);
 
 	void save_torrents(sqlite3yaw::session & ses, const torrent_list & torrents);
 	auto load_torrents(sqlite3yaw::session & ses) -> torrent_list;

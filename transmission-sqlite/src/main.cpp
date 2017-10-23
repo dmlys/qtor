@@ -56,6 +56,7 @@ void save_torrents(qtor::torrent_list torrents)
 		sqlite3yaw::session ses;
 		ses.open(g_sqlite_path);
 
+		qtor::sqlite::drop_torrents_table(ses);
 		qtor::sqlite::create_torrents_table(ses);
 		qtor::sqlite::save_torrents(ses, torrents);
 	}
