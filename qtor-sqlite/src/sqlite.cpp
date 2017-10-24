@@ -2,6 +2,7 @@
 #include <qtor/sqlite-conv-qtor.hpp>
 #include <qtor/utils.hpp>
 
+#include <ext/range/adaptors/getted.hpp>
 
 namespace qtor::sqlite
 {
@@ -17,6 +18,7 @@ namespace qtor::sqlite
 		static const column_info info = []
 		{
 			column_info info;
+			auto & meta = torrents_meta();
 
 			torrent::index_type first = torrent::FirstField;
 			torrent::index_type last = torrent::LastField;
@@ -25,8 +27,8 @@ namespace qtor::sqlite
 			for (; first != last; ++first)
 			{
 				auto & val = info[first];
-				auto name = torrents_meta().item_name(first);
-				auto type = torrents_meta().item_type(first);
+				auto name = meta.item_name(first);
+				auto type = meta.item_type(first);
 				val = std::make_tuple(first, type, FromQString(name));
 			}
 
@@ -60,16 +62,15 @@ namespace qtor::sqlite
 		std::string cmd;
 		cmd.resize(1024);
 
-		auto out = std::back_inserter(cmd);
 		cmd = "create table if not exists ";
-		out = sqlite3yaw::copy_sql_name(name, out);
+		sqlite3yaw::escape_sql_name(name, cmd);
 		cmd += "( ";
 
 		for (auto & col : columns)
 		{
 			auto & type = std::get<1>(col);
 			auto & name = std::get<2>(col);
-			out = sqlite3yaw::copy_sql_name(name, out);
+			sqlite3yaw::escape_sql_name(name, cmd);
 			
 			cmd += ' ';
 			cmd += get_type(type);
@@ -93,7 +94,7 @@ namespace qtor::sqlite
 	void drop_torrents_table(sqlite3yaw::session & ses)
 	{
 		std::string cmd = "drop table ";
-		sqlite3yaw::copy_sql_name(torrents_table_name, std::back_inserter(cmd));
+		sqlite3yaw::escape_sql_name(torrents_table_name, cmd);
 
 		ses.exec(cmd);
 	}

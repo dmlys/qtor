@@ -407,7 +407,6 @@ namespace qtor
 
 		const auto ratio = tor.ratio();
 		const auto seed_limit = tor.seed_limit();
-		constexpr double ZERO = 0.0;
 
 		QStyleOptionProgressBar option;
 		option.QStyleOption::operator =(*item.option);
@@ -431,12 +430,12 @@ namespace qtor
 		if (seeding and seed_limit)
 		{
 			const auto scale = ratio / seed_limit;
-			option.progress = static_cast<int>(option.minimum + scale.value_or(ZERO) * (option.maximum - option.minimum));
+			option.progress = static_cast<int>(option.minimum + scale.value_or(0) * (option.maximum - option.minimum));
 		}
 		else
 		{
 			const auto progress = magnet ? metadata_progress : requested_progress;
-			option.progress = static_cast<int>(option.minimum + progress.value_or(ZERO) * (option.maximum - option.minimum));
+			option.progress = static_cast<int>(option.minimum + progress.value_or(0) * (option.maximum - option.minimum));
 		}
 	
 		auto & palette = option.palette;

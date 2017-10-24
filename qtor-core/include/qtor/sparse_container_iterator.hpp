@@ -109,6 +109,6 @@ namespace qtor
 	template <class functor, class index_iterator> using       sparse_container_transform_iterator = base_sparse_container_transform_iterator<functor, index_iterator, false>;
 
 	template <class functor, class index_iterator> using const_sparse_container_transform_range = boost::iterator_range<const_sparse_container_transform_iterator<functor, index_iterator>>;
-	template <class functor, class index_iterator>       using sparse_container_transform_range = boost::iterator_range<sparse_container_transform_iterator<functor, index_iterator>>;
+	template <class functor, class index_iterator> using       sparse_container_transform_range = boost::iterator_range<sparse_container_transform_iterator<functor, index_iterator>>;
 
 }

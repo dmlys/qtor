@@ -104,8 +104,6 @@
 //	}
 //}
 
-#include <QtTools/ListModel.hqt>
-#include <ext/range/pretty_printers.hpp>
 
 int main(int argc, char * argv[])
 {
@@ -113,6 +111,7 @@ int main(int argc, char * argv[])
 	using namespace qtor;
 
 	ext::winsock2_stream_init();
+	ext::init_future_library(std::thread::hardware_concurrency());
 
 	QtTools::QtRegisterStdString();
 	QMetaType::registerComparators<datetime_type>();
