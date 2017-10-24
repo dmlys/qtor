@@ -22,6 +22,8 @@ namespace qtor
 				else
 					return nullopt;
 
+			case meta::Ratio:
+			case meta::Percent:
 			case meta::Double:
 				if (auto * ptr = any_cast<double>(&val))
 					return *ptr;

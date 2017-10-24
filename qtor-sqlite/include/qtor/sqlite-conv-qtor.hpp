@@ -74,11 +74,11 @@ namespace sqlite3yaw::convert
 		static void get(optional & val, iquery & q)
 		{
 			if (q.get_type() == SQLITE_NULL)
-				val = nullopt;
+				val = std::nullopt;
 			else
 			{
 				Type v;
-				conv<Type>::get(q, v);
+				conv<Type>::get(v, q);
 				val = std::move(v);
 			}
 		}

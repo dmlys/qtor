@@ -4,6 +4,7 @@
 
 #include <ext/range/adaptors/getted.hpp>
 
+
 namespace qtor::sqlite
 {
 	const std::string torrents_table_name = "torrents";
@@ -154,29 +155,29 @@ namespace qtor::sqlite
 				case sparse_container_meta::Uint64:
 				case sparse_container_meta::Speed:
 				case sparse_container_meta::Size:
-					torr.set_item(key, sqlite3yaw::get<uint64_type>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<uint64_type>>(stmt, i));
 					break;
 
 				case sparse_container_meta::Bool:
-					torr.set_item(key, sqlite3yaw::get<bool>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<bool>>(stmt, i));
 					break;
 
 				case sparse_container_meta::Double:
 				case sparse_container_meta::Percent:
 				case sparse_container_meta::Ratio:
-					torr.set_item(key, sqlite3yaw::get<double>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<double>>(stmt, i));
 					break;
 
 				case sparse_container_meta::String:
-					torr.set_item(key, sqlite3yaw::get<string_type>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<string_type>>(stmt, i));
 					break;
 
 				case sparse_container_meta::DateTime:
-					torr.set_item(key, sqlite3yaw::get<datetime_type>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<datetime_type>>(stmt, i));
 					break;
 
 				case sparse_container_meta::Duration:
-					torr.set_item(key, sqlite3yaw::get<duration_type>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<duration_type>>(stmt, i));
 					break;
 
 				default:
