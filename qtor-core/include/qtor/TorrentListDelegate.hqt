@@ -49,14 +49,20 @@ namespace qtor
 
 		//virtual QString ShortStatusText(const torrent & tor) const;
 		//virtual QString ShortTransferText(const torrent & tor) const;
+		
+		static QPalette::ColorGroup ColorGroup(const QStyleOption & opt) noexcept;
 
 	protected:
+		virtual QPalette ProgressBarPalete(const LaidoutItem & item) const;
 		virtual void LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index, LaidoutItem & cache) const;
 
 		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
 		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;
 		virtual void DrawText(QPainter * painter, const LaidoutItem & item) const;
+
 		virtual void DrawProgressBar(QPainter * painter, const LaidoutItem & item) const;
+		virtual void DrawStyledProgressBar(QPainter * painter, const LaidoutItem & item) const;
+		virtual void DrawCustomProgressBar(QPainter * painter, const LaidoutItem & item) const;
 
 	public:
 		QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;

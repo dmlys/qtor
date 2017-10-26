@@ -4,8 +4,8 @@
 
 #include <QtCore/QStringBuilder>
 #include <QtGui/QPainter>
+#include <QtGui/QLinearGradient>
 #include <QtWidgets/QAbstractItemView>
-#include <QtCore/QDebug>
 
 #include <QtTools/Delegates/StyledParts.hpp>
 #include <QtTools/Delegates/SearchDelegate.hpp>
@@ -234,6 +234,17 @@ namespace qtor
 		return str;
 	}
 
+	QPalette::ColorGroup TorrentListDelegate::ColorGroup(const QStyleOption & opt) noexcept
+	{
+		const bool selected = opt.state & QStyle::State_Selected;
+		const bool enabled = opt.state & QStyle::State_Enabled;
+		const bool active = opt.state & QStyle::State_Active;
+
+		return not enabled ? QPalette::Disabled :
+		       not active  ? QPalette::Inactive
+		                   : QPalette::Normal;
+	}
+
 	void TorrentListDelegate::LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index, LaidoutItem & item) const
 	{
 		item.option = &option;
@@ -391,7 +402,114 @@ namespace qtor
 		DrawProgressBar(painter, item);
 	}
 
+	QPalette TorrentListDelegate::ProgressBarPalete(const LaidoutItem & item) const
+	{
+		auto & tor = *item.tor;
+
+		const auto status = tor.status().value();
+		const bool seeding = status == torrent_status::seeding;
+		const bool downloading = status == torrent_status::downloading;
+
+		auto palette = item.option->palette;
+		if (downloading)
+		{
+			static const QColor front = QColor("steelblue");
+			static const QColor back = QColor("steelblue");
+
+			palette.setBrush(QPalette::Highlight, front);
+			palette.setColor(QPalette::Base, back);
+			palette.setColor(QPalette::Window, back);
+		}
+		else if (seeding)
+		{
+			static const QColor front = QColor("forestgreen");
+			static const QColor back = QColor("darkseagreen");
+
+			palette.setBrush(QPalette::Highlight, front);
+			palette.setColor(QPalette::Base, back);
+			palette.setColor(QPalette::Window, back);
+		}
+		else
+		{
+			static const QColor front = QColor("silver");
+			static const QColor back = QColor("grey");
+
+			palette.setBrush(QPalette::Highlight, front);
+			palette.setColor(QPalette::Base, back);
+			palette.setColor(QPalette::Window, back);
+		}
+
+		return palette;
+	}
+
 	void TorrentListDelegate::DrawProgressBar(QPainter * painter, const LaidoutItem & item) const
+	{
+		DrawCustomProgressBar(painter, item);
+		//DrawStyledProgressBar(painter, item);
+	}
+
+	void TorrentListDelegate::DrawCustomProgressBar(QPainter * painter, const LaidoutItem & item) const
+	{
+		auto * style = item.option->widget->style();
+		auto & tor = *item.tor;
+		auto & option = *item.option;
+
+		const auto status = tor.status().value();
+		const bool seeding = status == torrent_status::seeding;
+		const bool downloading = status == torrent_status::downloading;
+		const bool paused = status == torrent_status::stopped;
+
+		const auto metadata_progress = tor.metadata_progress();
+		const auto requested_progress = tor.requested_progress();
+		const bool magnet = not metadata_progress or metadata_progress.value() < 1.0;
+
+		const auto ratio = tor.ratio();
+		const auto seed_limit = tor.seed_limit();
+
+		auto palette = ProgressBarPalete(item);
+		palette.setCurrentColorGroup(ColorGroup(option));
+
+		auto width = item.option->rect.width();
+		auto rect = item.barRect;
+		width -= ms_InnerMargins.right() + ms_InnerMargins.left() + ms_OutterMargins.right() + ms_OutterMargins.left();
+		rect.setWidth(width);
+		auto hieght = rect.height();
+
+		// [0.0 .. 1.0]
+		auto progress = seeding and seed_limit ? ratio / seed_limit : 
+		                                magnet ? metadata_progress 
+		                                       : requested_progress;
+		
+		auto xprogress = rect.left() + std::clamp(0.0, progress.value_or(0.0), 1.0) * rect.width();
+		auto left = rect, right = rect;
+		left.setRight(xprogress);
+		right.setLeft(xprogress);
+
+		QLinearGradient gradient {left.topLeft(), left.bottomLeft()};
+		gradient.setColorAt(0, palette.color(QPalette::Base));
+		gradient.setColorAt(0.5, palette.color(QPalette::Highlight));
+		gradient.setColorAt(1, palette.color(QPalette::Base));
+
+		painter->setRenderHint(QPainter::Antialiasing);
+		//painter->setPen(palette.color(QPalette::Highlight));
+		painter->setBrush(gradient);
+
+		if (not left.isEmpty())
+		{
+			painter->setClipRect(left.adjusted(0, 0, 0, 1));
+			painter->drawRoundedRect(left, hieght / 3, hieght / 3);
+		}
+
+		if (not right.isEmpty())
+		{
+			painter->setClipRect(right.adjusted(0, 0, 0, 1));
+			painter->drawRoundedRect(right, hieght / 3, hieght / 3);
+		}
+
+		painter->setClipping(false);
+	}
+
+	void TorrentListDelegate::DrawStyledProgressBar(QPainter * painter, const LaidoutItem & item) const
 	{
 		auto * style = item.option->widget->style();
 		auto & tor = *item.tor;
@@ -426,6 +544,7 @@ namespace qtor
 		
 		option.rect = item.barRect;
 		option.rect.setWidth(barWidth);
+		option.palette = ProgressBarPalete(item);
 
 		if (seeding and seed_limit)
 		{
@@ -436,35 +555,6 @@ namespace qtor
 		{
 			const auto progress = magnet ? metadata_progress : requested_progress;
 			option.progress = static_cast<int>(option.minimum + progress.value_or(0) * (option.maximum - option.minimum));
-		}
-	
-		auto & palette = option.palette;
-		if (downloading)
-		{
-			static const QColor front = QColor("forestgreen");
-			static const QColor back  = QColor("darkseagreen");
-
-			palette.setBrush(QPalette::Highlight, front);
-			palette.setColor(QPalette::Base, back);
-			palette.setColor(QPalette::Window, back);
-		}
-		else if (seeding)
-		{
-			static const QColor front = QColor("steelblue");
-			static const QColor back = QColor("steelblue");
-
-			palette.setBrush(QPalette::Highlight, front);
-			palette.setColor(QPalette::Base, back);
-			palette.setColor(QPalette::Window, back);
-		}
-		else
-		{
-			static const QColor front = QColor("silver");
-			static const QColor back = QColor("grey");
-
-			palette.setBrush(QPalette::Highlight, front);
-			palette.setColor(QPalette::Base, back);
-			palette.setColor(QPalette::Window, back);
 		}
 
 		style->drawControl(QStyle::CE_ProgressBar, &option, painter);
