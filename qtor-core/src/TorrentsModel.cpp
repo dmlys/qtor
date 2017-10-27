@@ -7,10 +7,10 @@ namespace qtor
 	{
 		switch (status)
 		{
-			case torrent_status::stopped:          return tr("stopped");
-			case torrent_status::downloading:      return tr("downloading");
-			case torrent_status::seeding:          return tr("seeding");
-			case torrent_status::checking:         return tr("checking");
+			case torrent_status::stopped:            return tr("stopped");
+			case torrent_status::downloading:        return tr("downloading");
+			case torrent_status::seeding:            return tr("seeding");
+			case torrent_status::checking:           return tr("checking");
 			case torrent_status::downloading_queued: return tr("downloading_queued");
 			case torrent_status::seeding_queued:     return tr("seeding_queued");
 			case torrent_status::checking_queued:    return tr("checking_queued");
@@ -42,7 +42,7 @@ namespace qtor
 		return refilter_and_notify(rtype);
 	}
 
-	void TorrentsModel::sort(int column, Qt::SortOrder order)
+	void TorrentsModel::SortBy(int column, Qt::SortOrder order)
 	{
 		m_sort_pred = sparse_container_comparator(m_columns[column], order == Qt::AscendingOrder);
 		view_type::sort_and_notify(m_store.begin(), m_store.end());

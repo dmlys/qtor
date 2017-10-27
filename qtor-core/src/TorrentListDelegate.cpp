@@ -5,6 +5,7 @@
 #include <QtCore/QStringBuilder>
 #include <QtGui/QPainter>
 #include <QtGui/QLinearGradient>
+#include <QtWidgets/QStyleFactory>
 #include <QtWidgets/QAbstractItemView>
 
 #include <QtTools/Delegates/StyledParts.hpp>
@@ -234,17 +235,6 @@ namespace qtor
 		return str;
 	}
 
-	QPalette::ColorGroup TorrentListDelegate::ColorGroup(const QStyleOption & opt) noexcept
-	{
-		const bool selected = opt.state & QStyle::State_Selected;
-		const bool enabled = opt.state & QStyle::State_Enabled;
-		const bool active = opt.state & QStyle::State_Active;
-
-		return not enabled ? QPalette::Disabled :
-		       not active  ? QPalette::Inactive
-		                   : QPalette::Normal;
-	}
-
 	void TorrentListDelegate::LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index, LaidoutItem & item) const
 	{
 		item.option = &option;
@@ -321,18 +311,14 @@ namespace qtor
 
 	void TorrentListDelegate::DrawBackground(QPainter * painter, const LaidoutItem & item) const
 	{
+		using QtTools::Delegates::ColorGroup;
+
 		const QStyleOptionViewItem & option = *item.option;
 		const bool selected = option.state & QStyle::State_Selected;
-		const bool enabled = option.state & QStyle::State_Enabled;
-		const bool active = option.state & QStyle::State_Active;
-
-		QPalette::ColorGroup cg =
-			not enabled ? QPalette::Disabled :
-			not  active ? QPalette::Inactive
-			            : QPalette::Normal;
 
 		if (selected)
 		{
+			auto cg = ColorGroup(option);
 			painter->fillRect(item.option->rect, option.palette.brush(cg, QPalette::Highlight));
 		}
 
@@ -353,15 +339,8 @@ namespace qtor
 		const bool error = false;
 
 		const bool selected = option.state & QStyle::State_Selected;
-		const bool enabled = option.state & QStyle::State_Enabled;
-		const bool active = option.state & QStyle::State_Active;
-
-		QPalette::ColorGroup cg =
-			paused or not enabled ? QPalette::Disabled :
-			          not active  ? QPalette::Inactive
-			                      : QPalette::Normal;
-
-		QPalette::ColorRole cr = selected ? QPalette::HighlightedText : QPalette::Text;
+		auto cg = paused ? QPalette::Disabled : QtTools::Delegates::ColorGroup(option);
+		auto cr = selected ? QPalette::HighlightedText : QPalette::Text;
 
 		static const QColor red {"red"};
 		painter->setPen(error and not selected ? red : option.palette.color(cg, cr));
@@ -440,80 +419,17 @@ namespace qtor
 		}
 
 		return palette;
-	}
+	}	
 
 	void TorrentListDelegate::DrawProgressBar(QPainter * painter, const LaidoutItem & item) const
 	{
-		DrawCustomProgressBar(painter, item);
-		//DrawStyledProgressBar(painter, item);
-	}
-
-	void TorrentListDelegate::DrawCustomProgressBar(QPainter * painter, const LaidoutItem & item) const
-	{
+#ifdef Q_OS_WIN
+		static auto * style = QStyleFactory::create("Fusion");
+#else
 		auto * style = item.option->widget->style();
+#endif
+
 		auto & tor = *item.tor;
-		auto & option = *item.option;
-
-		const auto status = tor.status().value();
-		const bool seeding = status == torrent_status::seeding;
-		const bool downloading = status == torrent_status::downloading;
-		const bool paused = status == torrent_status::stopped;
-
-		const auto metadata_progress = tor.metadata_progress();
-		const auto requested_progress = tor.requested_progress();
-		const bool magnet = not metadata_progress or metadata_progress.value() < 1.0;
-
-		const auto ratio = tor.ratio();
-		const auto seed_limit = tor.seed_limit();
-
-		auto palette = ProgressBarPalete(item);
-		palette.setCurrentColorGroup(ColorGroup(option));
-
-		auto width = item.option->rect.width();
-		auto rect = item.barRect;
-		width -= ms_InnerMargins.right() + ms_InnerMargins.left() + ms_OutterMargins.right() + ms_OutterMargins.left();
-		rect.setWidth(width);
-		auto hieght = rect.height();
-
-		// [0.0 .. 1.0]
-		auto progress = seeding and seed_limit ? ratio / seed_limit : 
-		                                magnet ? metadata_progress 
-		                                       : requested_progress;
-		
-		auto xprogress = rect.left() + std::clamp(0.0, progress.value_or(0.0), 1.0) * rect.width();
-		auto left = rect, right = rect;
-		left.setRight(xprogress);
-		right.setLeft(xprogress);
-
-		QLinearGradient gradient {left.topLeft(), left.bottomLeft()};
-		gradient.setColorAt(0, palette.color(QPalette::Base));
-		gradient.setColorAt(0.5, palette.color(QPalette::Highlight));
-		gradient.setColorAt(1, palette.color(QPalette::Base));
-
-		painter->setRenderHint(QPainter::Antialiasing);
-		//painter->setPen(palette.color(QPalette::Highlight));
-		painter->setBrush(gradient);
-
-		if (not left.isEmpty())
-		{
-			painter->setClipRect(left.adjusted(0, 0, 0, 1));
-			painter->drawRoundedRect(left, hieght / 3, hieght / 3);
-		}
-
-		if (not right.isEmpty())
-		{
-			painter->setClipRect(right.adjusted(0, 0, 0, 1));
-			painter->drawRoundedRect(right, hieght / 3, hieght / 3);
-		}
-
-		painter->setClipping(false);
-	}
-
-	void TorrentListDelegate::DrawStyledProgressBar(QPainter * painter, const LaidoutItem & item) const
-	{
-		auto * style = item.option->widget->style();
-		auto & tor = *item.tor;
-
 		const auto status = tor.status().value();
 		const bool seeding = status == torrent_status::seeding;
 		const bool downloading = status == torrent_status::downloading;
@@ -571,7 +487,6 @@ namespace qtor
 		LayoutItem(option, index, m_cachedItem);
 
 		painter->save();
-		//painter->setClipRect(option.rect);
 		Draw(painter, m_cachedItem);
 		painter->restore();
 	}

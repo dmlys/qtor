@@ -23,49 +23,86 @@ namespace qtor
 		m_nameDelegate->SetFilterText(m_filterString);
 		m_listDelegate->SetFilterText(m_filterString);
 
-		if (m_model) m_model->FilterBy(m_filterString);
+		if (m_model) m_model->SetFilter(m_filterString);
 	}
 
-	QSize TorrentsView::sizeHint() const
+	/************************************************************************/
+	/*                    Sort submenu                                      */
+	/************************************************************************/
+	void TorrentsView::OnSortingChanged(int column, Qt::SortOrder order)
 	{
-		// maximum size - half screen
-		QSize maxSize = QApplication::desktop()->screenGeometry().size();
-		maxSize /= 2;
-		// but no more than maximumSize()
-		maxSize = maxSize.boundedTo(maximumSize());
+		if (not m_sortMenu or column < 0) return;
 
-		// if we are in QMdiArea, then our sizeHint should not be more than one third of QMdiArea size
-		if (auto mdi = QtTools::FindAncestor<QMdiArea>(this))
+		auto actions = m_sortMenu->actions();
+		actions[column + 3]->setChecked(true);
+		actions[order]->setChecked(true);
+	}
+
+	QMenu * TorrentsView::CreateSortMenu()
+	{
+		if (not m_model) return nullptr;
+
+		auto changeOrder = [this](auto checked)
 		{
-			maxSize = mdi->size();
-			maxSize /= 3;
+			if (not m_model or not checked) return;
+			
+			auto * action = static_cast<QAction *>(QObject::sender());
+			Qt::SortOrder newOrder = qvariant_cast<Qt::SortOrder>(action->data());
+			auto [column, order] = m_model->GetSorting();
+			m_model->sort(column, newOrder);
+			Q_UNUSED(order);
+		};
+
+		auto changeColumn = [this](auto checked)
+		{
+			if (not m_model or not checked) return;
+
+			auto * action = static_cast<QAction *>(QObject::sender());
+			int newColumn = qvariant_cast<int>(action->data());
+			auto [column, order] = m_model->GetSorting();
+			m_model->sort(newColumn, order);
+			Q_UNUSED(column);
+		};
+
+		auto * menu = new QMenu(tr("&Sort by"), this);
+		QAction * action;
+		QActionGroup * group;
+		
+		group = new QActionGroup(this);
+		//: sort ascending
+		action = menu->addAction(tr("&Ascending"));
+		action->setCheckable(true);
+		action->setData(Qt::AscendingOrder);
+		group->addAction(action);
+		connect(action, &QAction::triggered, this, changeOrder);
+
+		//: sort ascending
+		action = menu->addAction(tr("&Descending"));
+		action->setData(Qt::DescendingOrder);
+		action->setCheckable(true);
+		group->addAction(action);
+		connect(action, &QAction::triggered, this, changeOrder);
+
+		group = new QActionGroup(this);
+		action = menu->addSection(tr("Colunms"));
+		group->addAction(action);
+
+		for (int i = 0, n = m_model->columnCount(); i < n; ++i)
+		{
+			auto name = m_model->FieldName(i);
+			action = menu->addAction(name);
+			action->setData(i);
+			action->setCheckable(true);
+			group->addAction(action);
+			connect(action, &QAction::triggered, this, changeColumn);
 		}
 
-		// additional size - size of all layout'а
-		// minus size of tableView, size of which we calculate ourself.
-		// QTableView::sizeHint in fact always reutrn dummy size: 256:192
-		QSize addSz = QWidget::sizeHint() - m_tableView->sizeHint();
-		maxSize -= addSz;
+		int column;
+		Qt::SortOrder order;
+		std::tie(column, order) = m_model->GetSorting();
+		OnSortingChanged(column, order);
 
-		auto sz = QtTools::TableSizeHint(m_tableView, m_sizeHint, maxSize);
-		return sz += addSz;
-	}
-
-	void TorrentsView::contextMenuEvent(QContextMenuEvent * ev)
-	{
-		ev->accept();
-		auto pos = ev->globalPos();
-
-		auto * viewport = m_itemView->viewport();
-		auto viewPos = viewport->mapFromGlobal(pos);
-
-		// обрабатываем только меню по QTableView
-		if (not viewport->contentsRect().contains(viewPos))
-			return;
-
-		auto idx = m_tableView->indexAt(viewPos);
-		auto * menu = CreateItemMenu(idx);
-		if (menu) menu->popup(pos);
+		return menu;
 	}
 
 	/************************************************************************/
@@ -135,6 +172,12 @@ namespace qtor
 		auto * menu = new QMenu(this);
 		connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater); // auto delete on hide
 
+		if (m_sortMenu)
+		{
+			menu->addMenu(m_sortMenu);
+			menu->addSeparator();
+		}
+
 		action = new QAction(tr("Table &settings..."), menu);
 		connect(action, &QAction::triggered, this, &TorrentsView::TableSettings);
 		menu->addAction(action);
@@ -154,6 +197,48 @@ namespace qtor
 		menu->addAction(action);
 
 		return menu;
+	}
+
+	void TorrentsView::contextMenuEvent(QContextMenuEvent * ev)
+	{
+		ev->accept();
+		auto pos = ev->globalPos();
+
+		auto * viewport = m_itemView->viewport();
+		auto viewPos = viewport->mapFromGlobal(pos);
+
+		// process only menu from QTableView
+		if (not viewport->contentsRect().contains(viewPos))
+			return;
+
+		auto idx = m_tableView->indexAt(viewPos);
+		auto * menu = CreateItemMenu(idx);
+		if (menu) menu->popup(pos);
+	}
+
+	QSize TorrentsView::sizeHint() const
+	{
+		// maximum size - half screen
+		QSize maxSize = QApplication::desktop()->screenGeometry().size();
+		maxSize /= 2;
+		// but no more than maximumSize()
+		maxSize = maxSize.boundedTo(maximumSize());
+
+		// if we are in QMdiArea, then our sizeHint should not be more than one third of QMdiArea size
+		if (auto mdi = QtTools::FindAncestor<QMdiArea>(this))
+		{
+			maxSize = mdi->size();
+			maxSize /= 3;
+		}
+
+		// additional size - size of all layout'а
+		// minus size of tableView, size of which we calculate ourself.
+		// QTableView::sizeHint in fact always reutrn dummy size: 256:192
+		QSize addSz = QWidget::sizeHint() - m_tableView->sizeHint();
+		maxSize -= addSz;
+
+		auto sz = QtTools::TableSizeHint(m_tableView, m_sizeHint, maxSize);
+		return sz += addSz;
 	}
 
 	/************************************************************************/
@@ -199,15 +284,22 @@ namespace qtor
 
 		//connect(model, &QAbstractItemModel::layoutChanged, this, &TorrentsView::ModelChanged);
 		//connect(model, &QAbstractItemModel::modelReset, this, &TorrentsView::ModelChanged);
+		connect(model, &AbstractSparseContainerModel::SortingChanged, this, &TorrentsView::OnSortingChanged);
 
 		connect(m_tableView->horizontalHeader(), &QHeaderView::customContextMenuRequested,
 		        this, &TorrentsView::OpenHeaderConfigurationWidget);
+
+		m_sortMenu = CreateSortMenu();
 	}
 
 	void TorrentsView::DisconnectModel()
 	{
 		delete m_headerModel;
 		m_headerModel = nullptr;
+
+		delete m_sortMenu;
+		m_sortMenu = nullptr;
+
 		m_tableView->setModel(nullptr);
 		m_listView->setModel(nullptr);
 

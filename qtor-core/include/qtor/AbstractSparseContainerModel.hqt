@@ -17,8 +17,16 @@ namespace qtor
 		std::vector<unsigned> m_columns;
 		const sparse_container_model_meta * m_meta = nullptr;
 
+		QString m_filterStr;
+		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
+		int m_sortColumn = -1;
+
 	protected:
 		void SetColumns(std::vector<unsigned> columns);
+
+	protected:
+		virtual void FilterBy(QString expr) = 0;
+		virtual void SortBy(int column, Qt::SortOrder order) = 0;
 
 	public:
 		auto GetTableMeta() { return m_meta; }
@@ -30,16 +38,20 @@ namespace qtor
 
 		virtual const sparse_container           & GetItem(int row) const = 0;
 		virtual const sparse_container::any_type & GetItem(int row, int column) const;
-
-		virtual void FilterBy(QString expr) = 0;
+		
 		virtual int FullRowCount() const = 0;
+
+		void SetFilter(QString expr);
+		auto GetFilter() const noexcept { return m_filterStr; }
+
+		void SetSorting(int column, Qt::SortOrder order = Qt::AscendingOrder) { sort(column, order); }
+		auto GetSorting() const noexcept { return std::make_pair(m_sortColumn, m_sortOrder); }
 
 	public:
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
 		int columnCount(const QModelIndex & parent = QModelIndex()) const override;
-
-		void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override = 0;
-
+		void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) final;
+		
 		// some default implementations with help of GetValueShort / GetFieldName / others
 		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
@@ -51,6 +63,10 @@ namespace qtor
 		QString FieldName(const QModelIndex & idx) const { return idx.isValid() ? FieldName(idx.row()) : QString::null; }
 		QString GetValue(const QModelIndex & idx) const { return idx.isValid() ? GetValue(idx.row(), idx.column()) : QString::null; }
 		QString GetValueShort(const QModelIndex & idx) const { return idx.isValid() ? GetValueShort(idx.row(), idx.column()) : QString::null; }
+
+	Q_SIGNALS:
+		void SortingChanged(int column, Qt::SortOrder order);
+		void FilterChanged(QString expr);
 
 	public:
 		using base_type::base_type;

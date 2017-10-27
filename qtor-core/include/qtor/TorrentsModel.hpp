@@ -43,9 +43,9 @@ namespace qtor
 		const torrent & GetItem(int row) const override;
 
 		void FilterBy(QString expr) override;
+		void SortBy(int column, Qt::SortOrder order) override;
 		int FullRowCount() const override;
 
-		void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override;
 
 	public:

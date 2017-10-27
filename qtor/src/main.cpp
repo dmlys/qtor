@@ -12,8 +12,6 @@
 #include <ext/base64.hpp>
 #include <ext/itoa.hpp>
 
-#include <fmt/format.h>
-
 #include <ext/library_logger/logger.hpp>
 #include <ext/library_logger/logging_macros.hpp>
 
@@ -29,6 +27,8 @@
 #include <TransmissionRemoteApp.hqt>
 
 #include <QtWidgets/QApplication>
+#include <QtGui/QColor>
+#include <QtCore/QDebug>
 
 //class http_method
 //{
@@ -104,7 +104,6 @@
 //	}
 //}
 
-
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -120,6 +119,16 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(qtor_core_resource);
 
 	QApplication qapp {argc, argv};
+
+#ifdef Q_OS_WIN
+	// On windows the highlighted colors for inactive widgets are the
+	// same as non highlighted colors.This is a regression from Qt 4.
+	// https://bugreports.qt-project.org/browse/QTBUG-41060
+	auto palette = qapp.palette();
+	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
+	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
+	qapp.setPalette(palette);
+#endif
 
 	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	source->set_address("bin/data.db"s);

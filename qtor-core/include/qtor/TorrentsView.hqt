@@ -59,16 +59,28 @@ namespace qtor
 
 		/// current filter string
 		QString m_filterString;
+		/// menu holding avail columns for sorting, constructed from model
+		QMenu * m_sortMenu = nullptr;
 
 	protected:
 		void ModelChanged();
-		void OnFilterChanged();
+		void OnFilterChanged();		
 
-		virtual void ConnectModel();
-		virtual void DisconnectModel();
+	protected:
+		void OnSortingChanged(int column, Qt::SortOrder order);
+		/// creates menu for sorting items in a view
+		QMenu * CreateSortMenu();
 
+	protected:
+		/// creates context menu for an item with idx,
+		/// if idx is not valid, common menu was requested
+		virtual QMenu * CreateItemMenu(const QModelIndex & idx);
 		/// basic menu handler
 		virtual void contextMenuEvent(QContextMenuEvent * ev) override;
+
+	protected:
+		virtual void ConnectModel();
+		virtual void DisconnectModel();
 
 	public:
 		/// returns model, serving horizontal QHeaderView.
@@ -89,20 +101,16 @@ namespace qtor
 		virtual void TableSettings();
 		/// adjusts resizes table columns by content
 		virtual void ResizeColumnsToContents();
-		/// creates context menu for an item with idx,
-		/// if idx is not valid, common menu was requested
-		virtual QMenu * CreateItemMenu(const QModelIndex & idx);
 
 	public:
+		virtual void SetViewMode(unsigned mode);
+		unsigned GetViewMode() const noexcept { return m_viewMode; }
+
 		void    SetFilter(QString newFilter);
 		QString GetFilter() const { return m_filterString; }
 
 		/// desired size
 		QSize sizeHint() const override;
-
-	public:
-		virtual void SetViewMode(unsigned mode);
-		unsigned GetViewMode() const noexcept { return m_viewMode; }
 
 	public:
 		/// Returns the model that this widget displays. This model is set by calling Init
