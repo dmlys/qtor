@@ -130,11 +130,11 @@ int main(int argc, char * argv[])
 	qapp.setPalette(palette);
 #endif
 
-	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	source->set_address("bin/data.db"s);
+	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	//source->set_address("bin/data.db"s);
 
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
 	
 	qtor::TransmissionRemoteApp app {std::move(source)};
 	qtor::MainWindow mainWindow;

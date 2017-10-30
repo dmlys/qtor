@@ -36,7 +36,7 @@ namespace qtor
 		connect(m_app, &Application::ConnectionError, this, &MainWindow::OnConnectionError);
 
 		auto model = m_app->AccquireTorrentModel();
-		m_torrentWidget->Init(std::move(model));
+		m_torrentWidget->SetModel(std::move(model));
 		m_torrentWidget->InitHeaderTracking(nullptr);
 	}
 

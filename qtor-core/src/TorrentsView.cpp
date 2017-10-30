@@ -26,31 +26,43 @@ namespace qtor
 		if (m_model) m_model->SetFilter(m_filterString);
 	}
 
+	void TorrentsView::Sort(int column, Qt::SortOrder order)
+	{
+		if (not m_model) return;
+
+		// model will emit signal and we will adjust ourselves in OnSortingChanged
+		m_model->sort(m_sortColumn, m_sortOrder);
+	}
+
+	void TorrentsView::OnSortingChanged(int column, Qt::SortOrder order)
+	{
+		m_sortColumn = column;
+		m_sortOrder = order;
+
+		if (m_sortMenu or column >= 0)
+		{
+			auto actions = m_sortMenu->actions();
+			actions[column + 3]->setChecked(true);
+			actions[order]->setChecked(true);
+		}
+
+		Q_EMIT SortingChanged(m_sortColumn, m_sortOrder);
+	}
+
 	/************************************************************************/
 	/*                    Sort submenu                                      */
 	/************************************************************************/
-	void TorrentsView::OnSortingChanged(int column, Qt::SortOrder order)
-	{
-		if (not m_sortMenu or column < 0) return;
-
-		auto actions = m_sortMenu->actions();
-		actions[column + 3]->setChecked(true);
-		actions[order]->setChecked(true);
-	}
-
 	QMenu * TorrentsView::CreateSortMenu()
 	{
 		if (not m_model) return nullptr;
 
 		auto changeOrder = [this](auto checked)
 		{
-			if (not m_model or not checked) return;
+			if (not m_model or not checked or m_sortColumn < 0) return;
 			
 			auto * action = static_cast<QAction *>(QObject::sender());
 			Qt::SortOrder newOrder = qvariant_cast<Qt::SortOrder>(action->data());
-			auto [column, order] = m_model->GetSorting();
-			m_model->sort(column, newOrder);
-			Q_UNUSED(order);
+			m_model->sort(m_sortColumn, newOrder);
 		};
 
 		auto changeColumn = [this](auto checked)
@@ -59,9 +71,7 @@ namespace qtor
 
 			auto * action = static_cast<QAction *>(QObject::sender());
 			int newColumn = qvariant_cast<int>(action->data());
-			auto [column, order] = m_model->GetSorting();
-			m_model->sort(newColumn, order);
-			Q_UNUSED(column);
+			m_model->sort(newColumn, m_sortOrder);
 		};
 
 		auto * menu = new QMenu(tr("&Sort by"), this);
@@ -97,11 +107,12 @@ namespace qtor
 			connect(action, &QAction::triggered, this, changeColumn);
 		}
 
-		int column;
-		Qt::SortOrder order;
-		std::tie(column, order) = m_model->GetSorting();
-		OnSortingChanged(column, order);
-
+		if (m_sortColumn >= 0)
+		{
+			auto actions = m_sortMenu->actions();
+			actions[m_sortColumn + 3]->setChecked(true);
+			actions[m_sortOrder]->setChecked(true);
+		}
 		return menu;
 	}
 
@@ -289,6 +300,7 @@ namespace qtor
 		connect(m_tableView->horizontalHeader(), &QHeaderView::customContextMenuRequested,
 		        this, &TorrentsView::OpenHeaderConfigurationWidget);
 
+		if (m_sortColumn >= 0) m_model->sort(m_sortColumn, m_sortOrder);
 		m_sortMenu = CreateSortMenu();
 	}
 
@@ -306,7 +318,7 @@ namespace qtor
 		m_sizeHint = m_defMinSizeHint;
 	}
 
-	void TorrentsView::Init(std::shared_ptr<AbstractSparseContainerModel> model)
+	void TorrentsView::SetModel(std::shared_ptr<AbstractSparseContainerModel> model)
 	{
 		// both null or valid
 		if (m_model) m_model->disconnect(this);

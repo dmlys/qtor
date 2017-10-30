@@ -393,7 +393,7 @@ namespace qtor
 		if (downloading)
 		{
 			static const QColor front = QColor("steelblue");
-			static const QColor back = QColor("steelblue");
+			static const QColor back = QColor("lightgrey");
 
 			palette.setBrush(QPalette::Highlight, front);
 			palette.setColor(QPalette::Base, back);
