@@ -7,13 +7,30 @@
 #include <ext/is_string.hpp>
 #include <ext/range.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 
 #include <fmt/format.h>
 #include <qtor/torrent.hpp>
 
+
 namespace qtor {
 namespace transmission
 {
+	struct as_stdstring_t {} const as_stdstring;
+
+	template <class Range, std::enable_if_t<ext::is_range_of<Range, QString>::value, int> = 0>
+	inline auto operator |(const Range & range, as_stdstring_t) noexcept
+	{
+		return boost::adaptors::transform(range, [](const auto & str) { return FromQString(str); });
+	}
+
+	template <class Range, std::enable_if_t<not ext::is_range_of<Range, QString>::value, int> = 0>
+	inline decltype(auto) operator |(const Range & range, as_stdstring_t) noexcept
+	{
+		return range;
+	}
+
+
 	/// json request template.
 	/// All requests follow same template:
 	///   method - ...
@@ -106,7 +123,7 @@ namespace transmission
 		if (boost::empty(ids))
 			return fmt::format(request_template_all, command, json_join(fields));
 		else
-			return fmt::format(request_template, command, json_join(fields), json_join(ids));
+			return fmt::format(request_template, command, json_join(fields), json_join(ids | as_stdstring));
 	}
 
 	template <class IdsRange>

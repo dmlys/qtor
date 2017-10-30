@@ -19,7 +19,8 @@ namespace qtor
 {
 	inline namespace types
 	{
-		typedef std::string    string_type;
+		//typedef std::string    string_type;
+		typedef QString        string_type;
 		typedef std::uint64_t  uint64_type;
 		typedef int            int_type;
 		typedef unsigned int   uint_type;
@@ -29,8 +30,7 @@ namespace qtor
 		typedef std::chrono::system_clock::time_point  datetime_type;
 		typedef std::chrono::system_clock::duration    duration_type;
 
-		// using any, optional, variant classes from boost
-		// std is ok, but i need optional with references, and std does not support them yet
+		// using any, optional, variant classes from std
 		template <class type>
 		using optional = std::optional<type>;
 

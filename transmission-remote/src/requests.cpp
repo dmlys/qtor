@@ -1,6 +1,19 @@
 #include <qtor/transmission/requests.hpp>
 #include <yaml-cpp/yaml.h>
 
+namespace YAML
+{
+	template <>
+	struct convert<QString>
+	{
+		static bool decode(const YAML::Node & node, QString & str)
+		{
+			str = ToQString(node.Scalar());
+			return true;
+		}
+	};
+}
+
 namespace qtor {
 namespace transmission
 {

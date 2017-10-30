@@ -19,18 +19,18 @@ namespace qtor
 			using namespace std::string_literals;
 			std::unordered_map<string_type, unsigned> type_map =
 			{
-				{"uint64"s, Uint64},
-				{"bool"s, Bool},
-				{"double"s, Double},
-				{"string"s, String},
+				{"uint64", Uint64},
+				{"bool", Bool},
+				{"double", Double},
+				{"string", String},
 				
-				{"percent"s, Percent},
-				{"ratio"s, Ratio},
-				{"speed"s, Speed},
-				{"size"s, Size},
+				{"percent", Percent},
+				{"ratio", Ratio},
+				{"speed", Speed},
+				{"size", Size},
 
-				{"datetime"s, DateTime},
-				{"Duration"s, Duration},
+				{"datetime", DateTime},
+				{"Duration", Duration},
 			};
 
 			auto types = std::make_shared<item_map>();

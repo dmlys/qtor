@@ -36,9 +36,7 @@ namespace qtor
 
 	void TorrentsModel::FilterBy(QString expr)
 	{
-		auto search = FromQString(expr);
-
-		auto rtype = m_filter_pred.set_expr(std::move(search));
+		auto rtype = m_filter_pred.set_expr(FromQString<string_type>(expr));
 		return refilter_and_notify(rtype);
 	}
 

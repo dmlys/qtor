@@ -5,6 +5,21 @@
 namespace sqlite3yaw::convert
 {
 	template <>
+	struct conv<QString>
+	{
+		static void put(const QString & val, bool temp, ibind & b)
+		{
+			auto str = FromQString(val);
+			b.bind(str, true);
+		}
+
+		static void get(QString & val, iquery & q)
+		{
+			ToQString(q.get_text(), q.get_bytes(), val);
+		}
+	};
+
+	template <>
 	struct conv<qtor::datetime_type>
 	{
 		static void put(qtor::datetime_type val, bool temp, ibind & b)

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <ext/utility.hpp>
 #include <boost/regex/pending/unicode_iterator.hpp>
 
 #include <QtCore/QChar>
@@ -32,9 +33,34 @@ namespace qtor
 		return QChar::toUpper(ch);
 	}
 
-	static void trim(string_type & str)
+	static void trim(QString & str)
 	{
-		auto * pfirst = const_cast<char *>(str.data());
+		str = str.trimmed();
+	}
+
+	static bool istarts_with(const QString & str, const QString & test)
+	{
+		return str.startsWith(test, Qt::CaseInsensitive);
+	}
+
+	static bool iequals(const QString & str, const QString & test)
+	{
+		return str.compare(test, Qt::CaseInsensitive) == 0;
+	}
+
+	static bool icontains(const QString & str, const QString & search)
+	{
+		return str.contains(search, Qt::CaseInsensitive);
+	}
+
+	static bool empty(const QString & str)
+	{
+		return str.isEmpty();
+	}
+
+	static void trim(std::string & str)
+	{
+		auto * pfirst = ext::unconst(str.data());
 		auto * plast = pfirst + str.size();
 
 		typedef boost::u8_to_u32_iterator<const char *, std::uint32_t> utf_iter;
@@ -52,7 +78,7 @@ namespace qtor
 		str.erase(stopped - pfirst, plast - stopped);
 	}
 
-	static bool istarts_with(const string_type & str, const string_type & test)
+	static bool istarts_with(const std::string & str, const std::string & test)
 	{
 		if (str.size() < test.size())
 			return false;
@@ -70,7 +96,7 @@ namespace qtor
 		return std::equal(test_first, test_last, first, eq);
 	}
 
-	static bool iequals(const string_type & str, const string_type & test)
+	static bool iequals(const std::string & str, const std::string & test)
 	{
 		auto * pfirst = str.data();
 		auto * plast = pfirst + str.size();
@@ -85,7 +111,7 @@ namespace qtor
 		return std::equal(first, last, test_first, test_last, eq);
 	}
 
-	static bool icontains(const string_type & str, const string_type & search)
+	static bool icontains(const std::string & str, const std::string & search)
 	{
 		auto * ifirst = str.data();
 		auto * ilast = ifirst + str.size();
@@ -122,7 +148,7 @@ namespace qtor
 		return result;
 	}
 
-	viewed::refilter_type sparse_container_filter::set_expr(std::string search)
+	viewed::refilter_type sparse_container_filter::set_expr(string_type search)
 	{
 		trim(search);
 		viewed::refilter_type result;
@@ -166,6 +192,6 @@ namespace qtor
 
 	bool sparse_container_filter::always_matches() const noexcept
 	{
-		return m_filter.empty() or m_items.empty();
+		return empty(m_filter) or m_items.empty();
 	}
 }
