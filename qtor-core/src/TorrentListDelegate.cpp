@@ -25,12 +25,12 @@ namespace qtor
 	}
 
 
-	QString TorrentListDelegate::TittleText(const torrent & tor) const
+	QString TorrentListDelegate::TittleText(const torrent & tor, const formatter * fmt) const
 	{
 		return ToQString(tor.name().value_or(tor.ms_emptystr));
 	}
 
-	QString TorrentListDelegate::ProgressText(const torrent & tor) const
+	QString TorrentListDelegate::ProgressText(const torrent & tor, const formatter * fmt) const
 	{
 		const auto metadata_progress = tor.metadata_progress();
 		const bool magnet = metadata_progress.value() < 1.0;
@@ -50,7 +50,7 @@ namespace qtor
 		{
 			//: torrent progress string first part, argument is amount of metadata loading done
 			str = tr("Magnetized transfer - retrieving metadata (%1)")
-				.arg(m_fmt->format_percent(metadata_progress));
+				.arg(fmt->format_percent(metadata_progress));
 		}
 		else if (not finished) // downloading
 		{
@@ -59,9 +59,9 @@ namespace qtor
 			//: %2 is how much we'll have when done,
 			//: %3 is a percentage of the two
 			str = tr("%1 of %2 (%3%)")
-				.arg(m_fmt->format_size(current_size))
-				.arg(m_fmt->format_size(requested_size))
-				.arg(m_fmt->format_percent(current_size / requested_size));
+				.arg(fmt->format_size(current_size))
+				.arg(fmt->format_size(requested_size))
+				.arg(fmt->format_percent(current_size / requested_size));
 		}
 		else
 		{
@@ -76,10 +76,10 @@ namespace qtor
 				//: %3 is a percentage of the two,
 				//: %4 is how much we've uploaded,
 				str = tr("%1 of %2 (%3), uploaded %4")
-					.arg(m_fmt->format_size(current_size))
-					.arg(m_fmt->format_size(total_size))
-					.arg(m_fmt->format_percent(current_size / total_size))
-					.arg(m_fmt->format_size(tor.ever_uploaded()));
+					.arg(fmt->format_size(current_size))
+					.arg(fmt->format_size(total_size))
+					.arg(fmt->format_percent(current_size / total_size))
+					.arg(fmt->format_size(tor.ever_uploaded()));
 			}
 			else
 			{
@@ -87,21 +87,21 @@ namespace qtor
 				//: %1 is the torrent's total size,
 				//: %2 is how much we've uploaded,
 				str = tr("%1, uploaded %2")
-					.arg(m_fmt->format_size(total_size))
-					.arg(m_fmt->format_size(tor.ever_uploaded()));
+					.arg(fmt->format_size(total_size))
+					.arg(fmt->format_size(tor.ever_uploaded()));
 			}
 
 
 			if (seed_ratio)
 			{
 				str = str % ' ' % tr("(Ratio: %3 Goal: %4)")
-					.arg(m_fmt->format_ratio(ratio))
-					.arg(m_fmt->format_ratio(seed_ratio));
+					.arg(fmt->format_ratio(ratio))
+					.arg(fmt->format_ratio(seed_ratio));
 			}
 			else
 			{
 				str = str % ' ' % tr("(Ratio: %1)")
-					.arg(m_fmt->format_ratio(ratio));
+					.arg(fmt->format_ratio(ratio));
 			}
 		}
 		
@@ -116,7 +116,7 @@ namespace qtor
 				//: Second (optional) part of torrent progress string;
 				//: %1 is duration;
 				//: notice that leading space (before the dash) is included here
-				str += tr(" - %1 left").arg(m_fmt->format_duration(eta));
+				str += tr(" - %1 left").arg(fmt->format_duration(eta));
 			else
 				//: Second (optional) part of torrent progress string;
 				//: notice that leading space (before the dash) is included here
@@ -134,11 +134,11 @@ namespace qtor
 
 	//	if (downloading)
 	//	{
-	//		return m_fmt->format_speed(tor.download_speed()) % " " % m_fmt->format_speed(tor.upload_speed());
+	//		return fmt->format_speed(tor.download_speed()) % " " % fmt->format_speed(tor.upload_speed());
 	//	}
 	//	else if (uploading)
 	//	{
-	//		return m_fmt->format_speed(tor.upload_speed());
+	//		return fmt->format_speed(tor.upload_speed());
 	//	}
 	//	else
 	//	{
@@ -152,18 +152,18 @@ namespace qtor
 	//	switch (status)
 	//	{
 	//		case torrent_status::checking:
-	//			return tr("Verifying local data (%1 tested)").arg(m_fmt->format_percent(tor.recheck_progress()));
+	//			return tr("Verifying local data (%1 tested)").arg(fmt->format_percent(tor.recheck_progress()));
 
 	//		case torrent_status::downloading:
 	//		case torrent_status::seeding:
-	//			return ShortTransferText(tor) % "    " % tr("Ratio: %1").arg(m_fmt->format_percent(tor.ratio()));
+	//			return ShortTransferText(tor) % "    " % tr("Ratio: %1").arg(fmt->format_percent(tor.ratio()));
 	//			
 	//		default:
 	//			return TorrentsModel::StatusString(status);
 	//	}
 	//}
 
-	QString TorrentListDelegate::StatusText(const torrent & tor) const
+	QString TorrentListDelegate::StatusText(const torrent & tor, const formatter * fmt) const
 	{
 		QString str;
 		
@@ -174,7 +174,7 @@ namespace qtor
 		switch (status)
 		{
 			case torrent_status::checking:
-				str = tr("Verifying local data (%1 tested)").arg(m_fmt->format_percent(tor.recheck_progress()));
+				str = tr("Verifying local data (%1 tested)").arg(fmt->format_percent(tor.recheck_progress()));
 				break;
 
 			case torrent_status::seeding:
@@ -188,10 +188,10 @@ namespace qtor
 				else
 				{
 					str = tr("Seeding to %1 of %Ln connected peer(s)", 0, connected)
-						.arg(m_fmt->format_uint64(uploading));
+						.arg(fmt->format_uint64(uploading));
 				}
 
-				str += " - " % m_fmt->format_speed(tor.upload_speed());
+				str += " - " % fmt->format_speed(tor.upload_speed());
 				break;
 			}
 
@@ -201,7 +201,7 @@ namespace qtor
 				{
 					auto peers = tor.downloading_peers().value_or(0);
 					str = tr("Downloading metadata from %Ln peer(s) (%1 done)", 0, peers)
-						.arg(m_fmt->format_percent(metadata_progress));
+						.arg(fmt->format_percent(metadata_progress));
 				}
 				else
 				{
@@ -210,14 +210,14 @@ namespace qtor
 					auto connected = peers + webseeds;
 					/* it would be nicer for translation if this was all one string, but I don't see how to do multiple %n's in tr() */
 					str = tr("Downloading from %1 of %Ln connected peer(s)", 0, connected)
-							 .arg(m_fmt->format_uint64(tor.downloading_peers()));
+							 .arg(fmt->format_uint64(tor.downloading_peers()));
 					
 					if (webseeds)
 						//: Second (optional) part of phrase "Downloading from ... of ... connected peer(s) and ... web seed(s)";
 						//: notice that leading space (before "and") is included here
 						str += tr(" and %Ln web seed(s)", 0, webseeds);
 
-					str += " - " % m_fmt->format_speed(tor.download_speed()) % "  " % m_fmt->format_speed(tor.upload_speed());
+					str += " - " % fmt->format_speed(tor.download_speed()) % "  " % fmt->format_speed(tor.upload_speed());
 				}
 
 				break;
@@ -258,10 +258,11 @@ namespace qtor
 		const auto * model = dynamic_cast<const TorrentsModel *>(item.index.model());
 		const auto & tor = model->GetItem(item.index.row());
 
+		item.fmt = model->GetMeta();
 		item.tor = &tor;
-		item.name = TittleText(tor);
-		item.progress = ProgressText(tor);
-		item.status = StatusText(tor);
+		item.name = TittleText(tor, item.fmt);
+		item.progress = ProgressText(tor, item.fmt);
+		item.status = StatusText(tor, item.fmt);
 
 		item.baseFont = option.font;
 		item.nameFont = item.progressFont = item.statusFont = item.baseFont;

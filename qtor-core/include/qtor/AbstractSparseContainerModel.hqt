@@ -29,7 +29,7 @@ namespace qtor
 		virtual void SortBy(int column, Qt::SortOrder order) = 0;
 
 	public:
-		auto GetTableMeta() { return m_meta; }
+		auto GetMeta() const noexcept { return m_meta; }
 
 		virtual int FindColumn(unsigned name) const;
 		virtual QString FieldName(int section) const;

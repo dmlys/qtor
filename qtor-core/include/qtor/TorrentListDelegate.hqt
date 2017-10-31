@@ -13,9 +13,10 @@ namespace qtor
 		struct LaidoutItem
 		{
 			QModelIndex index;
+			QPoint hintTopLeft;
 			const torrent * tor = nullptr;
 			const QStyleOptionViewItem * option = nullptr;
-			QPoint hintTopLeft;
+			const formatter * fmt = nullptr;
 			
 			QFont baseFont;
 			QFont nameFont;
@@ -33,8 +34,7 @@ namespace qtor
 			QRect totalRect;
 		};
 
-		mutable LaidoutItem m_cachedItem;
-		mutable formatter * m_fmt = new formatter(this);
+		mutable LaidoutItem m_cachedItem;		
 
 		QTextCharFormat m_searchFormat;
 		QString m_searchText;
@@ -43,9 +43,9 @@ namespace qtor
 		static const QMargins ms_InnerMargins;
 
 	protected:
-		virtual QString TittleText(const torrent & tor) const;
-		virtual QString StatusText(const torrent & tor) const;
-		virtual QString ProgressText(const torrent & tor) const;
+		virtual QString TittleText(const torrent & tor, const formatter * fmt) const;
+		virtual QString StatusText(const torrent & tor, const formatter * fmt) const;
+		virtual QString ProgressText(const torrent & tor, const formatter * fmt) const;
 
 	protected:
 		virtual QPalette ProgressBarPalete(const LaidoutItem & item) const;
