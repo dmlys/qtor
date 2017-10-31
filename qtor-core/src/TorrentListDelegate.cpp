@@ -235,6 +235,19 @@ namespace qtor
 		return str;
 	}
 
+	QString TorrentListDelegate::GetText(const QModelIndex & index) const
+	{
+		if (not index.isValid()) return QString::null;
+
+		auto * model = dynamic_cast<const TorrentsModel *>(index.model());
+		if (not model) return QString::null;
+
+		auto & tor = model->GetItem(index.row());
+		const formatter * fmt = model->GetMeta();
+
+		return TittleText(tor, fmt) % "\n" % ProgressText(tor, fmt) % "\n" % StatusText(tor, fmt);
+	}
+
 	void TorrentListDelegate::LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index, LaidoutItem & item) const
 	{
 		item.option = &option;

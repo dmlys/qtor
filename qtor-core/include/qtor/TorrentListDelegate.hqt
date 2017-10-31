@@ -67,6 +67,8 @@ namespace qtor
 		decltype(auto) GetFormat() const                         { return m_searchFormat; }
 		void           SetFormat(const QTextCharFormat & format) { m_searchFormat = format; }
 
+		virtual QString GetText(const QModelIndex & index) const;
+
 	public:
 		Q_DISABLE_COPY(TorrentListDelegate);
 

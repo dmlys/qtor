@@ -1,5 +1,6 @@
 #include <qtor/TorrentsView.hqt>
 
+#include <QtGui/QClipboard>
 #include <QtWidgets/QShortcut>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
@@ -9,6 +10,7 @@
 
 #include <QtTools/TableViewUtils.hpp>
 #include <QtTools/HeaderConfigurationWidget.hqt>
+
 
 namespace qtor
 {
@@ -252,6 +254,30 @@ namespace qtor
 		return sz += addSz;
 	}
 
+	bool TorrentsView::eventFilter(QObject * watched, QEvent * event)
+	{
+		if (event->type() == QEvent::KeyPress)
+		{
+			auto * keyEvent = static_cast<QKeyEvent *>(event);
+			if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
+			{
+				auto * selmodel = m_listView->selectionModel();
+
+				QStringList texts;
+				for (auto idx : selmodel->selectedIndexes())
+					texts.append(m_listDelegate->GetText(idx));
+
+				auto sep = "\n" + QString(80, '-') + "\n";
+				auto text = texts.join(sep);
+				qApp->clipboard()->setText(text);
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/************************************************************************/
 	/*                    Init Methods                                      */
 	/************************************************************************/
@@ -410,6 +436,7 @@ namespace qtor
 
 		m_listDelegate = new TorrentListDelegate(m_listView);
 		m_listView->setItemDelegate(m_listDelegate);
+		m_listView->installEventFilter(this);
 
 		m_verticalLayout->addWidget(m_rowFilter);
 		m_verticalLayout->addWidget(m_listView);
