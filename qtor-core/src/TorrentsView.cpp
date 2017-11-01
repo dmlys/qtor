@@ -11,6 +11,8 @@
 #include <QtTools/TableViewUtils.hpp>
 #include <QtTools/HeaderConfigurationWidget.hqt>
 
+#include <QtTools/ToolsBase.hpp>
+#include <ext/join_into.hpp>
 
 namespace qtor
 {
@@ -261,16 +263,14 @@ namespace qtor
 			auto * keyEvent = static_cast<QKeyEvent *>(event);
 			if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
 			{
-				auto * selmodel = m_listView->selectionModel();
+				auto indexes = m_listView->selectionModel()->selectedIndexes();
+				auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_listDelegate->GetText(idx); });
 
-				QStringList texts;
-				for (auto idx : selmodel->selectedIndexes())
-					texts.append(m_listDelegate->GetText(idx));
-
+				QString text;
 				auto sep = "\n" + QString(80, '-') + "\n";
-				auto text = texts.join(sep);
-				qApp->clipboard()->setText(text);
+				ext::join_into(texts, sep, text);
 
+				qApp->clipboard()->setText(text);
 				return true;
 			}
 		}
@@ -281,7 +281,7 @@ namespace qtor
 	/************************************************************************/
 	/*                    Init Methods                                      */
 	/************************************************************************/
-	void TorrentsView::SetViewMode(unsigned mode)
+	void TorrentsView::SetViewMode(ViewMode mode)
 	{
 		switch (mode)
 		{

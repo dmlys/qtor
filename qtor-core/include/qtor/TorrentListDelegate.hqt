@@ -7,35 +7,58 @@
 
 namespace qtor
 {
+	/// Torrent delegate for list model. It's modeled after Qt-transmission GUI client.
+	/// Consists of: 
+	/// * Title text - holds torrent name
+	/// * Progress text - progress string, current size, requested size, percentage, ratio, ...
+	/// * Progress bar  - downloading/verification/seeding limit progress bar
+	/// * Status text   - torrent status, download/upload speeds
+	/// 
+	/// Also supports text searching, matching text is highlighted
 	class TorrentListDelegate : public QAbstractItemDelegate
 	{
 	protected:
+		/// cached calculated various parts of drawn torrent.
 		struct LaidoutItem
 		{
-			QModelIndex index;
-			QPoint hintTopLeft;
-			const torrent * tor = nullptr;
-			const QStyleOptionViewItem * option = nullptr;
-			const formatter * fmt = nullptr;
-			
-			QFont baseFont;
-			QFont nameFont;
-			QFont progressFont;
-			QFont statusFont;
+			// First time delegate is called with sizeHint, 
+			// option->rect contains basic rectangle where item can placed, 
+			// it can whole listView viewport area.
+			// Second time delegate is called with paint,
+			// and option->rect holds proper region calculated based on previous sizeHint calculation.
+			// 
+			// hintTopLeft holds option->rect topLeft point
+			// so on second call we can just adjust calculated previously part rectangles
 
-			QString name;
-			QString progress;
-			QString status;
+			QModelIndex index;  // index for which this item was computed
+			QPoint hintTopLeft; // see above description
+
+			const torrent * tor = nullptr;   // tor from model by index
+			const formatter * fmt = nullptr; // fmt from model
+
+			// option from sizeHint/paint call(update on each call), 
+			// lifetime the same, this is just for a convenience.
+			const QStyleOptionViewItem * option = nullptr;
+						
+			QFont baseFont;     // basic font, baseFont = option->font;
+			QFont titleFont;    // title text font, 1.1 * baseFont, bold.
+			QFont progressFont; // progress text font, 0.9 * baseFont
+			QFont statusFont;   // status text font, 0.9 * baseFont;
+
+			QString title;      // acquired by TitleText(tor, fmt)
+			QString progress;	// acquired by ProgressText(tor, fmt)
+			QString status;		// acquired by StatusText(tor, fmt)
 			
-			QRect nameRect;
-			QRect statusRect;
-			QRect barRect;
-			QRect progressRect;
-			QRect totalRect;
+			QRect titleRect;    // rectangle occupied by title text, without all margins
+			QRect progressRect;	// rectangle occupied by progress text, without all margins
+			QRect statusRect;	// rectangle occupied by status text, without all margins
+			QRect barRect;		// rectangle occupied by progress bar, without all margins
+			QRect totalRect;	// rectangle occupied by union of all rectangles, including all margins
 		};
 
 		mutable LaidoutItem m_cachedItem;		
 
+		// search text parameters
 		QTextCharFormat m_searchFormat;
 		QString m_searchText;
 
@@ -44,8 +67,8 @@ namespace qtor
 
 	protected:
 		virtual QString TittleText(const torrent & tor, const formatter * fmt) const;
-		virtual QString StatusText(const torrent & tor, const formatter * fmt) const;
 		virtual QString ProgressText(const torrent & tor, const formatter * fmt) const;
+		virtual QString StatusText(const torrent & tor, const formatter * fmt) const;
 
 	protected:
 		virtual QPalette ProgressBarPalete(const LaidoutItem & item) const;

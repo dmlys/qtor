@@ -33,8 +33,6 @@ namespace qtor
 	QString TorrentListDelegate::ProgressText(const torrent & tor, const formatter * fmt) const
 	{
 		const auto metadata_progress = tor.metadata_progress();
-		const bool magnet = metadata_progress.value() < 1.0;
-
 		const auto requested_size = tor.requested_size();
 		const auto current_size = tor.current_size();
 		const auto total_size = tor.total_size();
@@ -46,7 +44,7 @@ namespace qtor
 		const auto seed_ratio = tor.seed_limit();
 
 		QString str;
-		if (magnet) // magnet link with metadata still downloading
+		if (metadata_progress.value() < 1.0) // magnet link with metadata still downloading
 		{
 			//: torrent progress string first part, argument is amount of metadata loading done
 			str = tr("Magnetized transfer - retrieving metadata (%1)")
@@ -58,16 +56,13 @@ namespace qtor
 			//: %1 is how much we've got,
 			//: %2 is how much we'll have when done,
 			//: %3 is a percentage of the two
-			str = tr("%1 of %2 (%3%)")
+			str = tr("%1 of %2 (%3)")
 				.arg(fmt->format_size(current_size))
 				.arg(fmt->format_size(requested_size))
 				.arg(fmt->format_percent(current_size / requested_size));
 		}
 		else
 		{
-			// whole string looks like:
-			// "$current_size of $total_size ($progress), uploaded $ever_uploaded (Ratio: $ratio Goal: $seed_limit)"
-
 			if (partial)
 			{
 				//: First part of torrent progress string;
@@ -126,51 +121,11 @@ namespace qtor
 		return str.trimmed();
 	}
 
-	//QString TorrentListDelegate::ShortTransferText(const torrent & tor) const
-	//{
-	//	auto metadata = tor.metadata_progress();
-	//	bool downloading = metadata and (tor.downloading_peers() > 0 or tor.downloading_webseeds() > 0);
-	//	bool uploading = metadata and (tor.uploading_peers() > 0);
-
-	//	if (downloading)
-	//	{
-	//		return fmt->format_speed(tor.download_speed()) % " " % fmt->format_speed(tor.upload_speed());
-	//	}
-	//	else if (uploading)
-	//	{
-	//		return fmt->format_speed(tor.upload_speed());
-	//	}
-	//	else
-	//	{
-	//		return {};
-	//	}
-	//}
-
-	//QString TorrentListDelegate::ShortStatusText(const torrent & tor) const
-	//{
-	//	auto status = tor.status().value();
-	//	switch (status)
-	//	{
-	//		case torrent_status::checking:
-	//			return tr("Verifying local data (%1 tested)").arg(fmt->format_percent(tor.recheck_progress()));
-
-	//		case torrent_status::downloading:
-	//		case torrent_status::seeding:
-	//			return ShortTransferText(tor) % "    " % tr("Ratio: %1").arg(fmt->format_percent(tor.ratio()));
-	//			
-	//		default:
-	//			return TorrentsModel::StatusString(status);
-	//	}
-	//}
-
 	QString TorrentListDelegate::StatusText(const torrent & tor, const formatter * fmt) const
 	{
 		QString str;
 		
 		auto status = tor.status().value();
-		auto metadata_progress = tor.metadata_progress();
-		bool metadata_finished = metadata_progress >= 1.0;
-
 		switch (status)
 		{
 			case torrent_status::checking:
@@ -197,7 +152,8 @@ namespace qtor
 
 			case torrent_status::downloading:
 			{
-				if (not metadata_finished)
+				auto metadata_progress = tor.metadata_progress();
+				if (metadata_progress < 1.0)
 				{
 					auto peers = tor.downloading_peers().value_or(0);
 					str = tr("Downloading metadata from %Ln peer(s) (%1 done)", 0, peers)
@@ -257,7 +213,7 @@ namespace qtor
 			auto diff = option.rect.topLeft() - item.hintTopLeft;
 			item.hintTopLeft = option.rect.topLeft();
 
-			item.nameRect.translate(diff);
+			item.titleRect.translate(diff);
 			item.progressRect.translate(diff);
 			item.barRect.translate(diff);
 			item.statusRect.translate(diff);
@@ -273,40 +229,38 @@ namespace qtor
 
 		item.fmt = model->GetMeta();
 		item.tor = &tor;
-		item.name = TittleText(tor, item.fmt);
+		item.title = TittleText(tor, item.fmt);
 		item.progress = ProgressText(tor, item.fmt);
 		item.status = StatusText(tor, item.fmt);
 
 		item.baseFont = option.font;
-		item.nameFont = item.progressFont = item.statusFont = item.baseFont;
+		item.titleFont = item.progressFont = item.statusFont = item.baseFont;
 
-		item.nameFont.setBold(true);
+		item.titleFont.setBold(true);
 		item.progressFont.setPointSize(item.baseFont.pointSize() * 9 / 10);
 		item.statusFont.setPointSize(item.baseFont.pointSize() * 9 / 10);
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		QFontMetrics baseFM {item.baseFont, device};
-		QFontMetrics nameFM {item.nameFont, device};
+		QFontMetrics nameFM {item.titleFont, device};
 		QFontMetrics progressFM {item.progressFont, device};
 		QFontMetrics statusFM {item.statusFont, device};
 
 		QRect rect = item.option->rect - ms_OutterMargins;
-		QSize nameSize = nameFM.size(0, item.name);
+		QSize nameSize = nameFM.size(0, item.title);
 		QSize progresSize = progressFM.size(0, item.progress);
 		QSize statusSize = statusFM.size(0, item.status);
-
-		//auto barWidth = std::max({nameSize.width(), progresSize.width(), statusSize.width(), rect.size().width()});
 		QSize progressBarSize = QSize(0, baseFM.height());
 
 		QPoint topLeft = rect.topLeft();
 
-		item.nameRect = {topLeft, nameSize};
+		item.titleRect = {topLeft, nameSize};
 		item.progressRect = {topLeft, progresSize};
 		item.statusRect = {topLeft, statusSize};
 		item.barRect = {topLeft, progressBarSize};
 
 		// layout rectangles vertically in that order
-		auto rects = {&item.nameRect, &item.progressRect, &item.barRect, &item.statusRect};
+		auto rects = {&item.titleRect, &item.progressRect, &item.barRect, &item.statusRect};
 
 		auto dy = 0;
 		for (auto * rect : rects)
@@ -318,7 +272,7 @@ namespace qtor
 		}
 
 		auto & totalRect = item.totalRect = {};
-		totalRect = item.nameRect | item.progressRect | item.barRect | item.statusRect;
+		totalRect = item.titleRect | item.progressRect | item.barRect | item.statusRect;
 		totalRect += ms_InnerMargins;
 		totalRect += ms_OutterMargins;
 	}
@@ -361,18 +315,18 @@ namespace qtor
 
 
 		QTextCharFormat fmt, searchFmt = m_searchFormat;
-		fmt.setFont(item.nameFont);
-		searchFmt.setFont(item.nameFont);
+		fmt.setFont(item.titleFont);
+		searchFmt.setFont(item.titleFont);
 
 		QVector<QTextLayout::FormatRange> formats;		
-		formats.push_back({0, item.name.length(), fmt});
+		formats.push_back({0, item.title.length(), fmt});
 
-		QtTools::Delegates::FormatSearchText(item.name, m_searchText, searchFmt, formats);
-		QtTools::Delegates::DrawSearchFormatedText(painter, item.name, item.nameRect, option, formats);
+		QtTools::Delegates::FormatSearchText(item.title, m_searchText, searchFmt, formats);
+		QtTools::Delegates::DrawSearchFormatedText(painter, item.title, item.titleRect, option, formats);
 
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
-		QFontMetrics nameFM {item.nameFont, device};
+		QFontMetrics nameFM {item.titleFont, device};
 		QFontMetrics progressFM {item.progressFont, device};
 		QFontMetrics statusFM {item.statusFont, device};
 

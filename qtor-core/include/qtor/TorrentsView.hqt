@@ -27,7 +27,7 @@ namespace qtor
 		using base_type = QFrame;
 
 	public:
-		enum : unsigned
+		enum ViewMode : unsigned
 		{
 			ListMode,
 			TableMode,
@@ -44,7 +44,7 @@ namespace qtor
 		QtTools::Delegates::SearchDelegate * m_nameDelegate = nullptr;
 		TorrentListDelegate * m_listDelegate = nullptr;
 
-		unsigned m_viewMode = TableMode;
+		ViewMode m_viewMode = TableMode;
 		QAbstractItemView * m_itemView = nullptr;
 
 		/// child widgets/graphical objects
@@ -109,9 +109,9 @@ namespace qtor
 		virtual void ResizeColumnsToContents();
 
 	public:
-		virtual void SetViewMode(unsigned mode);
-		virtual unsigned GetViewMode() const { return m_viewMode; }
-		Q_SIGNAL void ViewModeChanged(unsigned mode);
+		virtual void SetViewMode(ViewMode mode);
+		virtual ViewMode GetViewMode() const { return m_viewMode; }
+		Q_SIGNAL void ViewModeChanged(ViewMode mode);
 
 		virtual void SetFilter(QString newFilter);
 		virtual auto GetFilter() -> QString const { return m_filterString; }
