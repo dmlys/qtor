@@ -45,6 +45,8 @@ namespace transmission
 		extern const std::string torrent_get;
 		extern const std::string torrent_set;
 		extern const std::string torrent_add;
+		extern const std::string torrent_remove;
+		extern const std::string torrent_set_location;
 	}
 
 

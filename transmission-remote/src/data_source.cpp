@@ -219,12 +219,12 @@ namespace transmission
 		}
 	};
 
-	auto data_source::torrent_get() -> ext::future<torrent_list>
+	auto data_source::get_torrents() -> ext::future<torrent_list>
 	{
-		return torrent_get({});
+		return get_torrents({});
 	}
 
-	auto data_source::torrent_get(torrent_id_list idx) -> ext::future<torrent_list>
+	auto data_source::get_torrents(torrent_id_list idx) -> ext::future<torrent_list>
 	{
 		auto obj = ext::make_intrusive<torrent_request>();
 		obj->m_request_idx = std::move(idx);

@@ -30,6 +30,9 @@ namespace transmission
 		const std::string torrent_get = "torrent-get";
 		const std::string torrent_set = "torrent-set";
 		const std::string torrent_add = "torrent-add";
+		const std::string torrent_remove = "torrent-remove";
+		const std::string torrent_set_location = "torrent-set-location";
+
 
 		// fields helpers
 		static const std::string Arguments = "arguments";

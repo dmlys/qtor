@@ -37,8 +37,22 @@ namespace transmission
 
 		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
 
-		auto torrent_get() -> ext::future<torrent_list> override;
-		auto torrent_get(torrent_id_list ids) -> ext::future<torrent_list> override;
+		virtual ext::future<torrent_list> get_torrents() override;
+		virtual ext::future<torrent_list> get_torrents(torrent_id_list ids) override;
+
+		virtual ext::future<void> start_all_torrents() override { return ext::make_ready_future(); }
+		virtual ext::future<void> stop_all_torrents() override { return ext::make_ready_future(); }
+
+		virtual ext::future<void> start_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+		virtual ext::future<void> start_now_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+		virtual ext::future<void> stop_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+
+		virtual ext::future<void> verify_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+		virtual ext::future<void> announce_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+		virtual ext::future<void> set_torrent_location(torrent_id_type id, std::string newloc, bool move) override { return ext::make_ready_future(); }
+
+		virtual ext::future<void> remove_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+		virtual ext::future<void> purge_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
 
 	public:
 		data_source() = default;

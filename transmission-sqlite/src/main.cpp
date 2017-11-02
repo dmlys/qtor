@@ -38,7 +38,7 @@ qtor::torrent_list load_torrents()
 	
 	try
 	{
-		auto torrents = source.torrent_get().get();
+		auto torrents = source.get_torrents().get();
 		source.disconnect().get();
 		return torrents;
 	}

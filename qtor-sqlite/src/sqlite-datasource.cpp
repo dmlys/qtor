@@ -62,13 +62,13 @@ namespace qtor::sqlite
 		return sub;
 	}
 
-	auto sqlite_datasource::torrent_get(torrent_id_list ids)
+	auto sqlite_datasource::get_torrents(torrent_id_list ids)
 		-> ext::future<torrent_list>
 	{
 		return ext::make_ready_future(m_torrents);
 	}
 
-	auto sqlite_datasource::torrent_get()
+	auto sqlite_datasource::get_torrents()
 		-> ext::future<torrent_list>
 	{
 		return ext::make_ready_future(m_torrents);

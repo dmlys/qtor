@@ -22,8 +22,22 @@ namespace qtor
 	public:
 		virtual auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle = 0;
 
-		virtual auto torrent_get() -> ext::future<torrent_list> = 0;
-		virtual auto torrent_get(torrent_id_list ids) -> ext::future<torrent_list> = 0;
+		virtual ext::future<torrent_list> get_torrents() = 0;
+		virtual ext::future<torrent_list> get_torrents(torrent_id_list ids) = 0;
+
+		virtual ext::future<void> start_all_torrents() = 0;
+		virtual ext::future<void> stop_all_torrents() = 0;
+
+		virtual ext::future<void> start_torrents(torrent_id_list ids) = 0;
+		virtual ext::future<void> start_now_torrents(torrent_id_list ids) = 0;
+		virtual ext::future<void> stop_torrents(torrent_id_list ids) = 0;
+
+		virtual ext::future<void> verify_torrents(torrent_id_list ids) = 0;
+		virtual ext::future<void> announce_torrents(torrent_id_list ids) = 0;
+		virtual ext::future<void> set_torrent_location(torrent_id_type id, std::string newloc, bool move) = 0;
+
+		virtual ext::future<void> remove_torrents(torrent_id_list ids) = 0;
+		virtual ext::future<void> purge_torrents(torrent_id_list ids) = 0;
 
 		virtual void set_address(std::string addr) = 0;
 		virtual void set_timeout(std::chrono::steady_clock::duration timeout) = 0;
