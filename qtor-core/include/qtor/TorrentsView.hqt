@@ -16,6 +16,8 @@
 
 namespace qtor
 {
+	class MainWindow;
+
 	/// Torrent Item View Widget. Consists of QAbstractItemView + QLineEdit filter.
 	/// QAbstractItemView can be table view or list view.
 	/// Provides methods for behavior customization
@@ -36,6 +38,8 @@ namespace qtor
 	protected:
 		/// display model
 		std::shared_ptr<AbstractSparseContainerModel> m_model;
+		/// parrent window
+		MainWindow * m_parent = nullptr;
 
 		/// table headers customization/tracking
 		QtTools::HeaderControlModel * m_headerModel = nullptr;
@@ -64,7 +68,7 @@ namespace qtor
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
 
 		/// menu holding avail columns for sorting, constructed from model
-		QMenu * m_sortMenu = nullptr;
+		QMenu * m_sortMenu = nullptr;		
 
 	protected:
 		void ModelChanged();

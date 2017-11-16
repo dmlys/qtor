@@ -1,4 +1,5 @@
 #include <qtor/TorrentsView.hqt>
+#include <qtor/MainWindow.hqt>
 
 #include <QtGui/QClipboard>
 #include <QtWidgets/QShortcut>
@@ -13,6 +14,8 @@
 
 #include <QtTools/ToolsBase.hpp>
 #include <ext/join_into.hpp>
+
+#include <qtor/NotificationPopupWidget.hqt>
 
 namespace qtor
 {
@@ -210,6 +213,52 @@ namespace qtor
 		action = new QAction(tr("&List mode"), menu);
 		connect(action, &QAction::triggered, this, [this] { SetViewMode(ListMode); });
 		menu->addAction(action);
+
+//		if (idx.isValid())
+//		{
+//			QPersistentModelIndex pidx = idx;
+//
+//#define CONNECT(METHOD)                                                                     \
+//			action->setData(pidx);                                                          \
+//			connect(action, &QAction::triggered, this, [this]                               \
+//			{                                                                               \
+//				auto * action = static_cast<QAction *>(QObject::sender());                  \
+//				QModelIndex idx = qvariant_cast<QPersistentModelIndex>(action->data());     \
+//				m_parent->METHOD(idx);                                                      \
+//			})                                                                              \
+//
+//			action = menu->addAction(tr("&Properties"));
+//			action->setIcon(QIcon::fromTheme("document-properties"));
+//			action->setShortcut(QKeySequence("Alt+Enter"));
+//			CONNECT(OpenTorrentLocationSettings);
+//			
+//			action = menu->addAction(tr("Open Fold&er"));
+//			action->setIcon(QIcon::fromTheme("folder-open"));
+//			action->setShortcut(QKeySequence("Alt+E"));
+//			CONNECT(OpenTorrentFolder);
+//
+//			action = menu->addAction(tr("Start"));
+//			CONNECT(StartTorrent);
+//			
+//			action = menu->addAction(tr("start Now"));
+//			CONNECT(StartTorrentNow);
+//			
+//			action = menu->addAction(tr("Stop"));
+//			CONNECT(StopTorrent);
+//
+//			action = menu->addAction(tr("Announce"));
+//			CONNECT(AnnounceTorrent);
+//
+//			action = menu->addAction(tr("Remove"));
+//			CONNECT(DeleteTorrent);
+//
+//			action = menu->addAction(tr("Remove and Delete data"));
+//			CONNECT(PurgeTorrent);
+//
+//
+//
+//#undef CONNECT
+//		}
 
 		return menu;
 	}

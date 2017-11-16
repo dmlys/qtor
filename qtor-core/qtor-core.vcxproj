@@ -55,6 +55,7 @@
     <ClCompile Include="src\MainWindow.cpp" />
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\Application.cpp" />
+    <ClCompile Include="src\NotificationPopupWidget.cpp" />
     <ClCompile Include="src\sparse_container.cpp" />
     <ClCompile Include="src\torrent.cpp" />
     <ClCompile Include="src\TorrentListDelegate.cpp" />
@@ -68,6 +69,7 @@
     <QtMOCCompile Include="include\qtor\formatter.hqt" />
     <QtMOCCompile Include="include\qtor\MainWindow.hqt" />
     <QtMOCCompile Include="include\qtor\Application.hqt" />
+    <QtMOCCompile Include="include\qtor\NotificationPopupWidget.hqt" />
     <QtMOCCompile Include="include\qtor\TorrentListDelegate.hqt" />
     <QtMOCCompile Include="include\qtor\TorrentsView.hqt" />
   </ItemGroup>

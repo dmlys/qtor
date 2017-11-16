@@ -104,6 +104,9 @@
 //	}
 //}
 
+#include <qtor/NotificationPopupWidget.hqt>
+#include <QtWidgets/QDesktopWidget>
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -121,28 +124,37 @@ int main(int argc, char * argv[])
 
 	QApplication qapp {argc, argv};
 
-#ifdef Q_OS_WIN
-	// On windows the highlighted colors for inactive widgets are the
-	// same as non highlighted colors.This is a regression from Qt 4.
-	// https://bugreports.qt-project.org/browse/QTBUG-41060
-	auto palette = qapp.palette();
-	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
-	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
-	qapp.setPalette(palette);
-#endif
+	QDesktopWidget * dwgt = qapp.desktop();
+	auto rect = dwgt->availableGeometry();
+	auto * wgt = new QtTools::NotificationPopupLabel();
+	wgt->setWindowFlag(Qt::ToolTip);
+	wgt->move(rect.bottomRight() - QPoint {640, 400});
+	wgt->setText("Some text");
+	wgt->show();
 
-	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	source->set_address("bin/data.db"s);
 
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
-	
-	qtor::TransmissionRemoteApp app {std::move(source)};
-	qtor::MainWindow mainWindow;
-	
-	mainWindow.Init(app);
-	mainWindow.show();
-	
-	QTimer::singleShot(100, [&app] { app.Connect(); });
+//#ifdef Q_OS_WIN
+//	// On windows the highlighted colors for inactive widgets are the
+//	// same as non highlighted colors.This is a regression from Qt 4.
+//	// https://bugreports.qt-project.org/browse/QTBUG-41060
+//	auto palette = qapp.palette();
+//	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
+//	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
+//	qapp.setPalette(palette);
+//#endif
+
+	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	//source->set_address("bin/data.db"s);
+
+	////auto source = std::make_shared<qtor::transmission::data_source>();
+	////source->set_address("http://melkiy:9091/transmission/rpc"s);
+	//
+	//qtor::TransmissionRemoteApp app {std::move(source)};
+	//qtor::MainWindow mainWindow;
+	//
+	//mainWindow.Init(app);
+	//mainWindow.show();
+	//
+	//QTimer::singleShot(100, [&app] { app.Connect(); });
 	return qapp.exec();
 }

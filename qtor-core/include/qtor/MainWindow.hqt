@@ -28,7 +28,7 @@ namespace qtor
 		Q_OBJECT;
 
 	protected:
-		qtor::Application * m_app = nullptr;
+		Application * m_app = nullptr;
 		TorrentsView * m_torrentWidget = nullptr;
 
 		// toolbar
@@ -46,29 +46,32 @@ namespace qtor
 		QPixmap m_disconnectedPixmap;
 	
 	protected Q_SLOTS:
-		/// обработчик отключения, вызывается в случае планового и не планового отключения,
-		/// в том числе если подключение еще не было установлено, а только был отправлен запрос
-		/// устанавливает отображение статуса, включает/выключает некоторые действия
 		virtual void OnDisconnected();
-		/// обработчик подключения, вызывается в случае успешного подключения к серверу
-		/// устанавливает отображение статуса, включает/выключает некоторые действия
 		virtual void OnConnected();
-		/// вызывается в случае ошибки соединения(вместе с OnDisconnected)
-		/// выдает сообщение об ошибке
 		virtual void OnConnectionError();
 
 	public Q_SLOTS:
-		/// выполняет запрос на приложение приложение к серверу
-		/// параметры задаются в Init, и дополнительно могут настраиваться пользователем
-		/// точка подключения выбирается combobox'ом в панели инструментов
-		/// метод вернет управление после подачи запроса,
-		/// когда запрос будет обработан будет сгенирированы сигналы:
-		/// в случае успеха - OnConnected
-		/// в случае неудачи - OnConnectionError
 		virtual void Connect();
-		/// выполняет запрос на отключения приложения от сервера
-		/// когда запрос будет обработан будут сгенирирован сигнал OnDisconnected
 		virtual void Disconnect();
+
+
+
+	public: // torrent actions
+		void StartTorrent(const QModelIndex & idx);
+		void StartTorrentNow(const QModelIndex & idx);
+		void StopTorrent(const QModelIndex & idx);
+
+		void DeleteTorrent(const QModelIndex & idx);
+		void PurgeTorrent(const QModelIndex & idx);
+
+		void AnnounceTorrent(const QModelIndex & idx);
+		void VerifyTorrentLocalData(const QModelIndex & idx);
+		void SetTorrentLocation(const QModelIndex & idx, QString location);
+
+	public: // torrent dialogs
+		QWidget * OpenTorrentSettings(const QModelIndex & idx);
+		QWidget * OpenTorrentLocationSettings(const QModelIndex & idx);
+		QWidget * OpenTorrentFolder(const QModelIndex & idx);
 
 	public:
 		virtual void Init(Application & app);
@@ -78,13 +81,13 @@ namespace qtor
 
 	protected:
 		virtual void setupToolBars();
-		virtual void retranslateToolBars();
 		virtual void setupStatusBar();
-		virtual void retranslateStatusBar();
-		virtual void setupUi();
-		virtual void retranslateUi();
-
 		virtual void setupMenu();
+		virtual void setupUi();
+
+		virtual void retranslateToolBars();
+		virtual void retranslateStatusBar();
+		virtual void retranslateUi();
 
 		virtual void connectSignals();
 
