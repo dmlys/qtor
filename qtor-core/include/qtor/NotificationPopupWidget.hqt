@@ -19,8 +19,8 @@ namespace QtTools
 		Q_PROPERTY(QColor  shadowColor      READ ShadowColor      WRITE SetShadowColor      RESET ResetShadowColor      NOTIFY ShadowColorChanged)
 
 		// notification background properties
-		Q_PROPERTY(QBrush backgroundBrush    READ BackgroundBrush  WRITE SetBackgroundBrush RESET ResetBackgroundBrush  NOTIFY BackgroundBrushChanged)
-		Q_PROPERTY(QPen   framePen           READ FramePen         WRITE SetFramePen        RESET ResetFramePen         NOTIFY FramePenChanged)
+		Q_PROPERTY(QBrush backgroundBrush   READ BackgroundBrush  WRITE SetBackgroundBrush  RESET ResetBackgroundBrush  NOTIFY BackgroundBrushChanged)
+		Q_PROPERTY(QPen   framePen          READ FramePen         WRITE SetFramePen         RESET ResetFramePen         NOTIFY FramePenChanged)
 
 	protected:
 		class DropShadowEffect;
