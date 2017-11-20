@@ -107,6 +107,34 @@
 #include <qtor/NotificationPopupWidget.hqt>
 #include <QtWidgets/QDesktopWidget>
 
+class NotificationPopupLabel : public QtTools::NotificationPopupWidget
+{
+protected:
+	QLayout * m_layout = nullptr;
+	QLabel * m_label = nullptr;
+
+public:
+	QString text() const noexcept { return m_label->text(); }
+	void setText(QString text) { m_label->setText(text); }
+
+public:
+	NotificationPopupLabel(QWidget * parent = nullptr);
+};
+
+NotificationPopupLabel::NotificationPopupLabel(QWidget * parent /* = nullptr */)
+	: QtTools::NotificationPopupWidget(parent)
+{
+	m_label = new QLabel(this);
+	m_layout = new QHBoxLayout {this};
+	m_layout->addWidget(m_label);
+	setLayout(m_layout);
+
+	QColor color = QColor("yellow");
+	color.setAlpha(160);
+	SetBackgroundBrush(color);
+}
+
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -123,10 +151,13 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(qtor_core_resource);
 
 	QApplication qapp {argc, argv};
+	qapp.setQuitOnLastWindowClosed(true);
+	//QObject::connect(&qapp, &QApplication::lastWindowClosed, &qapp, &QApplication::quit);
 
 	QDesktopWidget * dwgt = qapp.desktop();
 	auto rect = dwgt->availableGeometry();
-	auto * wgt = new QtTools::NotificationPopupLabel();
+	auto * wgt = new NotificationPopupLabel();
+	wgt->setAttribute(Qt::WA_DeleteOnClose);
 	wgt->setWindowFlag(Qt::ToolTip);
 	wgt->move(rect.bottomRight() - QPoint {640, 400});
 	wgt->setText("Some text");

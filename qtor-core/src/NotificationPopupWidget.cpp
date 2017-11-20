@@ -6,6 +6,10 @@
 #include <QtWidgets/QStyleOption>
 #include <QtWidgets/QStylePainter>
 #include <QtWidgets/QGraphicsDropShadowEffect>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QDesktopWidget>
+
+#include <QtCore/QPropertyAnimation>
 
 // src/widgets/effects/qpixmapfilter.cpp
 Q_DECL_IMPORT void qt_blurImage(
@@ -19,7 +23,6 @@ namespace QtTools
 	{
 		auto blur_radius = m_effect->blurRadius();
 		auto blur_offset = m_effect->offset();
-		auto frame_width = m_framePen.width();
 
 		return {
 			std::max(blur_radius - blur_offset.x(), 0.0),
@@ -37,9 +40,11 @@ namespace QtTools
 
 	QRectF NotificationPopupWidget::DropShadowEffect::boundingRectFor(const QRectF & rect) const
 	{
+		// this is original calculation
 		//auto radius = blurRadius();
 		//return rect | rect.translated(offset()).adjusted(-radius, -radius, radius, radius);
 		
+		// but we return rect as is(see NotificationPopupWidget description)
 		return rect;
 	}
 
@@ -60,9 +65,13 @@ namespace QtTools
 		QTransform restoreTransform = painter->worldTransform();
 		painter->setWorldTransform(QTransform());
 
-		if (pixmap.isNull())
-			return;
+		// NOTE: pixmap contains our whole widget rect.
+		//   rect = ShadowMargins + FrameMargins + contentsRect
+		auto * owner = this->owner();
+		auto margins = owner->contentsMargins();
+		auto frameMargins = owner->FrameMargins();
 
+		// draw pixmap into tmp for further processing(blurring etc)
 		QImage tmp(pixmap.size(), QImage::Format_ARGB32_Premultiplied);
 		tmp.setDevicePixelRatio(pixmap.devicePixelRatioF());
 		tmp.fill(0);
@@ -71,7 +80,7 @@ namespace QtTools
 		tmpPainter.drawPixmap(this->offset(), pixmap);
 		tmpPainter.end();
 
-		// blur the alpha channel
+		// blur the alpha channel from tmp into blurPainter(blurred)
 		QImage blurred(tmp.size(), QImage::Format_ARGB32_Premultiplied);
 		blurred.setDevicePixelRatio(pixmap.devicePixelRatioF());
 		blurred.fill(0);
@@ -81,20 +90,16 @@ namespace QtTools
 
 		tmp = blurred;
 
-		// blacken the image...
+		// blacken blurred shadow image
 		tmpPainter.begin(&tmp);
 		tmpPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
 		tmpPainter.fillRect(tmp.rect(), color());
 		tmpPainter.end();
 
-		// draw the blurred drop shadow...
+		// draw the blurred drop shadow into resulting painter
 		painter->drawImage(offset, tmp);
 
-		auto * owner = this->owner();
-		auto margins = owner->contentsMargins();
-		auto frameMargins = owner->FrameMargins();
-
-		// Draw the actual pixmap...
+		// Draw the actual pixmap, but only contents + frame
 		auto old = painter->compositionMode();
 		painter->setCompositionMode(QPainter::CompositionMode_Source);
 		painter->drawPixmap(offset, pixmap, pixmap.rect() - margins + frameMargins);
@@ -124,6 +129,37 @@ namespace QtTools
 		painter.drawRect(contentsRect().adjusted(-frameWidth, -frameWidth, 0, 0));
 	}
 
+	void NotificationPopupWidget::mousePressEvent(QMouseEvent * ev)
+	{
+		if (ev->button() == Qt::RightButton and contentsRect().contains(ev->pos()))
+			MoveOutAndClose();
+
+		return base_type::mousePressEvent(ev);
+	}
+
+	void NotificationPopupWidget::MoveOutAndClose()
+	{
+		auto * animation = new QPropertyAnimation(this, "geometry", this);
+		connect(animation, &QPropertyAnimation::finished, this, &NotificationPopupWidget::close);
+
+		QRectF parentGeom;
+		auto * parent = this->parentWidget();
+		if (parent)
+			parentGeom = parent->geometry();
+		else
+			parentGeom = qApp->desktop()->availableGeometry(this);
+
+		QRectF start = this->geometry();
+		QRectF finish = QRectF(parentGeom.right(), start.top(), 0, start.height());
+
+		animation->setStartValue(start);
+		animation->setEndValue(finish);
+		
+		animation->setEasingCurve(QEasingCurve::InCirc);
+		animation->start(animation->DeleteWhenStopped);
+		//close();
+	}
+
 	NotificationPopupWidget::NotificationPopupWidget(QWidget * parent /* = nullptr */, Qt::WindowFlags flags /* = {} */)
 		: QWidget(parent, flags)
 	{
@@ -143,18 +179,5 @@ namespace QtTools
 		
 		auto margins = ShadowMargins() + FrameMargins();
 		setContentsMargins(margins.toMargins());
-	}
-
-	NotificationPopupLabel::NotificationPopupLabel(QWidget * parent /* = nullptr */)
-		: NotificationPopupWidget(parent)
-	{
-		m_label = new QLabel(this);
-		m_layout = new QHBoxLayout {this};
-		m_layout->addWidget(m_label);
-		setLayout(m_layout);
-
-		QColor color = QColor("yellow");
-		color.setAlpha(160);
-		SetBackgroundBrush(color);
 	}
 }
