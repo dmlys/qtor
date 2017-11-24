@@ -135,10 +135,25 @@ NotificationPopupLabel::NotificationPopupLabel(QWidget * parent /* = nullptr */)
 }
 
 
+#include <viewed/sequence_container.hpp>
+#include <viewed/ptr_sequence_container.hpp>
+#include <viewed/view_qtbase.hpp>
+#include <QtWidgets/QWidget>
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
 	using namespace qtor;
+
+	//using int_cont = viewed::sequence_container<int>;
+	//using int_view = viewed::view_qtbase<int_cont>;
+	//
+	//using container = viewed::ptr_sequence_container<QWidget>;
+	//using view = viewed::view_qtbase<container>;
+
+	//container sc;
+	//view v(&sc);
+	//v.init();
 
 	ext::winsock2_stream_init();
 	ext::init_future_library(std::thread::hardware_concurrency());
@@ -151,16 +166,17 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(qtor_core_resource);
 
 	QApplication qapp {argc, argv};
-	qapp.setQuitOnLastWindowClosed(true);
-	//QObject::connect(&qapp, &QApplication::lastWindowClosed, &qapp, &QApplication::quit);
+	//qapp.setQuitOnLastWindowClosed(true);
+	////QObject::connect(&qapp, &QApplication::lastWindowClosed, &qapp, &QApplication::quit);
 
-	QDesktopWidget * dwgt = qapp.desktop();
-	auto rect = dwgt->availableGeometry();
-	auto * wgt = new NotificationPopupLabel();
-	wgt->setWindowFlag(Qt::ToolTip);
-	wgt->move(rect.bottomRight() - QPoint {640, 400});
-	wgt->setText("Some text");
-	wgt->show();
+	//QDesktopWidget * dwgt = qapp.desktop();
+	//auto rect = dwgt->availableGeometry();
+	//auto * wgt = new NotificationPopupLabel();
+	//wgt->setWindowFlag(Qt::ToolTip);
+	//wgt->SetShadowColor(Qt::black);
+	//wgt->move(rect.bottomRight() - QPoint {640, 400});
+	//wgt->setText("Some text");
+	//wgt->show();
 
 
 //#ifdef Q_OS_WIN
@@ -173,18 +189,18 @@ int main(int argc, char * argv[])
 //	qapp.setPalette(palette);
 //#endif
 
-	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	//source->set_address("bin/data.db"s);
+	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	source->set_address("bin/data.db"s);
 
-	////auto source = std::make_shared<qtor::transmission::data_source>();
-	////source->set_address("http://melkiy:9091/transmission/rpc"s);
-	//
-	//qtor::TransmissionRemoteApp app {std::move(source)};
-	//qtor::MainWindow mainWindow;
-	//
-	//mainWindow.Init(app);
-	//mainWindow.show();
-	//
-	//QTimer::singleShot(100, [&app] { app.Connect(); });
+	//auto source = std::make_shared<qtor::transmission::data_source>();
+	//source->set_address("http://melkiy:9091/transmission/rpc"s);
+	
+	qtor::TransmissionRemoteApp app {std::move(source)};
+	qtor::MainWindow mainWindow;
+	
+	mainWindow.Init(app);
+	mainWindow.show();
+	
+	QTimer::singleShot(100, [&app] { app.Connect(); });
 	return qapp.exec();
 }

@@ -42,6 +42,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
+    <ClInclude Include="include\qtor\NotificationSystem.hpp" />
     <ClInclude Include="include\qtor\sparse_container.hpp" />
     <ClInclude Include="include\qtor\sparse_container_iterator.hpp" />
     <ClInclude Include="include\qtor\TorrentsModel.hpp" />
@@ -56,6 +57,7 @@
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\NotificationPopupWidget.cpp" />
+    <ClCompile Include="src\NotificationSystem.cpp" />
     <ClCompile Include="src\sparse_container.cpp" />
     <ClCompile Include="src\torrent.cpp" />
     <ClCompile Include="src\TorrentListDelegate.cpp" />

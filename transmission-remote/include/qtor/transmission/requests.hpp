@@ -56,6 +56,7 @@ namespace transmission
 	{
 		using std::begin; using std::end;
 		boost::replace_all_copy(std::back_inserter(cont), val, "\"", "\\\"");
+		boost::replace_all_copy(std::back_inserter(cont), val, "\\", "\\\\");
 	}
 
 	template <class Range, class OutContainer>
