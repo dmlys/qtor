@@ -1,6 +1,7 @@
 #pragma once
 #include <QtGui/QPen>
 #include <QtGui/QBrush>
+#include <QtCore/QAbstractAnimation>
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QLayout>
@@ -10,12 +11,18 @@
 namespace QtTools
 {
 	/// NotificationPopupWidget is used to display notifications to user.
-	/// It's a framelss(Qt::FramelessWindowHint) 
+	/// It's a frameless(Qt::FramelessWindowHint)
 	/// floating translucent separate(but can be a child too) widget with shadow effect.
 	/// 
 	/// This class is more of a base, it provides only background, frame and a shadow effect.
 	/// You a expected to add content, overriding paintEvent, sizeHint,
 	/// or simpler adding child widget(s) and setting layout of NotificationPopupWidget.
+	/// 
+	/// Also on RMB click widget starts move out animation 
+	/// to nearest left or right parent window edge and then auto closes.
+	/// 
+	/// NOTE:
+	///  This widget set Qt::WA_DeleteOnClose attribute in constructor
 	/// 
 	/// TECHNICAL ASPECTS:
 	///  This widget can be both Qt::Widget and Qt::Window(use contructor and setWindowFlag method)
@@ -25,7 +32,6 @@ namespace QtTools
 	///  
 	///  |--------------------------------------------------------------
 	///  |++++++++++++++++++++++++++++++++                            |
-	///  |+                              +                            |
 	///  |+                              +                            |
 	///  |+    contentRect()             +                            |
 	///  |+    visible part              +                            |
@@ -81,13 +87,19 @@ namespace QtTools
 		DropShadowEffect * m_effect = nullptr;
 
 	protected:
-		QMarginsF ShadowMargins() const noexcept;
-		QMargins  FrameMargins() const noexcept;
+		virtual QMarginsF ShadowMargins() const noexcept;
+		virtual QMargins  FrameMargins() const noexcept;
 
 	protected:
-		QSize sizeHint() const override;
-		void paintEvent(QPaintEvent * ev) override;
-		void mousePressEvent(QMouseEvent * ev) override;
+		virtual QSize sizeHint() const override;
+		virtual void paintEvent(QPaintEvent * ev) override;
+		virtual void mousePressEvent(QMouseEvent * ev) override;
+
+	protected:
+		virtual QAbstractAnimation * CreateMoveOutAnimation();
+
+	public Q_SLOTS:
+		virtual void MoveOutAndClose();
 
 	public:
 		QPointF ShadowOffset() const noexcept;
@@ -110,9 +122,6 @@ namespace QtTools
 		void SetBackgroundBrush(QBrush brush);
 		void ResetBackgroundBrush();
 
-	public Q_SLOTS:
-		void MoveOutAndClose();
-
 	Q_SIGNALS:
 		void ShadowOffsetChanged();
 		void ShadowBlurRadiusChanged();
@@ -120,6 +129,9 @@ namespace QtTools
 
 		void BackgroundBrushChanged();
 		void FramePenChanged();
+
+		// fires when move out animation finishes
+		void MovedOut();
 
 	public:
 		NotificationPopupWidget(QWidget * parent = nullptr, Qt::WindowFlags flags = {});

@@ -137,10 +137,9 @@ namespace QtTools
 		return base_type::mousePressEvent(ev);
 	}
 
-	void NotificationPopupWidget::MoveOutAndClose()
+	QAbstractAnimation * NotificationPopupWidget::CreateMoveOutAnimation()
 	{
 		auto * animation = new QPropertyAnimation(this, "geometry", this);
-		connect(animation, &QPropertyAnimation::finished, this, &NotificationPopupWidget::close);
 
 		QRectF parentGeom;
 		auto * parent = this->parentWidget();
@@ -150,14 +149,25 @@ namespace QtTools
 			parentGeom = qApp->desktop()->availableGeometry(this);
 
 		QRectF start = this->geometry();
-		QRectF finish = QRectF(parentGeom.right(), start.top(), 0, start.height());
+		QRectF finish = parentGeom.right() - start.right() < start.left() - parentGeom.left()
+			? QRectF(parentGeom.right(), start.top(), 0, start.height())
+			: QRectF(parentGeom.left(), start.top(), 0, start.height());
 
 		animation->setStartValue(start);
 		animation->setEndValue(finish);
-		
 		animation->setEasingCurve(QEasingCurve::InCirc);
+
+		return animation;
+	}
+
+	void NotificationPopupWidget::MoveOutAndClose()
+	{
+		auto * animation = CreateMoveOutAnimation();
+		connect(animation, &QPropertyAnimation::finished, this, &NotificationPopupWidget::close);
+		connect(animation, &QPropertyAnimation::finished, this, &NotificationPopupWidget::MovedOut);
+
+		animation->setParent(this);
 		animation->start(animation->DeleteWhenStopped);
-		//close();
 	}
 
 	NotificationPopupWidget::NotificationPopupWidget(QWidget * parent /* = nullptr */, Qt::WindowFlags flags /* = {} */)
@@ -165,6 +175,7 @@ namespace QtTools
 	{
 		setWindowFlag(Qt::FramelessWindowHint);
 		setAttribute(Qt::WA_OpaquePaintEvent);
+		setAttribute(Qt::WA_DeleteOnClose);
 
 		if (isWindow())
 			setAttribute(Qt::WA_TranslucentBackground);

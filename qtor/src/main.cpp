@@ -157,7 +157,6 @@ int main(int argc, char * argv[])
 	QDesktopWidget * dwgt = qapp.desktop();
 	auto rect = dwgt->availableGeometry();
 	auto * wgt = new NotificationPopupLabel();
-	wgt->setAttribute(Qt::WA_DeleteOnClose);
 	wgt->setWindowFlag(Qt::ToolTip);
 	wgt->move(rect.bottomRight() - QPoint {640, 400});
 	wgt->setText("Some text");
