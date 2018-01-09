@@ -7,6 +7,7 @@ namespace qtor
 	{
 		switch (status)
 		{
+			case torrent_status::unknown:            return tr("unknown");
 			case torrent_status::stopped:            return tr("stopped");
 			case torrent_status::downloading:        return tr("downloading");
 			case torrent_status::seeding:            return tr("seeding");

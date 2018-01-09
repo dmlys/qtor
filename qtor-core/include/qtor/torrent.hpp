@@ -12,6 +12,7 @@ namespace qtor
 {
 	namespace torrent_status
 	{		
+		constexpr unsigned unknown = -1;
 		constexpr unsigned stopped = 0;
 		constexpr unsigned checking = 1;
 		constexpr unsigned checking_queued = 2;

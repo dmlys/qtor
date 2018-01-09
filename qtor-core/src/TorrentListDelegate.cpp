@@ -46,11 +46,7 @@ namespace qtor
 		const auto error_string = tor.error_string().value_or(torrent::ms_emptystr);
 
 		QString str;
-		if (not error_string.isEmpty())
-		{
-			str = error_string;
-		}
-		else if (metadata_progress.value_or(0) < 1.0) // magnet link with metadata still downloading
+		if (metadata_progress.value_or(0) < 1.0) // magnet link with metadata still downloading
 		{
 			//: torrent progress string first part, argument is amount of metadata loading done
 			str = tr("Magnetized transfer - retrieving metadata (%1)")
@@ -129,11 +125,20 @@ namespace qtor
 
 	QString TorrentListDelegate::StatusText(const torrent & tor, const formatter * fmt) const
 	{
-		QString str;
+		const auto status = tor.status().value_or(torrent_status::unknown);
+		const auto error_string = tor.error_string().value_or(torrent::ms_emptystr);
+
+		if (not error_string.isEmpty())
+			//: StatusText error description
+			return tr("Error: ") + error_string;
 		
-		auto status = tor.status().value();
+		QString str;
 		switch (status)
 		{
+			case torrent_status::unknown:
+				str = tr("Unknown status");
+				break;
+
 			case torrent_status::checking:
 				str = tr("Verifying local data (%1 tested)").arg(fmt->format_percent(tor.recheck_progress()));
 				break;
@@ -189,6 +194,7 @@ namespace qtor
 			case torrent_status::checking_queued:
 			case torrent_status::downloading_queued:
 			case torrent_status::seeding_queued:
+
 			default:
 				str = TorrentsModel::StatusString(status);
 				break;
@@ -308,9 +314,10 @@ namespace qtor
 		const QStyleOptionViewItem & option = *item.option;
 		auto * style = item.option->widget->style();
 
-		const auto status = item.tor->status().value();
-		const bool paused = status == torrent_status::stopped;
-		const bool error = false;
+		const auto status = item.tor->status().value_or(torrent_status::unknown);
+		const bool paused = status == torrent_status::stopped or status == torrent_status::unknown;
+		const auto error_string = item.tor->error_string().value_or(torrent::ms_emptystr);
+		const bool error = status == torrent_status::unknown or not error_string.isEmpty();
 
 		const bool selected = option.state & QStyle::State_Selected;
 		auto cg = paused ? QPalette::Disabled : QtTools::Delegates::ColorGroup(option);
