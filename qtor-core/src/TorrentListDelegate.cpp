@@ -43,8 +43,14 @@ namespace qtor
 		const auto ratio = tor.ratio();
 		const auto seed_ratio = tor.seed_limit();
 
+		const auto error_string = tor.error_string().value_or(torrent::ms_emptystr);
+
 		QString str;
-		if (metadata_progress.value() < 1.0) // magnet link with metadata still downloading
+		if (not error_string.isEmpty())
+		{
+			str = error_string;
+		}
+		else if (metadata_progress.value_or(0) < 1.0) // magnet link with metadata still downloading
 		{
 			//: torrent progress string first part, argument is amount of metadata loading done
 			str = tr("Magnetized transfer - retrieving metadata (%1)")

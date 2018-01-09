@@ -6,7 +6,8 @@
 #include <ext/type_traits.hpp>
 #include <ext/is_string.hpp>
 #include <ext/range.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/find_format.hpp>
+#include <boost/algorithm/string/finder.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
 #include <fmt/format.h>
@@ -55,8 +56,21 @@ namespace transmission
 	void escape_json_string(const String & val, OutContainer & cont)
 	{
 		using std::begin; using std::end;
-		boost::replace_all_copy(std::back_inserter(cont), val, "\"", "\\\"");
-		boost::replace_all_copy(std::back_inserter(cont), val, "\\", "\\\\");
+		auto first = begin(val);
+		auto last  = end(val);
+
+		for (;;)
+		{
+			auto it = std::find_if(first, last, [](auto ch) { return ch == '"' or ch == '\\'; });
+			ext::append(cont, first, it);
+
+			if (it == last) break;
+			
+			cont.push_back('\\');
+			cont.push_back(*it);
+
+			first = ++it;
+		}
 	}
 
 	template <class Range, class OutContainer>
