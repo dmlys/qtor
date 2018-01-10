@@ -11,6 +11,7 @@
 #include <QtCore/QAbstractItemModel>
 #include <QtWidgets/QAbstractItemDelegate>
 
+#include <qtor/NotificationPopupWidget.hqt>
 
 
 namespace QtTools
@@ -30,6 +31,9 @@ namespace QtTools
 		class TimestampPred;
 		class NotificationFilter;
 		class SimpleNotification;
+
+		class SimpleNotificationDelegate;
+		class SimpleNotificationPopup;
 
 		enum NotificationType
 		{
@@ -58,15 +62,60 @@ namespace QtTools
 	public:
 		virtual QDateTime Timestamp() const = 0;
 		virtual QString Text() const = 0;
-		virtual QAbstractItemDelegate * CreateDelegate() const = 0;
 		virtual NotificationPopupWidget * CreatePopup() const = 0;
 
+	public:
+		// item delegate methods
+		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const = 0;
+		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const = 0;
+
+	public:
 		virtual ~Notification() = default;
 	};
 
 
 	class NotificationSystem::SimpleNotification : public Notification
 	{
+	protected:
+		/// cached calculated various parts of drawn content.
+		struct LaidoutItem
+		{
+			// First time delegate is called with sizeHint, 
+			// option->rect contains basic rectangle where item can placed, 
+			// it can whole listView viewport area.
+			// Second time delegate is called with paint,
+			// and option->rect holds proper region calculated based on previous sizeHint calculation.
+			// 
+			// hintTopLeft holds option->rect topLeft point
+			// so on second call we can just adjust calculated previously part rectangles
+
+			QModelIndex index;  // index for which this item was computed
+			QPoint hintTopLeft; // see above description
+
+			QIcon     icon;      // notification icon
+			QString   timestamp; // notification datetime
+			QString   title;     // notification title
+			QString   text;      // notification text
+			
+			// option from sizeHint/paint call(update on each call), 
+			// lifetime the same, this is just for a convenience.
+			const QStyleOptionViewItem * option = nullptr;
+
+			QFont baseFont;     // basic font, baseFont = option->font;
+			QFont titleFont;    // title text font, 1.1 * baseFont, bold.
+			QFont textFont;     // baseFont
+			
+			QRect titleRect;    // rectangle occupied by title text, without all margins
+			QRect datetimeRect; // rectangle occupied by datetime text, without all margins
+			QRect textRect;     // rectangle occupied by text, without all margins
+			QRect iconRect;     // rectangle occupied by icon, without all margins
+			QRect totalRect;    // rectangle occupied by union of all rectangles, including all margins
+		};
+
+	protected:
+		static const QMargins ms_OutterMargins; // { 0, 1, 0, 1 };
+		static const QMargins ms_InnerMargins;  // { 4, 4, 4, 4 };
+
 	protected:
 		QDateTime m_timestamp;
 		QString m_title;
@@ -76,10 +125,35 @@ namespace QtTools
 	public:
 		virtual QDateTime Timestamp() const override;
 		virtual QString Text() const override;
-		virtual QAbstractItemDelegate * CreateDelegate() const override;
 		virtual NotificationPopupWidget * CreatePopup() const override;
+
+	protected:
+		virtual LaidoutItem LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index) const;
+	
+	public:
+		// item delegate methods
+		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 	};
 
+	class NotificationSystem::SimpleNotificationDelegate : public QAbstractItemDelegate
+	{
+	public:
+		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+
+	public:
+		SimpleNotificationDelegate(QObject * parent = nullptr);
+	};
+
+	class NotificationSystem::SimpleNotificationPopup : public NotificationPopupWidget
+	{
+	public:
+		SimpleNotificationPopup(const SimpleNotification & notification);
+
+	protected:
+		void setupUi();
+	};
 
 	class NotificationSystem::Store : 
 		public viewed::ptr_sequence_container<Notification>

@@ -33,7 +33,7 @@ namespace qtor
 			QModelIndex index;  // index for which this item was computed
 			QPoint hintTopLeft; // see above description
 
-			const torrent * tor = nullptr;   // tor from model by index
+			const torrent   * tor = nullptr; // tor from model by index
 			const formatter * fmt = nullptr; // fmt from model
 
 			// option from sizeHint/paint call(update on each call), 
@@ -56,7 +56,7 @@ namespace qtor
 			QRect totalRect;	// rectangle occupied by union of all rectangles, including all margins
 		};
 
-		mutable LaidoutItem m_cachedItem;		
+		mutable LaidoutItem m_cachedItem;
 
 		// search text parameters
 		QTextCharFormat m_searchFormat;
