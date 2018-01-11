@@ -1,72 +1,74 @@
-#include <QtTools/Delegates/Utils.hpp>
-#include <QtTools/Delegates/DrawFormattedText.hpp>
-#include <qtor/NotificationSystem.hpp>
+#include <QtTools/ToolsBase.hpp>
+#include <qtor/NotificationSystem.hqt>
 
 namespace QtTools
 {
-	const QMargins NotificationSystem::SimpleNotification::ms_InnerMargins = {0, 1, 0, 1};
-	const QMargins NotificationSystem::SimpleNotification::ms_OutterMargins = {4, 4, 4, 4};
-
-	NotificationSystem::SimpleNotificationDelegate::SimpleNotificationDelegate(QObject * parent /* = nullptr */)
-		: QAbstractItemDelegate(parent)
+	viewed::refilter_type NotificationSystem::NotificationFilter::set_expr(QString search)
 	{
-
+		return viewed::refilter_type::same;
 	}
 
-	void NotificationSystem::SimpleNotificationDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
+	bool NotificationSystem::NotificationFilter::matches(const Notification & n) const noexcept
 	{
-		
+		return true;
 	}
 
-	QSize NotificationSystem::SimpleNotificationDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const
+	bool NotificationSystem::NotificationFilter::always_matches() const noexcept
 	{
-
+		return true;
 	}
 
-	auto NotificationSystem::SimpleNotification::LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index) const 
-		-> LaidoutItem
+	NotificationSystem::Model::Model(std::shared_ptr<Store> store, QObject * parent /* = nullptr */)
+		: view_type(store.get()), base_type(parent)
 	{
-		LaidoutItem item;
-		item.option = &option;
-		//if (item.index == index)
-		//{
-		//	auto newTopLeft = option.rect.topLeft();
-		//	auto diff = option.rect.topLeft() - item.hintTopLeft;
-		//	item.hintTopLeft = option.rect.topLeft();
+		assert(store);
 
-		//	item.titleRect.translate(diff);
-		//	item.datetimeRect.translate(diff);
-		//	item.textRect.translate(diff);
-		//	item.iconRect.translate(diff);
+		m_owner_store = std::move(store);
 
-		//	return;
-		//}
-
-		item.hintTopLeft = option.rect.topLeft();
-		item.index = index;
-
-		item.timestamp = m_timestamp.toString();
-		item.title = m_title;
-		item.text = m_text;
-		item.icon = m_icon;
-
-		item.baseFont = option.font;
-		item.titleFont = option.font;
-		item.textFont = option.font;
-
-		QFontMetrics fm {item.titleFont};
-		auto topLeft = option.rect.topLeft();
-
-		auto elided = QtTools::Delegates::TextLayout::ElideText(fm, item.title, option.textElideMode, option.rect.width());
+		// from view_base_type
+		connect_signals();
+		reinit_view();
 	}
 
-	void NotificationSystem::SimpleNotification::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
+	auto NotificationSystem::Model::GetItem(int row) const -> const Notification *
 	{
-
+		return m_store.at(row);
 	}
 
-	QSize NotificationSystem::SimpleNotification::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const
+	void NotificationSystem::Model::FilterBy(QString expr)
 	{
+		auto rtype = m_filter_pred.set_expr(expr);
+		refilter_and_notify(rtype);
+	}
 
+	int NotificationSystem::Model::FullRowCount() const
+	{
+		return qint(m_owner_store->size());
+	}
+
+	int NotificationSystem::Model::rowCount(const QModelIndex & parent /*= QModelIndex()*/) const
+	{
+		return qint(m_store.size());
+	}
+
+	QVariant NotificationSystem::Model::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const
+	{
+		if (!index.isValid())
+			return {};
+
+		int row = index.row();
+		int column = index.column();
+
+		switch (role)
+		{
+			//case Qt::UserRole:
+			//	return QVariant::fromValue(GetItem(row));
+
+			case Qt::DisplayRole:
+			case Qt::ToolTipRole:
+				return m_store[row]->Text();
+
+			default:          return {};
+		}
 	}
 }

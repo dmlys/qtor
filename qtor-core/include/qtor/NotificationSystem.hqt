@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <any>
 
 #include <viewed/sfview_qtbase.hpp>
 #include <viewed/ptr_sequence_container.hpp>
@@ -66,8 +67,8 @@ namespace QtTools
 
 	public:
 		// item delegate methods
-		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const = 0;
-		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const = 0;
+		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const = 0;
+		virtual QSize sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const = 0;
 
 	public:
 		virtual ~Notification() = default;
@@ -82,17 +83,18 @@ namespace QtTools
 		{
 			// First time delegate is called with sizeHint, 
 			// option->rect contains basic rectangle where item can placed, 
-			// it can whole listView viewport area.
+			// it can be whole listView viewport area.
 			// Second time delegate is called with paint,
 			// and option->rect holds proper region calculated based on previous sizeHint calculation.
 			// 
 			// hintTopLeft holds option->rect topLeft point
 			// so on second call we can just adjust calculated previously part rectangles
 
-			QModelIndex index;  // index for which this item was computed
-			QPoint hintTopLeft; // see above description
+			// address of item for which this item was computed
+			const SimpleNotification * notification = nullptr;
+			QPoint hintTopLeft;  // see above description
 
-			QIcon     icon;      // notification icon
+			QPixmap   pixmap;    // notification pixmap
 			QString   timestamp; // notification datetime
 			QString   title;     // notification title
 			QString   text;      // notification text
@@ -106,9 +108,9 @@ namespace QtTools
 			QFont textFont;     // baseFont
 			
 			QRect titleRect;    // rectangle occupied by title text, without all margins
-			QRect datetimeRect; // rectangle occupied by datetime text, without all margins
+			QRect timestampRect; // rectangle occupied by datetime text, without all margins
 			QRect textRect;     // rectangle occupied by text, without all margins
-			QRect iconRect;     // rectangle occupied by icon, without all margins
+			QRect pixmapRect;     // rectangle occupied by icon, without all margins
 			QRect totalRect;    // rectangle occupied by union of all rectangles, including all margins
 		};
 
@@ -120,7 +122,7 @@ namespace QtTools
 		QDateTime m_timestamp;
 		QString m_title;
 		QString m_text;
-		QIcon m_icon;
+		QPixmap m_pixmap;
 
 	public:
 		virtual QDateTime Timestamp() const override;
@@ -128,22 +130,28 @@ namespace QtTools
 		virtual NotificationPopupWidget * CreatePopup() const override;
 
 	protected:
-		virtual LaidoutItem LayoutItem(const QStyleOptionViewItem & option, const QModelIndex & index) const;
+		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
+		virtual void Draw(QPainter * painter, LaidoutItem & item) const;
 	
 	public:
 		// item delegate methods
-		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
-		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const override;
+		virtual QSize sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const override;
 	};
 
 	class NotificationSystem::SimpleNotificationDelegate : public QAbstractItemDelegate
 	{
+	protected:
+		mutable std::any m_cachedItem;
+
 	public:
 		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 
 	public:
-		SimpleNotificationDelegate(QObject * parent = nullptr);
+		using QAbstractItemDelegate::QAbstractItemDelegate;
+		//SimpleNotificationDelegate(QObject * parent = nullptr)
+		//	: QAbstractItemDelegate(parent) {}
 	};
 
 	class NotificationSystem::SimpleNotificationPopup : public NotificationPopupWidget
@@ -219,14 +227,14 @@ namespace QtTools
 		virtual const Notification * GetItem(int row) const;
 
 		virtual void FilterBy(QString expr);
-		virtual void SortBy(int column, Qt::SortOrder order) ;
 		virtual int FullRowCount() const;
 
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override;
+		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 
 	public:
 		Model(std::shared_ptr<Store> store, QObject * parent = nullptr);
-		~Model();
+		~Model() = default;
 
 		Q_DISABLE_COPY(Model);
 

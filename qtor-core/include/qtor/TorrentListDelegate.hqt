@@ -1,9 +1,10 @@
 #pragma once
+#include <QtGui/QTextFormat>
+#include <QtWidgets/QAbstractItemDelegate>
+
 #include <qtor/torrent.hpp>
 #include <qtor/formatter.hqt>
 
-#include <QtGui/QTextFormat>
-#include <QtWidgets/QAbstractItemDelegate>
 
 namespace qtor
 {
@@ -23,7 +24,7 @@ namespace qtor
 		{
 			// First time delegate is called with sizeHint, 
 			// option->rect contains basic rectangle where item can placed, 
-			// it can whole listView viewport area.
+			// it can be whole listView viewport area.
 			// Second time delegate is called with paint,
 			// and option->rect holds proper region calculated based on previous sizeHint calculation.
 			// 
