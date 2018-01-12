@@ -106,6 +106,7 @@
 
 #include <qtor/NotificationPopupWidget.hqt>
 #include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
 #include <QtWidgets/QDesktopWidget>
 
 class NotificationPopupLabel : public QtTools::NotificationPopupWidget
@@ -177,16 +178,21 @@ int main(int argc, char * argv[])
 	//
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	std::shared_ptr<QtTools::NotificationSystem::Store> store = std::make_shared<QtTools::NotificationSystem::Store>();
-	QtTools::NotificationSystem::Model model {store};
+	QtTools::NotificationSystem nsys;
+	nsys.AddNotification("Title", "Text1");
+	nsys.AddNotification("Title", "Text2");
+	nsys.AddNotification("Title", "Text3");
+
+	auto model = nsys.CreateModel();
 
 	QListView listView;
-	listView.setModel(&model);
+	QtTools::NotificationSystem::SimpleNotificationDelegate delegate;
+	listView.setModel(model.get());
+	listView.setItemDelegate(&delegate);
 
 	listView.show();
 
-	auto & item = **model.begin();
-	QString t = item.Text();
+	//cout << model->rowCount() << endl;
 
 	return qapp.exec();
 }

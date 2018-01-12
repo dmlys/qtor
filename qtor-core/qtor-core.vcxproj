@@ -73,6 +73,7 @@
     <QtMOCCompile Include="include\qtor\Application.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationPopupWidget.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationSystem.hqt" />
+    <QtMOCCompile Include="include\qtor\NotificationSystemExt.hqt" />
     <QtMOCCompile Include="include\qtor\TorrentListDelegate.hqt" />
     <QtMOCCompile Include="include\qtor\TorrentsView.hqt" />
   </ItemGroup>

@@ -1,8 +1,10 @@
 #include <QtGui/QPainter>
 #include <QtTools/Delegates/Utils.hpp>
+#include <QtTools/Delegates/StyledParts.hpp>
 #include <QtTools/Delegates/DrawFormattedText.hpp>
 
 #include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
 
 
 namespace QtTools
@@ -10,18 +12,19 @@ namespace QtTools
 	const QMargins NotificationSystem::SimpleNotification::ms_InnerMargins = {0, 1, 0, 1};
 	const QMargins NotificationSystem::SimpleNotification::ms_OutterMargins = {4, 4, 4, 4};	
 
-	void NotificationSystem::SimpleNotificationDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
+	QString NotificationSystem::SimpleNotification::Text() const
 	{
-		auto * model = dynamic_cast<const Model *>(index.model());
-		const auto * notification = model->GetItem(index.row());
-		return notification->paint(painter, option, m_cachedItem);
+		return m_text;
 	}
 
-	QSize NotificationSystem::SimpleNotificationDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const
+	QDateTime NotificationSystem::SimpleNotification::Timestamp() const
 	{
-		auto * model = dynamic_cast<const Model *>(index.model());
-		const auto * notification = model->GetItem(index.row());
-		return notification->sizeHint(option, m_cachedItem);
+		return m_timestamp;
+	}
+
+	NotificationPopupWidget * NotificationSystem::SimpleNotification::CreatePopup() const
+	{
+		return nullptr;
 	}
 
 	void NotificationSystem::SimpleNotification::LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const 
@@ -45,7 +48,7 @@ namespace QtTools
 
 		item.notification = this;
 		item.hintTopLeft = option.rect.topLeft();
-		item.timestamp = m_timestamp.toString();
+		item.timestamp = m_timestamp.toString(Qt::DateFormat::DefaultLocaleShortDate);
 		item.title = m_title;
 		item.text = m_text;
 		item.pixmap = m_pixmap;
@@ -66,7 +69,7 @@ namespace QtTools
 		QSize timestampSize(titleFm.width(item.timestamp), titleFm.height());
 
 		auto left = std::max(textLeft, rect.right() - timestampSize.width());
-		item.timestampRect = QRect {left, rect.top(), rect.right(), rect.top() + timestampSize.height()};
+		item.timestampRect = QRect {left, rect.top(), rect.right() - left, rect.top() + timestampSize.height()};
 		item.timestampRect -= ms_InnerMargins;
 
 		item.titleRect = QRect {textLeft, rect.top(), left, rect.top() + timestampSize.height()};
@@ -77,11 +80,21 @@ namespace QtTools
 		item.textRect = textFm.boundingRect(item.textRect, Qt::AlignLeft | Qt::TextWordWrap, item.text);
 
 		item.totalRect = item.pixmapRect | item.timestampRect | item.textRect;
+		item.totalRect += ms_InnerMargins;
+		item.totalRect += ms_OutterMargins;
 	}
 
-	void NotificationSystem::SimpleNotification::Draw(QPainter * painter, LaidoutItem & item) const
+	void NotificationSystem::SimpleNotification::Draw(QPainter * painter, const LaidoutItem & item) const
 	{
 		painter->drawPixmap(item.pixmapRect, item.pixmap);
+
+		const QStyleOptionViewItem & option = *item.option;
+		const bool selected = option.state & QStyle::State_Selected;
+
+		auto cg = QtTools::Delegates::ColorGroup(option);
+		auto cr = selected ? QPalette::HighlightedText : QPalette::Text;
+
+		painter->setPen(option.palette.color(cg, cr));
 
 		painter->setFont(item.titleFont);
 		painter->drawText(item.titleRect, item.text);
@@ -91,25 +104,60 @@ namespace QtTools
 		painter->drawText(item.textRect, Qt::AlignLeft, item.text);
 	}
 
+	void NotificationSystem::SimpleNotification::DrawBackground(QPainter * painter, const LaidoutItem & item) const
+	{
+		using QtTools::Delegates::ColorGroup;
+
+		const QStyleOptionViewItem & option = *item.option;
+		const bool selected = option.state & QStyle::State_Selected;
+
+		if (selected)
+		{
+			auto cg = ColorGroup(option);
+			painter->fillRect(item.option->rect, option.palette.brush(cg, QPalette::Highlight));
+		}
+
+		using namespace QtTools::Delegates;
+		if (HasFocusFrame(option))
+		{
+			DrawFocusFrame(painter, item.option->rect, option);
+		}
+	}
+
 	void NotificationSystem::SimpleNotification::paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const
 	{
-		auto * cache = std::any_cast<LaidoutItem *>(cookie);
+		auto * cache = std::any_cast<LaidoutItem>(&cookie);
 		if (not cache) cache = &cookie.emplace<LaidoutItem>();
 
 		LayoutItem(option, *cache);
 
 		painter->save();
+		DrawBackground(painter, *cache);
 		Draw(painter, *cache);
 		painter->restore();
 	}
 
 	QSize NotificationSystem::SimpleNotification::sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const
 	{
-		auto * cache = std::any_cast<LaidoutItem *>(cookie);
+		auto * cache = std::any_cast<LaidoutItem>(&cookie);
 		if (not cache) cache = &cookie.emplace<LaidoutItem>();
 		
 		LayoutItem(option, *cache);
 		return cache->totalRect.size();
 
+	}
+
+	void NotificationSystem::SimpleNotificationDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
+	{
+		auto * model = dynamic_cast<const Model *>(index.model());
+		const auto * notification = model->GetItem(index.row());
+		return notification->paint(painter, option, m_cachedItem);
+	}
+
+	QSize NotificationSystem::SimpleNotificationDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const
+	{
+		auto * model = dynamic_cast<const Model *>(index.model());
+		const auto * notification = model->GetItem(index.row());
+		return notification->sizeHint(option, m_cachedItem);
 	}
 }

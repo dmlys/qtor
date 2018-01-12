@@ -1,0 +1,179 @@
+#pragma once
+
+#include <qtor/NotificationSystem.hqt>
+
+namespace QtTools
+{
+	class NotificationSystem::SimpleNotification : public Notification
+	{
+	protected:
+		/// cached calculated various parts of drawn content.
+		struct LaidoutItem
+		{
+			// First time delegate is called with sizeHint, 
+			// option->rect contains basic rectangle where item can placed, 
+			// it can be whole listView viewport area.
+			// Second time delegate is called with paint,
+			// and option->rect holds proper region calculated based on previous sizeHint calculation.
+			// 
+			// hintTopLeft holds option->rect topLeft point
+			// so on second call we can just adjust calculated previously part rectangles
+
+			// address of item for which this item was computed
+			const SimpleNotification * notification = nullptr;
+			QPoint hintTopLeft;  // see above description
+
+			QPixmap   pixmap;    // notification pixmap
+			QString   timestamp; // notification datetime
+			QString   title;     // notification title
+			QString   text;      // notification text
+
+								 // option from sizeHint/paint call(update on each call), 
+								 // lifetime the same, this is just for a convenience.
+			const QStyleOptionViewItem * option = nullptr;
+
+			QFont baseFont;     // basic font, baseFont = option->font;
+			QFont titleFont;    // title text font, 1.1 * baseFont, bold.
+			QFont textFont;     // baseFont
+
+			QRect titleRect;    // rectangle occupied by title text, without all margins
+			QRect timestampRect; // rectangle occupied by datetime text, without all margins
+			QRect textRect;     // rectangle occupied by text, without all margins
+			QRect pixmapRect;     // rectangle occupied by icon, without all margins
+			QRect totalRect;    // rectangle occupied by union of all rectangles, including all margins
+		};
+
+	protected:
+		static const QMargins ms_OutterMargins; // { 0, 1, 0, 1 };
+		static const QMargins ms_InnerMargins;  // { 1, 1, 1, 1 };
+
+	protected:
+		QDateTime m_timestamp;
+		QString m_title;
+		QString m_text;
+		QPixmap m_pixmap;
+
+	public:
+		virtual QDateTime Timestamp() const override;
+		virtual QString Text() const override;
+		virtual NotificationPopupWidget * CreatePopup() const override;
+
+	protected:
+		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
+		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
+		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;
+
+	public:
+		// item delegate methods
+		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const override;
+		virtual QSize sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const override;
+
+	public:
+		void setTitle(QString title)           { m_title = std::move(title); }
+		void setText(QString text)             { m_text = std::move(text); }
+		void setTimestamp(QDateTime timestamp) { m_timestamp = std::move(timestamp); }
+		void setPixmap(QPixmap pixmap)         { m_pixmap = std::move(pixmap); }
+
+	public:
+		SimpleNotification(QString title, QString text, QDateTime timestamp)
+			: m_title(std::move(title)), m_text(std::move(text)), m_timestamp(std::move(timestamp)) {}
+	};
+
+	class NotificationSystem::SimpleNotificationDelegate : public QAbstractItemDelegate
+	{
+	protected:
+		mutable std::any m_cachedItem;
+
+	public:
+		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+
+	public:
+		using QAbstractItemDelegate::QAbstractItemDelegate;
+		//SimpleNotificationDelegate(QObject * parent = nullptr)
+		//	: QAbstractItemDelegate(parent) {}
+	};
+
+	class NotificationSystem::SimpleNotificationPopup : public NotificationPopupWidget
+	{
+	public:
+		SimpleNotificationPopup(const SimpleNotification & notification);
+
+	protected:
+		void setupUi();
+	};
+
+	class NotificationSystem::Store :
+		public viewed::ptr_sequence_container<const Notification>
+	{
+		using self_type = Store;
+		using base_type = viewed::ptr_sequence_container<const Notification>;
+
+	public:
+		using base_type::base_type;
+	};
+
+
+	class NotificationSystem::TimestampPred
+	{
+	public:
+		bool operator()(const Notification * n1, const Notification * n2) const
+		{
+			return operator()(*n1, *n2);
+		}
+
+		bool operator()(const Notification & n1, const Notification & n2) const
+		{
+			return n1.Timestamp() < n2.Timestamp();
+		}
+	};
+
+
+	class NotificationSystem::NotificationFilter
+	{
+	private:
+		QString m_filter;
+
+	public:
+		// same, incremental
+		viewed::refilter_type set_expr(QString search);
+
+		bool matches(const Notification & n) const noexcept;
+		bool always_matches() const noexcept;
+
+		bool operator()(const Notification & n) const noexcept { return matches(n); }
+		bool operator()(const Notification * n) const noexcept { return matches(*n); }
+		explicit operator bool() const noexcept { return not always_matches(); }
+	};
+
+	class NotificationSystem::Model :
+		public NotificationSystem::AbstractModel,
+		public viewed::sfview_qtbase<Store, TimestampPred, NotificationFilter>
+	{
+		using self_type = Model;
+		using view_type = viewed::sfview_qtbase<Store, TimestampPred, NotificationFilter>;
+		using base_type = AbstractModel;
+
+	private:
+		using view_type::m_owner;
+		using view_type::m_store; // vector of pointers
+		using view_type::m_sort_pred;
+		using view_type::m_filter_pred;
+
+	private:
+		std::shared_ptr<Store> m_owner_store;
+
+	public:
+		virtual const Notification * GetItem(int row) const override;
+		virtual void FilterBy(QString expr) override;
+
+		virtual int FullRowCount() const override;
+		int rowCount(const QModelIndex & parent = QModelIndex()) const override;
+
+	public:
+		Model(std::shared_ptr<Store> store, QObject * parent = nullptr);
+		~Model() = default;
+
+		Q_DISABLE_COPY(Model);
+	};
+}

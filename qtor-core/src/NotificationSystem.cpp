@@ -1,5 +1,6 @@
 #include <QtTools/ToolsBase.hpp>
 #include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
 
 namespace QtTools
 {
@@ -51,7 +52,7 @@ namespace QtTools
 		return qint(m_store.size());
 	}
 
-	QVariant NotificationSystem::Model::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const
+	QVariant NotificationSystem::AbstractModel::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const
 	{
 		if (!index.isValid())
 			return {};
@@ -66,9 +67,41 @@ namespace QtTools
 
 			case Qt::DisplayRole:
 			case Qt::ToolTipRole:
-				return m_store[row]->Text();
+				return GetItem(row)->Text();
 
 			default:          return {};
 		}
+	}
+
+	NotificationSystem::NotificationSystem(QWidget * parent /* = nullptr */)
+		: QObject(parent)
+	{
+		m_store = std::make_shared<Store>();
+	}
+
+	auto NotificationSystem::CreateModel() -> std::unique_ptr<AbstractModel>
+	{
+		return std::make_unique<Model>(m_store);
+	}
+
+	auto NotificationSystem::GetStore() -> std::shared_ptr<Store>
+	{
+		return m_store;
+	}
+
+	auto NotificationSystem::GetStore() const -> std::shared_ptr<const Store>
+	{
+		return m_store;
+	}
+
+	void NotificationSystem::AddNotification(QString title, QString text, QDateTime timestamp /* = QDateTime::currentDateTime() */)
+	{
+		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), std::move(timestamp));
+		AddNotification(std::move(notification));
+	}
+
+	void NotificationSystem::AddNotification(std::unique_ptr<const Notification> notification)
+	{
+		m_store->push_back(notification.release());
 	}
 }
