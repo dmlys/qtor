@@ -30,6 +30,9 @@
 #include <QtGui/QColor>
 #include <QtCore/QDebug>
 
+#include <QtWidgets/QTextEdit>
+#include <QtWidgets/QPlainTextEdit>
+
 //class http_method
 //{
 //	const char * m_val;
@@ -107,6 +110,7 @@
 #include <qtor/NotificationPopupWidget.hqt>
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
+#include <QtWidgets/QStyleFactory>
 #include <QtWidgets/QDesktopWidget>
 
 class NotificationPopupLabel : public QtTools::NotificationPopupWidget
@@ -180,7 +184,7 @@ int main(int argc, char * argv[])
 
 	QtTools::NotificationSystem nsys;
 	nsys.AddNotification("Title", "Text1");
-	nsys.AddNotification("Title", "Text2");
+	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
 	nsys.AddNotification("Title", "Text3");
 
 	auto model = nsys.CreateModel();
@@ -188,11 +192,14 @@ int main(int argc, char * argv[])
 	QListView listView;
 	QtTools::NotificationSystem::SimpleNotificationDelegate delegate;
 	listView.setModel(model.get());
+	listView.setSelectionMode(QAbstractItemView::ExtendedSelection);
 	listView.setItemDelegate(&delegate);
+	listView.setMouseTracking(true);
+
+	//auto * style = QStyleFactory::create("Fusion");
+	//listView.setStyle(style);
 
 	listView.show();
-
-	//cout << model->rowCount() << endl;
 
 	return qapp.exec();
 }

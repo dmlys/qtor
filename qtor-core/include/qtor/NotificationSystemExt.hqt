@@ -1,6 +1,11 @@
 #pragma once
-
 #include <qtor/NotificationSystem.hqt>
+#include <QtGui/QTextDocument>
+
+QT_BEGIN_NAMESPACE
+class QTextDocument;
+QT_END_NAMESPACE
+
 
 namespace QtTools
 {
@@ -13,39 +18,45 @@ namespace QtTools
 			// First time delegate is called with sizeHint, 
 			// option->rect contains basic rectangle where item can placed, 
 			// it can be whole listView viewport area.
+			// 
 			// Second time delegate is called with paint,
 			// and option->rect holds proper region calculated based on previous sizeHint calculation.
 			// 
 			// hintTopLeft holds option->rect topLeft point
-			// so on second call we can just adjust calculated previously part rectangles
+			// so on second call we can just adjust calculated previously parts rectangles
 
 			// address of item for which this item was computed
 			const SimpleNotification * notification = nullptr;
 			QPoint hintTopLeft;  // see above description
 
-			QPixmap   pixmap;    // notification pixmap
-			QString   timestamp; // notification datetime
-			QString   title;     // notification title
-			QString   text;      // notification text
+			QPixmap pixmap;      // notification pixmap
+			QString timestamp;   // notification datetime
+			QString title;       // notification title
+			QString text;        // notification text
 
-								 // option from sizeHint/paint call(update on each call), 
-								 // lifetime the same, this is just for a convenience.
+			// option from sizeHint/paint call(update on each call), 
+			// lifetime the same, this is just for a convenience.
 			const QStyleOptionViewItem * option = nullptr;
 
-			QFont baseFont;     // basic font, baseFont = option->font;
-			QFont titleFont;    // title text font, 1.1 * baseFont, bold.
-			QFont textFont;     // baseFont
+			QFont baseFont;      // basic font, baseFont = option->font;
+			QFont titleFont;     // title text font, 1.1 * baseFont, bold.
+			QFont timestampFont; // timestamp font, baseFont
+			QFont textFont;      // baseFont
 
-			QRect titleRect;    // rectangle occupied by title text, without all margins
+			QRect titleRect;     // rectangle occupied by title text, without all margins
 			QRect timestampRect; // rectangle occupied by datetime text, without all margins
-			QRect textRect;     // rectangle occupied by text, without all margins
-			QRect pixmapRect;     // rectangle occupied by icon, without all margins
-			QRect totalRect;    // rectangle occupied by union of all rectangles, including all margins
+			QRect textRect;      // rectangle occupied by text, without all margins
+			QRect pixmapRect;    // rectangle occupied by icon, without all margins
+			QRect totalRect;     // rectangle occupied by union of all rectangles, including all margins
+
+			// cached prepared and calculated QTextDocument for text
+			// shared_ptr only for convenience(pimpl + copyable), logically - unique
+			std::shared_ptr<QTextDocument> textdocptr;
 		};
 
 	protected:
 		static const QMargins ms_OutterMargins; // { 0, 1, 0, 1 };
-		static const QMargins ms_InnerMargins;  // { 1, 1, 1, 1 };
+		static const unsigned ms_InnerMargins;  // 1
 
 	protected:
 		QDateTime m_timestamp;
@@ -59,14 +70,23 @@ namespace QtTools
 		virtual NotificationPopupWidget * CreatePopup() const override;
 
 	protected:
+		static QMargins TextMargins(const QStyleOptionViewItem & option);
+		static void PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item);
+
 		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
 		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
 		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;
+
+	protected:
+		virtual void LinkActivated(QString href, const QStyleOptionViewItem & option) const;
+		virtual void LinkHovered(QString href, const QStyleOptionViewItem & option) const;
+		virtual void LinkUnhovered(QString href, const QStyleOptionViewItem & option) const;
 
 	public:
 		// item delegate methods
 		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const override;
 		virtual QSize sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const override;
+		virtual bool editorEvent(QEvent * event, const QStyleOptionViewItem & option, std::any & cookie) const override;
 
 	public:
 		void setTitle(QString title)           { m_title = std::move(title); }
@@ -87,6 +107,7 @@ namespace QtTools
 	public:
 		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+		virtual bool editorEvent(QEvent * event, QAbstractItemModel * model, const QStyleOptionViewItem & option, const QModelIndex & index) override;
 
 	public:
 		using QAbstractItemDelegate::QAbstractItemDelegate;
