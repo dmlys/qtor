@@ -169,10 +169,10 @@ namespace QtTools
 
 	class NotificationSystem::Model :
 		public NotificationSystem::AbstractModel,
-		public viewed::sfview_qtbase<Store, TimestampPred, NotificationFilter>
+		public viewed::sfview_qtbase<Store, viewed::null_sorter, NotificationFilter>
 	{
 		using self_type = Model;
-		using view_type = viewed::sfview_qtbase<Store, TimestampPred, NotificationFilter>;
+		using view_type = viewed::sfview_qtbase<Store, viewed::null_sorter, NotificationFilter>;
 		using base_type = AbstractModel;
 
 	private:

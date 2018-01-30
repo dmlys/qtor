@@ -14,7 +14,7 @@
 namespace qtor
 {
 	const QMargins TorrentListDelegate::ms_InnerMargins = {0, 1, 0, 1};
-	const QMargins TorrentListDelegate::ms_OutterMargins = {4, 4, 4, 4};
+	const QMargins TorrentListDelegate::ms_OutterMargins = {1, 1, 1, 1};
 
 	template <class Type>
 	static optional<double> operator /(optional<Type> opt1, optional<Type> opt2)
@@ -23,7 +23,6 @@ namespace qtor
 
 		return static_cast<double>(opt1.value()) / static_cast<double>(opt2.value());
 	}
-
 
 	QString TorrentListDelegate::TittleText(const torrent & tor, const formatter * fmt) const
 	{
@@ -238,6 +237,8 @@ namespace qtor
 
 		const auto * model = dynamic_cast<const TorrentsModel *>(item.index.model());
 		const auto & tor = model->GetItem(item.index.row());
+		const auto margins = ms_OutterMargins + QtTools::Delegates::TextMargins(option);
+		const auto rect = item.option->rect - margins;
 
 		item.fmt = model->GetMeta();
 		item.tor = &tor;
@@ -257,8 +258,7 @@ namespace qtor
 		QFontMetrics nameFM {item.titleFont, device};
 		QFontMetrics progressFM {item.progressFont, device};
 		QFontMetrics statusFM {item.statusFont, device};
-
-		QRect rect = item.option->rect - ms_OutterMargins;
+		
 		QSize nameSize = nameFM.size(0, item.title);
 		QSize progresSize = progressFM.size(0, item.progress);
 		QSize statusSize = statusFM.size(0, item.status);
@@ -286,7 +286,7 @@ namespace qtor
 		auto & totalRect = item.totalRect = {};
 		totalRect = item.titleRect | item.progressRect | item.barRect | item.statusRect;
 		totalRect += ms_InnerMargins;
-		totalRect += ms_OutterMargins;
+		totalRect += margins;
 	}
 
 	void TorrentListDelegate::DrawBackground(QPainter * painter, const LaidoutItem & item) const
@@ -436,8 +436,9 @@ namespace qtor
 		if (paused) option.state = QStyle::State_None;
 		option.state |= QStyle::State_Small;
 		
+		const auto margins = ms_OutterMargins + ms_InnerMargins + QtTools::Delegates::TextMargins(*item.option);
 		auto barWidth = item.option->rect.width();
-		barWidth -= ms_InnerMargins.right() + ms_InnerMargins.left() + ms_OutterMargins.right() + ms_OutterMargins.left();
+		barWidth -= margins.right() + margins.left();
 		
 		option.rect = item.barRect;
 		option.rect.setWidth(barWidth);

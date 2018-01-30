@@ -18,6 +18,7 @@ namespace QtTools
 {
 	const unsigned NotificationSystem::SimpleNotification::ms_InnerMargins = 1;
 	const QMargins NotificationSystem::SimpleNotification::ms_OutterMargins = {0, 0, 0, 0};
+	
 	static const char * ms_OldHrefProperty = "QtTools::NotificationSystem::SimpleNotification::OldHref";
 	static const QVariant ms_NullVariant;
 
@@ -38,13 +39,7 @@ namespace QtTools
 
 	QMargins NotificationSystem::SimpleNotification::TextMargins(const QStyleOptionViewItem & option)
 	{
-		auto * style = QtTools::Delegates::AccquireStyle(option);
-		int hmargin = 1 + style->pixelMetric(QStyle::PM_FocusFrameHMargin, &option, option.widget);
-		int vmargin = 0;
-		return ms_OutterMargins + QMargins {
-			 hmargin, vmargin,
-			 hmargin, vmargin,
-		};
+		return ms_OutterMargins + QtTools::Delegates::TextMargins(option);
 	}
 
 	void NotificationSystem::SimpleNotification::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item)
@@ -77,8 +72,6 @@ namespace QtTools
 			return;
 		}
 		
-		QPaintDevice * device = const_cast<QWidget *>(option.widget);
-		const auto * style = QtTools::Delegates::AccquireStyle(option);
 		const auto margins = TextMargins(option);
 		const auto rect = option.rect - margins;
 		const auto topLeft = rect.topLeft();
@@ -98,6 +91,7 @@ namespace QtTools
 		//item.pixmapRect.moveTo(topLeft);
 		//auto pixmapSz = m_pixmap.size();
 
+		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		QFontMetrics titleFm {item.titleFont, device};
 		QFontMetrics textFm {item.textFont, device};
 		QFontMetrics timestampFm {item.timestampFont, device};
