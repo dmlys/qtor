@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include <vector>
 #include <any>
 
 #include <viewed/sfview_qtbase.hpp>
@@ -11,6 +10,14 @@
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
 #include <QtCore/QAbstractItemModel>
+
+#include <QtWidgets/QFrame>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QListView>
+
+#include <QtTools/HeaderControlModel.hqt>
 #include <QtWidgets/QAbstractItemDelegate>
 
 #include <qtor/NotificationPopupWidget.hqt>
@@ -30,6 +37,9 @@ namespace QtTools::NotificationSystem
 	class SimpleNotificationDelegate;
 	class SimpleNotificationPopup;
 
+	class NotificationCenter;
+	class NotificationView;
+
 	/// Simple notification system. More or less.
 	class NotificationCenter : public QObject
 	{
@@ -39,7 +49,7 @@ namespace QtTools::NotificationSystem
 		std::shared_ptr<NotificationStore> m_store;
 
 	public:
-		virtual std::unique_ptr<AbstractNotificationModel> CreateModel();
+		virtual std::shared_ptr<AbstractNotificationModel> CreateModel();
 
 		virtual std::shared_ptr<      NotificationStore> GetStore();
 		virtual std::shared_ptr<const NotificationStore> GetStore() const;
@@ -83,17 +93,109 @@ namespace QtTools::NotificationSystem
 
 	class AbstractNotificationModel : public QAbstractListModel
 	{
+		Q_OBJECT;
+
+	private:
+		using base_type = QAbstractListModel;
+		using self_type = AbstractNotificationModel;
+
+	protected:
+		QString m_filterStr;
+
+	protected:
+		virtual void FilterBy(QString expr) = 0;
+
 	public:
 		virtual QPointer<NotificationCenter> GetNotificationCenter() const = 0;
-		virtual const Notification * GetItem(int row) const = 0;
-		virtual void FilterBy(QString expr) = 0;
+		virtual const Notification * GetItem(int row) const = 0;		
 		
 		virtual int FullRowCount() const = 0;
-		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const = 0;
 
+	public:
+		void SetFilter(QString expr);
+		auto GetFilter() const noexcept { return m_filterStr; }
+		Q_SIGNAL void FilterChanged(QString expr);
+
+	public:
+		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
 		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 
 	public:
 		using QAbstractListModel::QAbstractListModel;
+	};
+
+	
+	class NotificationView : public QFrame
+	{
+		Q_OBJECT;
+
+	private:
+		using base_type = QFrame;
+
+	protected:
+		/// display model
+		std::shared_ptr<AbstractNotificationModel> m_model;
+
+		/// child widgets/graphical objects
+		QVBoxLayout * m_verticalLayout = nullptr;
+		QLineEdit   * m_rowFilter = nullptr;
+		QListView   * m_listView = nullptr;
+
+		// By default - SimpleNotificationDelegate 
+		QAbstractItemDelegate * m_listDelegate = nullptr;
+
+		/// hints for initial widget size
+		const QSize m_defMinSizeHint = QSize(640, 480);
+		QSize m_sizeHint = m_defMinSizeHint;
+
+		/// current filter string
+		QString m_filterString;
+
+	protected:
+		void ModelChanged();
+		void OnFilterChanged();
+
+	protected:
+		/// creates context menu for an item with idx,
+		/// if idx is not valid, common menu was requested
+		//virtual QMenu * CreateItemMenu(const QModelIndex & idx);
+		/// basic menu handler
+		//virtual void contextMenuEvent(QContextMenuEvent * ev) override;
+		/// to change ListView clipboard handling
+		//virtual bool eventFilter(QObject * watched, QEvent * event) override;
+
+	protected:
+		virtual void ConnectModel();
+		virtual void DisconnectModel();
+
+	public:
+		/// main layout
+		QVBoxLayout * GetLayout() const { return m_verticalLayout; }
+		/// filter field
+		QLineEdit * GetFilterWidget() const { return m_rowFilter; }
+		/// list view
+		QListView * GetTableView() const { return m_listView; }
+
+	public:
+		virtual void SetFilter(QString newFilter);
+		virtual auto GetFilter() const -> QString { return m_filterString; }
+		Q_SIGNAL void FilterChanged(QString newFilter);
+
+		/// initializes widget
+		/// @Param model specifies model, if null - deinitializes widget
+		virtual void SetModel(std::shared_ptr<AbstractNotificationModel> model);
+		virtual auto GetModel() const -> std::shared_ptr<AbstractNotificationModel> { return m_model; }
+
+		/// desired size
+		//QSize sizeHint() const override;
+
+	public:
+		NotificationView(QWidget * parent = nullptr);
+		~NotificationView() = default;
+
+	protected:
+		virtual void setupUi();
+		virtual void retranslateUi();
+		virtual void connectSignals();
 	};
 }

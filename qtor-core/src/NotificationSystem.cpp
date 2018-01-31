@@ -57,6 +57,13 @@ namespace QtTools::NotificationSystem
 		return qint(m_store.size());
 	}
 
+	void AbstractNotificationModel::SetFilter(QString expr)
+	{
+		m_filterStr = std::move(expr);
+		FilterBy(m_filterStr);
+		Q_EMIT FilterChanged(m_filterStr);
+	}
+
 	QVariant AbstractNotificationModel::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const
 	{
 		if (!index.isValid())
@@ -84,9 +91,9 @@ namespace QtTools::NotificationSystem
 		m_store = std::make_shared<NotificationStore>(this);
 	}
 
-	auto NotificationCenter::CreateModel() -> std::unique_ptr<AbstractNotificationModel>
+	auto NotificationCenter::CreateModel() -> std::shared_ptr<AbstractNotificationModel>
 	{
-		return std::make_unique<NotificationModel>(m_store);
+		return std::make_shared<NotificationModel>(m_store);
 	}
 
 	auto NotificationCenter::GetStore() -> std::shared_ptr<NotificationStore>

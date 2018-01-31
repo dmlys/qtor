@@ -195,14 +195,9 @@ int main(int argc, char * argv[])
 
 	auto model = nsys.CreateModel();
 
-	QListView listView;
-	QtTools::NotificationSystem::SimpleNotificationDelegate delegate;
-	listView.setModel(model.get());
-	listView.setSelectionMode(QAbstractItemView::ExtendedSelection);
-	listView.setItemDelegate(&delegate);
-	listView.setMouseTracking(true);
-
-	listView.show();
+	QtTools::NotificationSystem::NotificationView view;
+	view.SetModel(model);
+	view.show();
 
 	return qapp.exec();
 }

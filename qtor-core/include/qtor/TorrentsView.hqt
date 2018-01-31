@@ -7,7 +7,6 @@
 #include <QtWidgets/QListView>
 
 #include <QtTools/HeaderControlModel.hqt>
-#include <QtTools/DelayedExecutionTimer.hqt>
 #include <QtTools/Delegates/SearchDelegate.hpp>
 
 #include <qtor/TorrentsModel.hpp>
@@ -118,7 +117,7 @@ namespace qtor
 		Q_SIGNAL void ViewModeChanged(ViewMode mode);
 
 		virtual void SetFilter(QString newFilter);
-		virtual auto GetFilter() -> QString const { return m_filterString; }
+		virtual auto GetFilter() const -> QString { return m_filterString; }
 		Q_SIGNAL void FilterChanged(QString newFilter);
 
 		virtual void Sort(int column, Qt::SortOrder order);
@@ -128,7 +127,7 @@ namespace qtor
 		/// initializes widget
 		/// @Param model specifies model, if null - deinitializes widget
 		virtual void SetModel(std::shared_ptr<AbstractSparseContainerModel> model);
-		virtual auto GetModel() -> const std::shared_ptr<AbstractSparseContainerModel> & { return m_model; }
+		virtual auto GetModel() const -> const std::shared_ptr<AbstractSparseContainerModel> & { return m_model; }
 
 		/// initializes headers tracking, additionally sets headerConf configuration, see also QtTools::HeaderControlModel.
 		/// TorrentsView must be initialized before calling this method.

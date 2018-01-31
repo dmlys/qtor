@@ -34,6 +34,10 @@ namespace QtTools::NotificationSystem
 			QString title;       // notification title
 			QString text;        // notification text
 
+			// searchStr, optional, comes from some search field,
+			// not from notification itself
+			QString searchStr;   
+
 			// option from sizeHint/paint call(update on each call), 
 			// lifetime the same, this is just for a convenience.
 			const QStyleOptionViewItem * option = nullptr;
@@ -110,14 +114,19 @@ namespace QtTools::NotificationSystem
 		virtual void highlightBlock(const QString &text) override;
 
 	public:
+		void SetSearchText(QString text) { m_searchString = std::move(text); }
+		auto GetSearchText() const       { return m_searchString; }
+
+		void SetFormat(const QTextCharFormat & format) { m_searchFormat = format; }
+		auto Getformat() const                         { return m_searchFormat; }
+
+	public:
 		using QSyntaxHighlighter::QSyntaxHighlighter;
 	};
 
 	class SimpleNotificationDelegate : public QAbstractItemDelegate
 	{
 	protected:
-		//QString m_searchText;
-		//QTextCharFormat m_searchFormat;
 		mutable std::any m_cachedItem;
 
 	protected:
@@ -127,15 +136,6 @@ namespace QtTools::NotificationSystem
 		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 		virtual bool editorEvent(QEvent * event, QAbstractItemModel * model, const QStyleOptionViewItem & option, const QModelIndex & index) override;
-
-	public:
-		//QString GetFilterText() const { return m_searchText; }
-		//void    SetFilterText(const QString text) { m_searchText = text; }
-
-		//decltype(auto) GetFormat() const { return m_searchFormat; }
-		//void           SetFormat(const QTextCharFormat & format) { m_searchFormat = format; }
-
-		//virtual QString GetText(const QModelIndex & index) const;
 
 	public:
 		using QAbstractItemDelegate::QAbstractItemDelegate;

@@ -15,8 +15,6 @@
 #include <QtTools/ToolsBase.hpp>
 #include <ext/join_into.hpp>
 
-#include <qtor/NotificationPopupWidget.hqt>
-
 namespace qtor
 {
 	void TorrentsView::OnFilterChanged()
@@ -30,7 +28,11 @@ namespace qtor
 		m_nameDelegate->SetFilterText(m_filterString);
 		m_listDelegate->SetFilterText(m_filterString);
 
-		if (m_model) m_model->SetFilter(m_filterString);
+		if (m_model)
+		{
+			m_model->SetFilter(m_filterString);
+			m_itemView->viewport()->update();
+		}
 	}
 
 	void TorrentsView::Sort(int column, Qt::SortOrder order)
@@ -440,7 +442,7 @@ namespace qtor
 
 	void TorrentsView::connectSignals()
 	{
-		//: filter shortcut in generic BasicTableWidget, probably should not be translated
+		//: filter shortcut in generic QTableView/QListView, shown as placeholder in QLineEdit
 		auto * filterShortcut = new QShortcut(QKeySequence(tr("Ctrl+F")), this);
 		connect(filterShortcut, &QShortcut::activated,
 		        m_rowFilter, static_cast<void (QLineEdit::*)()>(&QLineEdit::setFocus));
@@ -494,7 +496,7 @@ namespace qtor
 
 	void TorrentsView::retranslateUi()
 	{
-		//: filter shortcut in generic BasicTableWidget, shown as placeholder in EditWidget
+		//: filter shortcut in generic QTableView/QListView, shown as placeholder in QLineEdit
 		m_rowFilter->setPlaceholderText(tr("Row filter(Ctrl+F)"));
 	}
 }

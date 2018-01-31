@@ -9,6 +9,7 @@
 #include <QtTools/Delegates/Utils.hpp>
 #include <QtTools/Delegates/StyledParts.hpp>
 #include <QtTools/Delegates/DrawFormattedText.hpp>
+#include <QtTools/Delegates/SearchDelegate.hpp>
 
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
@@ -72,6 +73,7 @@ namespace QtTools::NotificationSystem
 			return;
 		}
 		
+
 		const auto margins = TextMargins(option);
 		const auto rect = option.rect - margins;
 		const auto topLeft = rect.topLeft();
@@ -82,6 +84,9 @@ namespace QtTools::NotificationSystem
 		item.title = m_title;
 		item.text = m_text;
 		item.pixmap = m_pixmap;
+
+		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
+		if (model) item.searchStr = model->GetFilter();
 
 		item.textFont = item.titleFont = item.timestampFont = item.baseFont = option.font;
 		item.titleFont.setPointSize(item.titleFont.pointSize() * 11 / 10);
@@ -113,8 +118,9 @@ namespace QtTools::NotificationSystem
 			timestampSz
 		};
 
-		item.textdocptr = std::make_shared<QTextDocument>();
+		item.textdocptr = std::make_shared<QTextDocument>();		
 		auto * highlighter = new SearchHighlighter(item.textdocptr.get());
+		highlighter->SetSearchText(item.searchStr);
 
 		QTextDocument & textDoc = *item.textdocptr;
 		PrepareTextDocument(textDoc, item);
@@ -150,7 +156,12 @@ namespace QtTools::NotificationSystem
 		
 		auto titleopt = option;
 		titleopt.font = item.titleFont;
-		DrawFormattedText(painter, item.title, item.titleRect, titleopt);
+		//DrawFormattedText(painter, item.title, item.titleRect, titleopt);
+		QTextCharFormat format;
+		format.setForeground(Qt::GlobalColor::red);
+		format.setBackground(Qt::GlobalColor::green);		
+		DrawSearchFormatedText(painter, item.title, item.titleRect, titleopt, 
+		                       FormatSearchText(item.title, item.searchStr, format));
 
 		painter->setFont(item.timestampFont);
 		painter->drawText(timestampRect, item.timestamp);
@@ -161,6 +172,7 @@ namespace QtTools::NotificationSystem
 		
 		assert(item.textdocptr);
 		QTextDocument & textDoc = *item.textdocptr;
+		textDoc.setTextWidth(rect.width());
 		textDoc.drawContents(painter);
 
 		painter->restore();
@@ -309,6 +321,9 @@ namespace QtTools::NotificationSystem
 	void SimpleNotification::SearchHighlighter::highlightBlock(const QString & text)
 	{
 		if (m_searchString.isEmpty()) return;
+
+		m_searchFormat.setForeground(Qt::GlobalColor::red);
+		m_searchFormat.setBackground(Qt::GlobalColor::green);
 
 		int index = text.indexOf(m_searchString, 0, Qt::CaseInsensitive);
 		while (index >= 0)

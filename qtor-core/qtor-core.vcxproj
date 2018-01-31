@@ -58,6 +58,7 @@
     <ClCompile Include="src\NotificationPopupWidget.cpp" />
     <ClCompile Include="src\NotificationSystemDelegate.cpp" />
     <ClCompile Include="src\NotificationSystem.cpp" />
+    <ClCompile Include="src\NotificationView.cpp" />
     <ClCompile Include="src\sparse_container.cpp" />
     <ClCompile Include="src\torrent.cpp" />
     <ClCompile Include="src\TorrentListDelegate.cpp" />

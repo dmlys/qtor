@@ -96,7 +96,7 @@ namespace qtor
 	{
 		m_filterStr = std::move(expr);
 		FilterBy(m_filterStr);
-		Q_EMIT FilterChanged(std::move(m_filterStr));
+		Q_EMIT FilterChanged(m_filterStr);
 	}
 
 	void AbstractSparseContainerModel::sort(int column, Qt::SortOrder order /* = Qt::AscendingOrder */)
