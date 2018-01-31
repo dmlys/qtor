@@ -1,17 +1,17 @@
 #pragma once
 #include <qtor/NotificationSystem.hqt>
 #include <QtGui/QTextDocument>
-
-QT_BEGIN_NAMESPACE
-class QTextDocument;
-QT_END_NAMESPACE
+#include <QtGui/QSyntaxHighlighter>
 
 
-namespace QtTools
+namespace QtTools::NotificationSystem
 {
-	class NotificationSystem::SimpleNotification : public Notification
+	class SimpleNotification : public Notification
 	{
 	protected:
+		/// search highlighter
+		class SearchHighlighter;
+
 		/// cached calculated various parts of drawn content.
 		struct LaidoutItem
 		{
@@ -99,10 +99,29 @@ namespace QtTools
 			: m_title(std::move(title)), m_text(std::move(text)), m_timestamp(std::move(timestamp)) {}
 	};
 
-	class NotificationSystem::SimpleNotificationDelegate : public QAbstractItemDelegate
+	/// search highlighter
+	class SimpleNotification::SearchHighlighter : public QSyntaxHighlighter
 	{
 	protected:
+		QString m_searchString;
+		QTextCharFormat m_searchFormat;
+
+	protected:
+		virtual void highlightBlock(const QString &text) override;
+
+	public:
+		using QSyntaxHighlighter::QSyntaxHighlighter;
+	};
+
+	class SimpleNotificationDelegate : public QAbstractItemDelegate
+	{
+	protected:
+		//QString m_searchText;
+		//QTextCharFormat m_searchFormat;
 		mutable std::any m_cachedItem;
+
+	protected:
+		void init(const QStyleOptionViewItem & option, const QModelIndex & index) const;
 
 	public:
 		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
@@ -110,12 +129,19 @@ namespace QtTools
 		virtual bool editorEvent(QEvent * event, QAbstractItemModel * model, const QStyleOptionViewItem & option, const QModelIndex & index) override;
 
 	public:
+		//QString GetFilterText() const { return m_searchText; }
+		//void    SetFilterText(const QString text) { m_searchText = text; }
+
+		//decltype(auto) GetFormat() const { return m_searchFormat; }
+		//void           SetFormat(const QTextCharFormat & format) { m_searchFormat = format; }
+
+		//virtual QString GetText(const QModelIndex & index) const;
+
+	public:
 		using QAbstractItemDelegate::QAbstractItemDelegate;
-		//SimpleNotificationDelegate(QObject * parent = nullptr)
-		//	: QAbstractItemDelegate(parent) {}
 	};
 
-	class NotificationSystem::SimpleNotificationPopup : public NotificationPopupWidget
+	class SimpleNotificationPopup : public NotificationPopupWidget
 	{
 	public:
 		SimpleNotificationPopup(const SimpleNotification & notification);
@@ -124,18 +150,25 @@ namespace QtTools
 		void setupUi();
 	};
 
-	class NotificationSystem::Store :
+	class NotificationStore :
 		public viewed::ptr_sequence_container<const Notification>
 	{
-		using self_type = Store;
+		using self_type = NotificationStore;
 		using base_type = viewed::ptr_sequence_container<const Notification>;
 
+	private:
+		QPointer<NotificationCenter> m_center;
+
 	public:
-		using base_type::base_type;
+		QPointer<NotificationCenter> GetNotificationCenter() const { return m_center; }
+
+	public:
+		NotificationStore(QPointer<NotificationCenter> center)
+			: m_center(std::move(center)) {}
 	};
 
 
-	class NotificationSystem::TimestampPred
+	class TimestampPred
 	{
 	public:
 		bool operator()(const Notification * n1, const Notification * n2) const
@@ -150,7 +183,7 @@ namespace QtTools
 	};
 
 
-	class NotificationSystem::NotificationFilter
+	class NotificationFilter
 	{
 	private:
 		QString m_filter;
@@ -167,13 +200,13 @@ namespace QtTools
 		explicit operator bool() const noexcept { return not always_matches(); }
 	};
 
-	class NotificationSystem::Model :
-		public NotificationSystem::AbstractModel,
-		public viewed::sfview_qtbase<Store, viewed::null_sorter, NotificationFilter>
+	class NotificationModel :
+		public AbstractNotificationModel,
+		public viewed::sfview_qtbase<NotificationStore, viewed::null_sorter, NotificationFilter>
 	{
-		using self_type = Model;
-		using view_type = viewed::sfview_qtbase<Store, viewed::null_sorter, NotificationFilter>;
-		using base_type = AbstractModel;
+		using self_type = NotificationModel;
+		using view_type = viewed::sfview_qtbase<NotificationStore, viewed::null_sorter, NotificationFilter>;
+		using base_type = AbstractNotificationModel;
 
 	private:
 		using view_type::m_owner;
@@ -182,9 +215,10 @@ namespace QtTools
 		using view_type::m_filter_pred;
 
 	private:
-		std::shared_ptr<Store> m_owner_store;
+		std::shared_ptr<NotificationStore> m_owner_store;
 
 	public:
+		virtual QPointer<NotificationCenter> GetNotificationCenter() const override;
 		virtual const Notification * GetItem(int row) const override;
 		virtual void FilterBy(QString expr) override;
 
@@ -192,9 +226,9 @@ namespace QtTools
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override;
 
 	public:
-		Model(std::shared_ptr<Store> store, QObject * parent = nullptr);
-		~Model() = default;
+		NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent = nullptr);
+		~NotificationModel() = default;
 
-		Q_DISABLE_COPY(Model);
+		Q_DISABLE_COPY(NotificationModel);
 	};
 }

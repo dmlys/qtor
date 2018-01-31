@@ -14,35 +14,35 @@
 #include <qtor/NotificationSystemExt.hqt>
 
 
-namespace QtTools
+namespace QtTools::NotificationSystem
 {
-	const unsigned NotificationSystem::SimpleNotification::ms_InnerMargins = 1;
-	const QMargins NotificationSystem::SimpleNotification::ms_OutterMargins = {0, 0, 0, 0};
+	const unsigned SimpleNotification::ms_InnerMargins = 1;
+	const QMargins SimpleNotification::ms_OutterMargins = {1, 3, 1, 3};
 	
 	static const char * ms_OldHrefProperty = "QtTools::NotificationSystem::SimpleNotification::OldHref";
 	static const QVariant ms_NullVariant;
 
-	QString NotificationSystem::SimpleNotification::Text() const
+	QString SimpleNotification::Text() const
 	{
 		return m_text;
 	}
 
-	QDateTime NotificationSystem::SimpleNotification::Timestamp() const
+	QDateTime SimpleNotification::Timestamp() const
 	{
 		return m_timestamp;
 	}
 
-	NotificationPopupWidget * NotificationSystem::SimpleNotification::CreatePopup() const
+	NotificationPopupWidget * SimpleNotification::CreatePopup() const
 	{
 		return nullptr;
 	}
 
-	QMargins NotificationSystem::SimpleNotification::TextMargins(const QStyleOptionViewItem & option)
+	QMargins SimpleNotification::TextMargins(const QStyleOptionViewItem & option)
 	{
 		return ms_OutterMargins + QtTools::Delegates::TextMargins(option);
 	}
 
-	void NotificationSystem::SimpleNotification::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item)
+	void SimpleNotification::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item)
 	{
 		QPaintDevice * device = const_cast<QWidget *>(item.option->widget);
 
@@ -53,7 +53,7 @@ namespace QtTools
 		textDoc.setHtml(item.text);
 	}
 
-	void NotificationSystem::SimpleNotification::LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const 
+	void SimpleNotification::LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const 
 	{
 		using namespace QtTools::Delegates::TextLayout;
 
@@ -114,6 +114,8 @@ namespace QtTools
 		};
 
 		item.textdocptr = std::make_shared<QTextDocument>();
+		auto * highlighter = new SearchHighlighter(item.textdocptr.get());
+
 		QTextDocument & textDoc = *item.textdocptr;
 		PrepareTextDocument(textDoc, item);
 		textDoc.setTextWidth(titleSz.width() + timestampSz.width() + titleSpacer);
@@ -128,7 +130,7 @@ namespace QtTools
 		return;
 	}
 
-	void NotificationSystem::SimpleNotification::Draw(QPainter * painter, const LaidoutItem & item) const
+	void SimpleNotification::Draw(QPainter * painter, const LaidoutItem & item) const
 	{
 		using namespace QtTools::Delegates;
 
@@ -137,7 +139,7 @@ namespace QtTools
 		const auto margins = TextMargins(option);
 		const auto rect = FocusFrameSubrect(option) - margins;
 
-		auto cg = QtTools::Delegates::ColorGroup(option);
+		auto cg = ColorGroup(option);
 		auto cr = selected ? QPalette::HighlightedText : QPalette::Text;
 
 		auto & titleRect = item.titleRect;
@@ -164,7 +166,7 @@ namespace QtTools
 		painter->restore();
 	}
 
-	void NotificationSystem::SimpleNotification::DrawBackground(QPainter * painter, const LaidoutItem & item) const
+	void SimpleNotification::DrawBackground(QPainter * painter, const LaidoutItem & item) const
 	{
 		using namespace QtTools::Delegates;
 		const QStyleOptionViewItem & option = *item.option;
@@ -177,7 +179,7 @@ namespace QtTools
 		}
 	}
 
-	void NotificationSystem::SimpleNotification::paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const
+	void SimpleNotification::paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const
 	{
 		auto * cache = std::any_cast<LaidoutItem>(&cookie);
 		if (not cache) cache = &cookie.emplace<LaidoutItem>();
@@ -192,7 +194,7 @@ namespace QtTools
 			DrawFocusFrame(painter, cache->option->rect, option);
 	}
 
-	QSize NotificationSystem::SimpleNotification::sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const
+	QSize SimpleNotification::sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const
 	{
 		auto * cache = std::any_cast<LaidoutItem>(&cookie);
 		if (not cache) cache = &cookie.emplace<LaidoutItem>();
@@ -201,7 +203,7 @@ namespace QtTools
 		return cache->totalRect.size();
 	}
 
-	bool NotificationSystem::SimpleNotification::editorEvent(QEvent * event, const QStyleOptionViewItem & option, std::any & cookie) const
+	bool SimpleNotification::editorEvent(QEvent * event, const QStyleOptionViewItem & option, std::any & cookie) const
 	{
 		auto evType = event->type();
 		bool mouseButtonEvent =
@@ -230,19 +232,26 @@ namespace QtTools
 		if (evType == QEvent::MouseMove)
 		{
 			auto oldHref = qvariant_cast<QString>(viewport->property(ms_OldHrefProperty));
-			if (href.isEmpty())
+			if (href.isEmpty() xor oldHref.isEmpty())
 			{
-				if (not oldHref.isNull())
+				// change from empty -> non empty or vice versa
+				if (href.isEmpty())
 				{
 					viewport->setProperty(ms_OldHrefProperty, ms_NullVariant);
 					LinkUnhovered(std::move(oldHref), option);
 				}
+				else
+				{
+					viewport->setProperty(ms_OldHrefProperty, href);
+					LinkHovered(std::move(href), option);
+				}
 			}
 			else
 			{
-				if (oldHref.isEmpty())
+				if (href != oldHref) // not empty and changed
 				{
 					viewport->setProperty(ms_OldHrefProperty, href);
+					LinkUnhovered(std::move(oldHref), option);
 					LinkHovered(std::move(href), option);
 				}
 			}
@@ -258,49 +267,91 @@ namespace QtTools
 		return false;
 	}
 
-	void NotificationSystem::SimpleNotification::LinkActivated(QString href, const QStyleOptionViewItem & option) const
+	void SimpleNotification::LinkActivated(QString href, const QStyleOptionViewItem & option) const
 	{
-		qDebug() << "LinkActivated: " << href;
+		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
+		if (not model) return;
+
+		auto center_ptr = model->GetNotificationCenter();
+		if (not center_ptr) return;
+
+		Q_EMIT center_ptr->LinkActivated(*this, std::move(href));
 	}
 
-	void NotificationSystem::SimpleNotification::LinkHovered(QString href, const QStyleOptionViewItem & option) const
-	{
+	void SimpleNotification::LinkHovered(QString href, const QStyleOptionViewItem & option) const
+	{		
 		auto * listView = qobject_cast<const QAbstractItemView *>(option.widget);
-		auto * viewport = listView->viewport();
+		listView->viewport()->setCursor(Qt::PointingHandCursor);
 
-		viewport->setCursor(Qt::PointingHandCursor);
-		qDebug() << "LinkHovered: " << href;
+		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
+		if (not model) return;
+
+		auto center_ptr = model->GetNotificationCenter();
+		if (not center_ptr) return;
+
+		Q_EMIT center_ptr->LinkHovered(*this, std::move(href));
 	}
 
-	void NotificationSystem::SimpleNotification::LinkUnhovered(QString href, const QStyleOptionViewItem & option) const
+	void SimpleNotification::LinkUnhovered(QString href, const QStyleOptionViewItem & option) const
 	{
 		auto * listView = qobject_cast<const QAbstractItemView *>(option.widget);
-		auto * viewport = listView->viewport();
+		listView->viewport()->unsetCursor();
 
-		viewport->unsetCursor();
-		qDebug() << "LinkUnhovered: " << href;
+		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
+		if (not model) return;
+
+		auto center_ptr = model->GetNotificationCenter();
+		if (not center_ptr) return;
+		
+		Q_EMIT center_ptr->LinkUnhovered(*this, std::move(href));
+	}
+
+	void SimpleNotification::SearchHighlighter::highlightBlock(const QString & text)
+	{
+		if (m_searchString.isEmpty()) return;
+
+		int index = text.indexOf(m_searchString, 0, Qt::CaseInsensitive);
+		while (index >= 0)
+		{
+			int length = m_searchString.length();
+			setFormat(index, length, m_searchFormat);
+			
+			index = text.indexOf(m_searchString, index + length, Qt::CaseInsensitive);
+		}
 	}
 
 	/************************************************************************/
 	/*                   SimpleNotificationDelegate                         */
 	/************************************************************************/
-	void NotificationSystem::SimpleNotificationDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
+	void SimpleNotificationDelegate::init(const QStyleOptionViewItem & option, const QModelIndex & index) const
 	{
-		auto * model = dynamic_cast<const Model *>(index.model());
+		auto & opt = ext::unconst(option);
+		opt.index = index;
+	}
+
+	void SimpleNotificationDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
+	{
+		init(option, index);
+
+		auto * model = dynamic_cast<const AbstractNotificationModel *>(index.model());
 		const auto * notification = model->GetItem(index.row());
 		return notification->paint(painter, option, m_cachedItem);
 	}
 
-	QSize NotificationSystem::SimpleNotificationDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const
+	QSize SimpleNotificationDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const
 	{
-		auto * model = dynamic_cast<const Model *>(index.model());
+		init(option, index);
+
+		auto * model = dynamic_cast<const AbstractNotificationModel *>(index.model());
 		const auto * notification = model->GetItem(index.row());
 		return notification->sizeHint(option, m_cachedItem);
 	}
 
-	bool NotificationSystem::SimpleNotificationDelegate::editorEvent(QEvent * event, QAbstractItemModel *, const QStyleOptionViewItem & option, const QModelIndex & index)
+	bool SimpleNotificationDelegate::editorEvent(QEvent * event, QAbstractItemModel *, const QStyleOptionViewItem & option, const QModelIndex & index)
 	{
-		auto * model = dynamic_cast<const Model *>(index.model());
+		init(option, index);
+
+		auto * model = dynamic_cast<const AbstractNotificationModel *>(index.model());
 		const auto * notification = model->GetItem(index.row());
 		return notification->editorEvent(event, option, m_cachedItem);
 	}

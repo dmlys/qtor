@@ -182,10 +182,16 @@ int main(int argc, char * argv[])
 	//
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	QtTools::NotificationSystem nsys;
+	auto ttt = R"(Your options Are:
+<ul>
+<li>opt 1
+<li>opt 2
+</ul>)";
+
+	QtTools::NotificationSystem::NotificationCenter nsys;
 	nsys.AddNotification("Title", "Text1");
 	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddNotification("Title", "Text3");
+	nsys.AddNotification("Title", ttt);
 
 	auto model = nsys.CreateModel();
 
@@ -195,9 +201,6 @@ int main(int argc, char * argv[])
 	listView.setSelectionMode(QAbstractItemView::ExtendedSelection);
 	listView.setItemDelegate(&delegate);
 	listView.setMouseTracking(true);
-
-	//auto * style = QStyleFactory::create("Fusion");
-	//listView.setStyle(style);
 
 	listView.show();
 

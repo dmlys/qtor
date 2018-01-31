@@ -7,6 +7,7 @@
 #include <viewed/ptr_sequence_container.hpp>
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
 #include <QtCore/QAbstractItemModel>
@@ -15,41 +16,33 @@
 #include <qtor/NotificationPopupWidget.hqt>
 
 
-namespace QtTools
+namespace QtTools::NotificationSystem
 {
-	class NotificationPopupWidget;
+	class Notification;
+	class AbstractNotificationModel;
+
+	class NotificationStore;
+	class NotificationModel;
+	class TimestampPred;
+	class NotificationFilter;
+	class SimpleNotification;
+
+	class SimpleNotificationDelegate;
+	class SimpleNotificationPopup;
 
 	/// Simple notification system. More or less.
-	class NotificationSystem : public QObject
+	class NotificationCenter : public QObject
 	{
 		Q_OBJECT
-
-	public:
-		class Notification;		
-		class AbstractModel;
-
-		class Store;
-		class Model;
-		class TimestampPred;
-		class NotificationFilter;
-		class SimpleNotification;
-
-		class SimpleNotificationDelegate;
-		class SimpleNotificationPopup;
-
-		enum NotificationType
-		{
-			Info, Warn, Error
-		};
-
+	
 	protected:
-		std::shared_ptr<Store> m_store;
+		std::shared_ptr<NotificationStore> m_store;
 
 	public:
-		virtual std::unique_ptr<AbstractModel> CreateModel();
+		virtual std::unique_ptr<AbstractNotificationModel> CreateModel();
 
-		virtual std::shared_ptr<Store>       GetStore();
-		virtual std::shared_ptr<const Store> GetStore() const;
+		virtual std::shared_ptr<      NotificationStore> GetStore();
+		virtual std::shared_ptr<const NotificationStore> GetStore() const;
 
 	public:
 		virtual void AddNotification(std::unique_ptr<const Notification> notification);
@@ -59,12 +52,17 @@ namespace QtTools
 		void setParent(QWidget * parent) { QObject::setParent(parent); }
 		auto parent() const -> QWidget * { return static_cast<QWidget *>(QObject::parent()); }
 
+	Q_SIGNALS:
+		void LinkActivated(const Notification & notification, QString href);
+		void LinkHovered(const Notification & notification, QString href);
+		void LinkUnhovered(const Notification & notification, QString href);
+
 	public:
-		NotificationSystem(QWidget * parent = nullptr);
-		virtual ~NotificationSystem() = default;
+		NotificationCenter(QWidget * parent = nullptr);
+		virtual ~NotificationCenter() = default;
 	};
 
-	class NotificationSystem::Notification : public QObject
+	class Notification : public QObject
 	{
 		Q_OBJECT
 
@@ -83,9 +81,10 @@ namespace QtTools
 		virtual ~Notification() = default;
 	};
 
-	class NotificationSystem::AbstractModel : public QAbstractListModel
+	class AbstractNotificationModel : public QAbstractListModel
 	{
 	public:
+		virtual QPointer<NotificationCenter> GetNotificationCenter() const = 0;
 		virtual const Notification * GetItem(int row) const = 0;
 		virtual void FilterBy(QString expr) = 0;
 		

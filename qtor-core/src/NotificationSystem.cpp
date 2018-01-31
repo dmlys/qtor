@@ -2,24 +2,24 @@
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
 
-namespace QtTools
+namespace QtTools::NotificationSystem
 {
-	viewed::refilter_type NotificationSystem::NotificationFilter::set_expr(QString search)
+	viewed::refilter_type NotificationFilter::set_expr(QString search)
 	{
 		return viewed::refilter_type::same;
 	}
 
-	bool NotificationSystem::NotificationFilter::matches(const Notification & n) const noexcept
+	bool NotificationFilter::matches(const Notification & n) const noexcept
 	{
 		return true;
 	}
 
-	bool NotificationSystem::NotificationFilter::always_matches() const noexcept
+	bool NotificationFilter::always_matches() const noexcept
 	{
 		return true;
 	}
 
-	NotificationSystem::Model::Model(std::shared_ptr<Store> store, QObject * parent /* = nullptr */)
+	NotificationModel::NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent /* = nullptr */)
 		: view_type(store.get()), base_type(parent)
 	{
 		assert(store);
@@ -31,28 +31,33 @@ namespace QtTools
 		reinit_view();
 	}
 
-	auto NotificationSystem::Model::GetItem(int row) const -> const Notification *
+	auto NotificationModel::GetNotificationCenter() const -> QPointer<NotificationCenter>
+	{
+		return m_owner->GetNotificationCenter();
+	}
+
+	auto NotificationModel::GetItem(int row) const -> const Notification *
 	{
 		return m_store.at(row);
 	}
 
-	void NotificationSystem::Model::FilterBy(QString expr)
+	void NotificationModel::FilterBy(QString expr)
 	{
 		auto rtype = m_filter_pred.set_expr(expr);
 		refilter_and_notify(rtype);
 	}
 
-	int NotificationSystem::Model::FullRowCount() const
+	int NotificationModel::FullRowCount() const
 	{
 		return qint(m_owner_store->size());
 	}
 
-	int NotificationSystem::Model::rowCount(const QModelIndex & parent /*= QModelIndex()*/) const
+	int NotificationModel::rowCount(const QModelIndex & parent /*= QModelIndex()*/) const
 	{
 		return qint(m_store.size());
 	}
 
-	QVariant NotificationSystem::AbstractModel::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const
+	QVariant AbstractNotificationModel::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const
 	{
 		if (!index.isValid())
 			return {};
@@ -73,34 +78,34 @@ namespace QtTools
 		}
 	}
 
-	NotificationSystem::NotificationSystem(QWidget * parent /* = nullptr */)
+	NotificationCenter::NotificationCenter(QWidget * parent /* = nullptr */)
 		: QObject(parent)
 	{
-		m_store = std::make_shared<Store>();
+		m_store = std::make_shared<NotificationStore>(this);
 	}
 
-	auto NotificationSystem::CreateModel() -> std::unique_ptr<AbstractModel>
+	auto NotificationCenter::CreateModel() -> std::unique_ptr<AbstractNotificationModel>
 	{
-		return std::make_unique<Model>(m_store);
+		return std::make_unique<NotificationModel>(m_store);
 	}
 
-	auto NotificationSystem::GetStore() -> std::shared_ptr<Store>
-	{
-		return m_store;
-	}
-
-	auto NotificationSystem::GetStore() const -> std::shared_ptr<const Store>
+	auto NotificationCenter::GetStore() -> std::shared_ptr<NotificationStore>
 	{
 		return m_store;
 	}
 
-	void NotificationSystem::AddNotification(QString title, QString text, QDateTime timestamp /* = QDateTime::currentDateTime() */)
+	auto NotificationCenter::GetStore() const -> std::shared_ptr<const NotificationStore>
+	{
+		return m_store;
+	}
+
+	void NotificationCenter::AddNotification(QString title, QString text, QDateTime timestamp /* = QDateTime::currentDateTime() */)
 	{
 		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), std::move(timestamp));
 		AddNotification(std::move(notification));
 	}
 
-	void NotificationSystem::AddNotification(std::unique_ptr<const Notification> notification)
+	void NotificationCenter::AddNotification(std::unique_ptr<const Notification> notification)
 	{
 		m_store->push_back(notification.release());
 	}
