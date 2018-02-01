@@ -29,7 +29,7 @@ namespace qtor
 		virtual ext::future<void> stop_all_torrents() = 0;
 
 		virtual ext::future<void> start_torrents(torrent_id_list ids) = 0;
-		virtual ext::future<void> start_now_torrents(torrent_id_list ids) = 0;
+		virtual ext::future<void> start_torrents_now(torrent_id_list ids) = 0;
 		virtual ext::future<void> stop_torrents(torrent_id_list ids) = 0;
 
 		virtual ext::future<void> verify_torrents(torrent_id_list ids) = 0;

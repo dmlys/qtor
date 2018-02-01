@@ -44,7 +44,7 @@ namespace transmission
 		virtual ext::future<void> stop_all_torrents() override { return ext::make_ready_future(); }
 
 		virtual ext::future<void> start_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
-		virtual ext::future<void> start_now_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+		virtual ext::future<void> start_torrents_now(torrent_id_list ids) override { return ext::make_ready_future(); }
 		virtual ext::future<void> stop_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
 
 		virtual ext::future<void> verify_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
