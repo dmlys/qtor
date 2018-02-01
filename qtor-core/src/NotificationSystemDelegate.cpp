@@ -19,28 +19,25 @@ namespace QtTools::NotificationSystem
 {
 	const unsigned SimpleNotification::ms_InnerMargins = 1;
 	const QMargins SimpleNotification::ms_OutterMargins = {1, 3, 1, 3};
+	const QTextCharFormat SimpleNotification::ms_searchFormat = [] 
+	{
+		QTextCharFormat format;
+		format.setForeground(Qt::GlobalColor::red);
+		format.setBackground(Qt::GlobalColor::green);
+		return format;
+	}();
 	
 	static const char * ms_OldHrefProperty = "QtTools::NotificationSystem::SimpleNotification::OldHref";
 	static const QVariant ms_NullVariant;
 
-	QString SimpleNotification::Text() const
+	QMargins SimpleNotification::TextMargins(const QStyleOptionViewItem & option)
 	{
-		return m_text;
-	}
-
-	QDateTime SimpleNotification::Timestamp() const
-	{
-		return m_timestamp;
+		return ms_OutterMargins + QtTools::Delegates::TextMargins(option);
 	}
 
 	NotificationPopupWidget * SimpleNotification::CreatePopup() const
 	{
 		return nullptr;
-	}
-
-	QMargins SimpleNotification::TextMargins(const QStyleOptionViewItem & option)
-	{
-		return ms_OutterMargins + QtTools::Delegates::TextMargins(option);
 	}
 
 	void SimpleNotification::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item)
@@ -118,13 +115,16 @@ namespace QtTools::NotificationSystem
 			timestampSz
 		};
 
-		item.textdocptr = std::make_shared<QTextDocument>();		
+		item.textdocptr = std::make_shared<QTextDocument>();
 		auto * highlighter = new SearchHighlighter(item.textdocptr.get());
 		highlighter->SetSearchText(item.searchStr);
+		highlighter->SetFormat(ms_searchFormat);
 
 		QTextDocument & textDoc = *item.textdocptr;
 		PrepareTextDocument(textDoc, item);
-		textDoc.setTextWidth(titleSz.width() + timestampSz.width() + titleSpacer);
+
+		const auto width = std::max(rect.width(), titleSz.width() + timestampSz.width() + titleSpacer);
+		textDoc.setTextWidth(width);
 
 		QSize textSz {std::lround((textDoc.idealWidth())), std::lround(textDoc.size().height())};
 		int textTop = ms_InnerMargins + std::max(item.titleRect.bottom(), item.timestampRect.bottom());
@@ -141,7 +141,7 @@ namespace QtTools::NotificationSystem
 		using namespace QtTools::Delegates;
 
 		const QStyleOptionViewItem & option = *item.option;
-		const bool selected = option.state & QStyle::State_Selected;		
+		const bool selected = option.state & QStyle::State_Selected;
 		const auto margins = TextMargins(option);
 		const auto rect = FocusFrameSubrect(option) - margins;
 
@@ -157,11 +157,8 @@ namespace QtTools::NotificationSystem
 		auto titleopt = option;
 		titleopt.font = item.titleFont;
 		//DrawFormattedText(painter, item.title, item.titleRect, titleopt);
-		QTextCharFormat format;
-		format.setForeground(Qt::GlobalColor::red);
-		format.setBackground(Qt::GlobalColor::green);		
 		DrawSearchFormatedText(painter, item.title, item.titleRect, titleopt, 
-		                       FormatSearchText(item.title, item.searchStr, format));
+		                       FormatSearchText(item.title, item.searchStr, ms_searchFormat));
 
 		painter->setFont(item.timestampFont);
 		painter->drawText(timestampRect, item.timestamp);
@@ -210,7 +207,11 @@ namespace QtTools::NotificationSystem
 	{
 		auto * cache = std::any_cast<LaidoutItem>(&cookie);
 		if (not cache) cache = &cookie.emplace<LaidoutItem>();
-		
+
+		// sizeHint should always be recalculated
+		// force it by setting invalid index
+		cache->notification = nullptr;
+
 		LayoutItem(option, *cache);
 		return cache->totalRect.size();
 	}
@@ -321,9 +322,6 @@ namespace QtTools::NotificationSystem
 	void SimpleNotification::SearchHighlighter::highlightBlock(const QString & text)
 	{
 		if (m_searchString.isEmpty()) return;
-
-		m_searchFormat.setForeground(Qt::GlobalColor::red);
-		m_searchFormat.setBackground(Qt::GlobalColor::green);
 
 		int index = text.indexOf(m_searchString, 0, Qt::CaseInsensitive);
 		while (index >= 0)

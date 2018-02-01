@@ -6,11 +6,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <regex>
+#include <fstream>
 
 #include <ext/is_string.hpp>
 #include <ext/utility.hpp>
 #include <ext/base64.hpp>
 #include <ext/itoa.hpp>
+
+#include <ext/Errors.hpp>
 
 #include <ext/library_logger/logger.hpp>
 #include <ext/library_logger/logging_macros.hpp>
@@ -183,15 +186,21 @@ int main(int argc, char * argv[])
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
 	auto ttt = R"(Your options Are:
-<ul>
+<ol>
 <li>opt 1
 <li>opt 2
-</ul>)";
+</ol>
+opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
+)";
+
+	std::error_code err {10066, ext::system_utf8_category()};
+	std::string errmsg = ext::FormatError(err);
 
 	QtTools::NotificationSystem::NotificationCenter nsys;
 	nsys.AddNotification("Title", "Text1");
 	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
 	nsys.AddNotification("Title", ttt);
+	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 
 	auto model = nsys.CreateModel();
 

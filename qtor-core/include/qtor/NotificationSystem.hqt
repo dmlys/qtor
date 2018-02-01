@@ -161,8 +161,8 @@ namespace QtTools::NotificationSystem
 		//virtual QMenu * CreateItemMenu(const QModelIndex & idx);
 		/// basic menu handler
 		//virtual void contextMenuEvent(QContextMenuEvent * ev) override;
-		/// to change ListView clipboard handling
-		//virtual bool eventFilter(QObject * watched, QEvent * event) override;
+		// to change ListView clipboard handling
+		virtual bool eventFilter(QObject * watched, QEvent * event) override;
 
 	protected:
 		virtual void ConnectModel();

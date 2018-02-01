@@ -1,22 +1,50 @@
+#include <QtCore/QStringBuilder>
 #include <QtTools/ToolsBase.hpp>
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
 
 namespace QtTools::NotificationSystem
 {
+	QString SimpleNotification::Text() const
+	{
+		QTextDocument doc;
+		doc.setHtml(m_text);
+		
+		return m_title % "  "
+			% m_timestamp.toString(Qt::DateFormat::DefaultLocaleShortDate)
+			% QStringLiteral("\n")
+			% doc.toPlainText();
+	}
+
+	QDateTime SimpleNotification::Timestamp() const
+	{
+		return m_timestamp;
+	}
+
 	viewed::refilter_type NotificationFilter::set_expr(QString search)
 	{
-		return viewed::refilter_type::same;
+		if (search.compare(m_filter, Qt::CaseInsensitive) == 0)
+			return viewed::refilter_type::same;
+		else if (search.startsWith(m_filter, Qt::CaseInsensitive))
+		{
+			m_filter = std::move(search);
+			return viewed::refilter_type::incremental;
+		}
+		else
+		{
+			m_filter = std::move(search);
+			return viewed::refilter_type::full;
+		}
 	}
 
 	bool NotificationFilter::matches(const Notification & n) const noexcept
 	{
-		return true;
+		return n.Text().contains(m_filter, Qt::CaseInsensitive);		
 	}
 
 	bool NotificationFilter::always_matches() const noexcept
 	{
-		return true;
+		return m_filter.isEmpty();
 	}
 
 	NotificationModel::NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent /* = nullptr */)

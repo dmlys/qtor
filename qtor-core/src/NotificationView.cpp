@@ -30,27 +30,27 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
-	//bool NotificationView::eventFilter(QObject * watched, QEvent * event)
-	//{
-	//	if (event->type() == QEvent::KeyPress)
-	//	{
-	//		auto * keyEvent = static_cast<QKeyEvent *>(event);
-	//		if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
-	//		{
-	//			auto indexes = m_listView->selectionModel()->selectedIndexes();
-	//			auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_listDelegate->GetText(idx); });
+	bool NotificationView::eventFilter(QObject * watched, QEvent * event)
+	{
+		if (event->type() == QEvent::KeyPress)
+		{
+			auto * keyEvent = static_cast<QKeyEvent *>(event);
+			if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
+			{
+				auto indexes = m_listView->selectionModel()->selectedIndexes();
+				auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_model->GetItem(idx.row())->Text(); });
 
-	//			QString text;
-	//			auto sep = "\n" + QString(80, '-') + "\n";
-	//			ext::join_into(texts, sep, text);
+				QString text;
+				auto sep = "\n" + QString(80, '-') + "\n";
+				ext::join_into(texts, sep, text);
 
-	//			qApp->clipboard()->setText(text);
-	//			return true;
-	//		}
-	//	}
+				qApp->clipboard()->setText(text);
+				return true;
+			}
+		}
 
-	//	return false;
-	//}
+		return false;
+	}
 
 	/************************************************************************/
 	/*                    Init Methods                                      */
@@ -121,11 +121,12 @@ namespace QtTools::NotificationSystem
 		m_listView->setModelColumn(1);
 		m_listView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 		m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+		m_listView->setWordWrap(true);
 		m_listView->setMouseTracking(true);
 
 		m_listDelegate = new SimpleNotificationDelegate(this);
 		m_listView->setItemDelegate(m_listDelegate);
-		//m_listView->installEventFilter(this);
+		m_listView->installEventFilter(this);
 
 		m_verticalLayout->addWidget(m_rowFilter);
 		m_verticalLayout->addWidget(m_listView);

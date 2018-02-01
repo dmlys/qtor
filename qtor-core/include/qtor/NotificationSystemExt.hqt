@@ -61,6 +61,7 @@ namespace QtTools::NotificationSystem
 	protected:
 		static const QMargins ms_OutterMargins; // { 0, 1, 0, 1 };
 		static const unsigned ms_InnerMargins;  // 1
+		static const QTextCharFormat ms_searchFormat;
 
 	protected:
 		QDateTime m_timestamp;

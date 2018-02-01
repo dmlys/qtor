@@ -459,7 +459,11 @@ namespace qtor
 	}
 
 	QSize TorrentListDelegate::sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const
-	{
+	{		
+		// sizeHint should always be recalculated
+		// force it by setting invalid index
+		m_cachedItem.index = {};
+
 		LayoutItem(option, index, m_cachedItem);
 		return m_cachedItem.totalRect.size();
 	}
