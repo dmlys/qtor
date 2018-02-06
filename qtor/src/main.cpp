@@ -144,6 +144,79 @@ NotificationPopupLabel::NotificationPopupLabel(QWidget * parent /* = nullptr */)
 }
 
 
+
+
+class NotificationPopupTest : public QtTools::NotificationPopupWidget
+{
+protected:	
+	QLabel * m_title = nullptr;
+	QLabel * m_text = nullptr;
+	QLabel * m_timestmap = nullptr;
+
+public:
+	NotificationPopupTest(QWidget * parent = nullptr)
+		: QtTools::NotificationPopupWidget(parent)
+	{
+		setupUi();
+	}
+
+
+protected:
+	void setupUi();
+};
+
+void NotificationPopupTest::setupUi()
+{
+	m_title = new QLabel(this);
+	m_text = new QLabel(this);
+	m_timestmap = new QLabel(this);
+
+	//QFrame * frame = new QFrame(this);
+	//frame->setFrameShape(QFrame::HLine);
+	//frame->setFrameShadow(QFrame::Plain);
+
+	auto pol = m_text->sizePolicy();
+	bool hhfw = pol.hasHeightForWidth();
+	pol.setHeightForWidth(true);
+	m_text->setSizePolicy(pol);
+
+	QHBoxLayout * titleLayout = new QHBoxLayout;
+	titleLayout->addWidget(m_title);
+	titleLayout->addStretch(20);
+	titleLayout->addWidget(m_timestmap, 0, Qt::AlignRight);
+
+	QVBoxLayout * layout = new QVBoxLayout;
+	layout->setSpacing(0);
+	layout->setContentsMargins(6, 6 - 4, 6, 6);
+	layout->addLayout(titleLayout);
+	//layout->addWidget(frame);
+	layout->addWidget(m_text);
+
+	setLayout(layout);
+
+	QColor color = QColor("yellow");
+	color.setAlpha(200);
+	SetBackgroundBrush(color);
+
+	SetShadowColor(Qt::black);
+
+	m_title->setText("Title");
+	m_timestmap->setText("2017/05/02");
+	m_text->setTextFormat(Qt::RichText);
+//	m_text->setText(R"(Your options Are:
+//<ol>
+//<li>opt 1
+//<li>opt 2
+//</ol>
+//opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
+//)");
+//)");
+	m_text->setText("Error");
+
+}
+
+
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -193,20 +266,33 @@ int main(int argc, char * argv[])
 opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 )";
 
-	std::error_code err {10066, ext::system_utf8_category()};
-	std::string errmsg = ext::FormatError(err);
+	//std::error_code err {10066, ext::system_utf8_category()};
+	//std::string errmsg = ext::FormatError(err);
 
-	QtTools::NotificationSystem::NotificationCenter nsys;
-	nsys.AddNotification("Title", "Text1");
-	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddNotification("Title", ttt);
-	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	//QtTools::NotificationSystem::NotificationCenter nsys;
+	//nsys.AddNotification("Title", "Text1");
+	//nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
+	//nsys.AddNotification("Title", ttt);
+	//nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 
-	auto model = nsys.CreateModel();
+	//auto model = nsys.CreateModel();
 
-	QtTools::NotificationSystem::NotificationView view;
-	view.SetModel(model);
-	view.show();
+	//QtTools::NotificationSystem::NotificationView view;
+	//view.SetModel(model);
+	//view.show();
+
+	QDesktopWidget * desktop = qapp.desktop();
+	auto geom = desktop->availableGeometry(desktop);
+
+	NotificationPopupTest wgt;
+	wgt.setAttribute(Qt::WA_DeleteOnClose, false);
+	wgt.adjustSize();
+
+	auto wg = wgt.geometry();
+	wg.setSize(wgt.size());
+	wg.moveBottomRight(geom.bottomRight());
+	wgt.move(wg.topLeft());
+	wgt.show();
 
 	return qapp.exec();
 }

@@ -173,9 +173,11 @@ namespace QtTools
 	NotificationPopupWidget::NotificationPopupWidget(QWidget * parent /* = nullptr */, Qt::WindowFlags flags /* = {} */)
 		: QWidget(parent, flags)
 	{
-		setWindowFlag(Qt::FramelessWindowHint);
-		setAttribute(Qt::WA_OpaquePaintEvent);
+		// normally notifications are not needed after they are closed
 		setAttribute(Qt::WA_DeleteOnClose);
+		setWindowFlag(Qt::FramelessWindowHint);
+		// in paintEvent rect is drawn in entire clientRect, so we are - opaque
+		setAttribute(Qt::WA_OpaquePaintEvent);
 
 		if (isWindow())
 			setAttribute(Qt::WA_TranslucentBackground);

@@ -4,8 +4,6 @@
 #include <QtCore/QAbstractAnimation>
 
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QLayout>
-#include <QtWidgets/QLabel>
 #include <QtWidgets/QGraphicsDropShadowEffect>
 
 namespace QtTools
@@ -25,8 +23,8 @@ namespace QtTools
 	///  This widget set Qt::WA_DeleteOnClose attribute in constructor
 	/// 
 	/// TECHNICAL ASPECTS:
-	///  This widget can be both Qt::Widget and Qt::Window(use contructor and setWindowFlag method)
-	///  If it is a Qt::Window it will automatically have Qt::WA_TranslucentBackground
+	///  This widget can be both Qt::Widget and Qt::Window(use contructor and setWindowFlag method).
+	///  If it is a Qt::Window it will automatically have Qt::WA_TranslucentBackground.
 	///  Due how Qt works widget cannot draw shadow effect outside it's own widget area on non qt-windows.
 	///  Instead this widget draws shadow always inside it's area, setting margins to add needed shadow+frame space.
 	///  

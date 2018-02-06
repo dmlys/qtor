@@ -17,8 +17,8 @@
 
 namespace QtTools::NotificationSystem
 {
-	const unsigned SimpleNotification::ms_InnerMargins = 1;
-	const QMargins SimpleNotification::ms_OutterMargins = {1, 3, 1, 3};
+	const unsigned SimpleNotification::ms_Spacing = 1;
+	const QMargins SimpleNotification::ms_ContentMargins = {1, 3, 1, 3};
 	const QTextCharFormat SimpleNotification::ms_searchFormat = [] 
 	{
 		QTextCharFormat format;
@@ -32,7 +32,7 @@ namespace QtTools::NotificationSystem
 
 	QMargins SimpleNotification::TextMargins(const QStyleOptionViewItem & option)
 	{
-		return ms_OutterMargins + QtTools::Delegates::TextMargins(option);
+		return ms_ContentMargins + QtTools::Delegates::TextMargins(option);
 	}
 
 	NotificationPopupWidget * SimpleNotification::CreatePopup() const
@@ -127,7 +127,7 @@ namespace QtTools::NotificationSystem
 		textDoc.setTextWidth(width);
 
 		QSize textSz {std::lround((textDoc.idealWidth())), std::lround(textDoc.size().height())};
-		int textTop = ms_InnerMargins + std::max(item.titleRect.bottom(), item.timestampRect.bottom());
+		int textTop = ms_Spacing + std::max(item.titleRect.bottom(), item.timestampRect.bottom());
 		item.textRect = QRect {{topLeft.x(), textTop}, textSz};
 
 		item.totalRect = item.timestampRect | item.titleRect | item.textRect;

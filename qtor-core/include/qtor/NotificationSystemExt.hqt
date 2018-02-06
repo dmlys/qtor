@@ -59,8 +59,8 @@ namespace QtTools::NotificationSystem
 		};
 
 	protected:
-		static const QMargins ms_OutterMargins; // { 0, 1, 0, 1 };
-		static const unsigned ms_InnerMargins;  // 1
+		static const QMargins ms_ContentMargins; // { 0, 1, 0, 1 };
+		static const unsigned ms_Spacing;  // 1
 		static const QTextCharFormat ms_searchFormat;
 
 	protected:
