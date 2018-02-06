@@ -155,7 +155,7 @@ protected:
 
 public:
 	NotificationPopupTest(QWidget * parent = nullptr)
-		: QtTools::NotificationPopupWidget(parent)
+		: QtTools::NotificationPopupWidget(parent, Qt::ToolTip)
 	{
 		setupUi();
 	}
@@ -185,7 +185,7 @@ void NotificationPopupTest::setupUi()
 	titleLayout->addStretch(20);
 	titleLayout->addWidget(m_timestmap, 0, Qt::AlignRight);
 
-	QVBoxLayout * layout = new QVBoxLayout;
+	QBoxLayout * layout = new QVBoxLayout;
 	layout->setSpacing(0);
 	layout->setContentsMargins(6, 6 - 4, 6, 6);
 	layout->addLayout(titleLayout);

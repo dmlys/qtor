@@ -149,9 +149,10 @@ namespace QtTools
 			parentGeom = qApp->desktop()->availableGeometry(this);
 
 		QRectF start = this->geometry();
+		QSizeF size = start.size();
 		QRectF finish = parentGeom.right() - start.right() < start.left() - parentGeom.left()
-			? QRectF(parentGeom.right(), start.top(), 0, start.height())
-			: QRectF(parentGeom.left(), start.top(), 0, start.height());
+			? QRectF(QPointF(parentGeom.right(), start.top()), size)
+			: QRectF(QPointF(parentGeom.left(), start.top()), size);
 
 		animation->setStartValue(start);
 		animation->setEndValue(finish);
