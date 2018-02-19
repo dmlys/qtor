@@ -35,6 +35,7 @@
 
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QPlainTextEdit>
+#include <QtWidgets/QShortcut>
 
 //class http_method
 //{
@@ -155,7 +156,7 @@ protected:
 
 public:
 	NotificationPopupTest(QWidget * parent = nullptr)
-		: QtTools::NotificationPopupWidget(parent, Qt::ToolTip)
+		: QtTools::NotificationPopupWidget(parent/*, Qt::ToolTip*/)
 	{
 		setupUi();
 	}
@@ -216,6 +217,59 @@ void NotificationPopupTest::setupUi()
 }
 
 
+namespace QtTools::NotificationSystem
+{
+	class AbstractNotificationLayout : public QObject
+	{
+		Q_OBJECT
+
+	public:
+		virtual void AddNotification(QPointer<const Notification> widget) = 0;
+		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification> = 0;
+		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> = 0;
+		virtual auto NotificationsCount() const -> unsigned = 0;
+		
+		virtual void SetGeomerty(const QRect & geom) = 0;
+		virtual QRect GetGeometry() const = 0;
+
+		virtual void SetParent(QWidget * widget) = 0;
+		virtual QWidget * GetParent() const = 0;
+	};
+
+	class NotificationLayout : public AbstractNotificationLayout
+	{
+	protected:
+		struct Item
+		{
+			QPointer<const Notification> notification;
+			QPointer<NotificationPopupWidget> widget;
+			QPointer<QAbstractAnimation> animation;
+		};
+
+	protected:
+		std::vector<Item> m_items;
+		QPointer<QWidget> m_parent;
+		QRect m_geometry;
+
+	protected:
+		virtual bool eventFilter(QObject * watched, QEvent * event) override;
+		virtual void relayout();
+
+	public:
+		virtual void AddNotification(QPointer<const Notification> widget) override;
+		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification> override;
+		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> override;
+		virtual auto NotificationsCount() const -> unsigned override;
+
+		virtual void SetGeomerty(const QRect & geom) override;
+		virtual QRect GetGeometry() const override;
+
+		virtual void SetParent(QWidget * widget) override;
+		virtual QWidget * GetParent() const override;
+	};
+}
+
+
 
 int main(int argc, char * argv[])
 {
@@ -266,33 +320,37 @@ int main(int argc, char * argv[])
 opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 )";
 
-	//std::error_code err {10066, ext::system_utf8_category()};
-	//std::string errmsg = ext::FormatError(err);
+	std::error_code err {10066, ext::system_utf8_category()};
+	std::string errmsg = ext::FormatError(err);
 
-	//QtTools::NotificationSystem::NotificationCenter nsys;
-	//nsys.AddNotification("Title", "Text1");
-	//nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	//nsys.AddNotification("Title", ttt);
-	//nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	QtTools::NotificationSystem::NotificationCenter nsys;
+	nsys.AddNotification("Title", "Text1");
+	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
+	nsys.AddNotification("Title", ttt);
+	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 
-	//auto model = nsys.CreateModel();
+	auto model = nsys.CreateModel();
 
-	//QtTools::NotificationSystem::NotificationView view;
-	//view.SetModel(model);
-	//view.show();
+	QtTools::NotificationSystem::NotificationView view;
+	view.SetModel(model);
+	view.show();
 
-	QDesktopWidget * desktop = qapp.desktop();
-	auto geom = desktop->availableGeometry(desktop);
 
-	NotificationPopupTest wgt;
-	wgt.setAttribute(Qt::WA_DeleteOnClose, false);
-	wgt.adjustSize();
+	//QDesktopWidget * desktop = qapp.desktop();
+	//auto geom = desktop->availableGeometry(desktop);
 
-	auto wg = wgt.geometry();
-	wg.setSize(wgt.size());
-	wg.moveBottomRight(geom.bottomRight());
-	wgt.move(wg.topLeft());
-	wgt.show();
+	//auto gwidth = std::max(400, geom.width() / 5);
+	//geom.setLeft(geom.right() - gwidth);
+
+	//QLayout * layout = new QBoxLayout(QBoxLayout::BottomToTop);
+	//layout->setGeometry(geom);	
+
+	//for (unsigned u = 0; u < 3; ++u)
+	//{
+	//	NotificationPopupTest * wgt = new NotificationPopupTest;
+	//	wgt->show();
+	//	layout->addWidget(wgt);
+	//}
 
 	return qapp.exec();
 }
