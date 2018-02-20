@@ -259,7 +259,7 @@ namespace QtTools::NotificationSystem
 		virtual void relayout();
 
 	public:
-		virtual void AddNotification(QPointer<const Notification> widget) override;
+		virtual void AddNotification(QPointer<const Notification> notification) override;
 		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification> override;
 		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> override;
 		virtual auto NotificationsCount() const -> unsigned override;
@@ -273,16 +273,40 @@ namespace QtTools::NotificationSystem
 
 	unsigned NotificationLayout::NotificationsCount() const
 	{
-		return m_items.size();
+		return static_cast<unsigned>(m_items.size());
 	}
 
 	auto NotificationLayout::NotificationAt(unsigned index) -> QPointer<const Notification>
 	{
-		if (m_items.size() < index)
-			return m_items[index].notification;
-		else
+		if (m_items.size() >= index)
 			return {};
+		
+		return m_items[index].notification;
 	}
+
+	auto NotificationLayout::TakeNotification(unsigned index) -> QPointer<const Notification>
+	{
+		if (m_items.size() >= index)
+			return {};
+
+		auto item = std::move(m_items[index]);
+		m_items.erase(m_items.begin() + index);
+
+		item.widget->close();
+		delete item.widget.data();
+
+		return item.notification;
+	}
+
+	void NotificationLayout::AddNotification(QPointer<const Notification> notification)
+	{
+		Item item;
+		item.notification = std::move(notification);
+
+		m_items.push_back(std::move(item));
+		relayout();
+	}
+
 
 }
 

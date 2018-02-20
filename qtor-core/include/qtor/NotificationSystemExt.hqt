@@ -70,6 +70,11 @@ namespace QtTools::NotificationSystem
 		QIcon     m_logo;
 		QPixmap   m_pixmap;
 
+		int m_priority        : 2;  // = Normal
+		int m_level           : 2;  // = Info
+		int m_priority_inited : 1;  // = 0
+		int m_level_inited    : 1;  // = 0
+
 	protected:
 		static QMargins TextMargins(const QStyleOptionViewItem & option);
 		static void PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item);
@@ -93,25 +98,32 @@ namespace QtTools::NotificationSystem
 		virtual NotificationPopupWidget * CreatePopup() const override;
 
 	public:
-		virtual QString Title() const override;
-		virtual QString Title(QString title) override;
+		virtual QString Title() const override        { return m_title;}
+		virtual QString Title(QString title) override { return std::exchange(m_title, std::move(title)); }
 
-		virtual QString Text() const override;
-		virtual QString Text(QString text) override;
+		virtual QString Text() const override         { return m_text; }
+		virtual QString Text(QString text) override   { return std::exchange(m_text, std::move(text)); }
 
-		virtual QDateTime Timestamp() const override;
-		virtual QDateTime Timestamp(QDateTime timestamp) override;
+		virtual QDateTime Timestamp() const override              { return m_timestamp; }
+		virtual QDateTime Timestamp(QDateTime timestamp) override { return std::exchange(m_timestamp, std::move(timestamp)); }
 
-		virtual QIcon Logo() const override;
-		virtual QIcon Logo(QIcon logo) override;
+		virtual QIcon Logo() const override      { return m_logo; }
+		virtual QIcon Logo(QIcon logo) override  { return std::exchange(m_logo, std::move(logo)); }
+
+		virtual NotificationPriority Priority() const override;
+		virtual NotificationPriority Priority(NotificationPriority priority);
+
+		virtual NotificationLevel Level() const override;
+		virtual NotificationLevel Level(NotificationLevel level) override;
 
 	public:
 		virtual QString FilterText() const override;
 		virtual QString ClipboardText() const override;
 
 	public:
-		SimpleNotification(QString title, QString text, QDateTime timestamp)
-			: m_title(std::move(title)), m_text(std::move(text)), m_timestamp(std::move(timestamp)) {}
+		SimpleNotification();
+		SimpleNotification(QString title, QString text, QDateTime timestamp);
+		~SimpleNotification() = default;
 	};
 
 	/// search highlighter

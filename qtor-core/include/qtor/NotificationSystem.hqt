@@ -47,12 +47,12 @@ namespace QtTools::NotificationSystem
 		High = 1,
 	};
 
-	//enum NotificationType
-	//{
-	//	Normal,  // implies Normal priority
-	//	Warn,    // implies Normal priority
-	//	Error,   // implies High   priority
-	//};
+	enum NotificationLevel
+	{
+		Info,    // implies Normal priority
+		Warn,    // implies Normal priority
+		Error,   // implies High   priority
+	};
 
 
 
@@ -88,6 +88,8 @@ namespace QtTools::NotificationSystem
 		virtual ~NotificationCenter() = default;
 	};
 
+
+
 	class Notification : public QObject
 	{
 		Q_OBJECT
@@ -99,6 +101,9 @@ namespace QtTools::NotificationSystem
 
 		Q_PROPERTY(QString filterText    READ FilterText)
 		Q_PROPERTY(QString clipboardText READ ClipboardText)
+
+		Q_PROPERTY(NotificationPriority priority READ Priority WRITE Priority)
+		Q_PROPERTY(NotificationLevel    level    READ Level    WRITE Level)
 
 	public:
 		virtual QString Title() const = 0;
@@ -112,6 +117,12 @@ namespace QtTools::NotificationSystem
 
 		virtual QIcon Logo() const = 0;
 		virtual QIcon Logo(QIcon logo) = 0;
+
+		virtual NotificationPriority Priority() const = 0;
+		virtual NotificationPriority Priority(NotificationPriority priority) = 0;
+
+		virtual NotificationLevel Level() const = 0;
+		virtual NotificationLevel Level(NotificationLevel level) = 0;
 
 	public:
 		virtual QString FilterText() const = 0;

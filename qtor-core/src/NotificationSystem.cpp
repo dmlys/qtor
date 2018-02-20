@@ -5,44 +5,48 @@
 
 namespace QtTools::NotificationSystem
 {
-	QString SimpleNotification::Title() const
+	SimpleNotification::SimpleNotification()
+		: m_priority(Normal), m_level(Info), m_priority_inited(0), m_level_inited(0)
 	{
-		return m_title;
+
 	}
 
-	QString SimpleNotification::Title(QString title)
+	SimpleNotification::SimpleNotification(QString title, QString text, QDateTime timestamp)
+		: m_title(std::move(title)), m_text(std::move(text)), m_timestamp(std::move(timestamp)),
+		  m_priority(Normal), m_level(Info), m_priority_inited(0), m_level_inited(0)
 	{
-		return std::exchange(m_title, std::move(title));
+
 	}
 
-	QString SimpleNotification::Text() const
+	auto SimpleNotification::Priority() const -> NotificationPriority
 	{
-		return m_text;
+		return static_cast<NotificationPriority>(m_priority);
 	}
 
-	QString SimpleNotification::Text(QString text)
+	auto SimpleNotification::Priority(NotificationPriority priority) -> NotificationPriority
 	{
-		return std::exchange(m_text, std::move(text));
+		auto ret = m_priority;
+		m_priority = priority;
+		m_priority_inited = 1;
+
+		return static_cast<NotificationPriority>(ret);
 	}
 
-	QDateTime SimpleNotification::Timestamp() const
+	auto SimpleNotification::Level() const -> NotificationLevel
 	{
-		return m_timestamp;
+		return static_cast<NotificationLevel>(m_level);
 	}
 
-	QDateTime SimpleNotification::Timestamp(QDateTime timestamp)
+	auto SimpleNotification::Level(NotificationLevel level) -> NotificationLevel
 	{
-		return std::exchange(m_timestamp, std::move(timestamp));
-	}
+		auto ret = m_level;
+		m_level = level;
+		m_level_inited = 1;
 
-	QIcon SimpleNotification::Logo() const
-	{
-		return m_logo;
-	}
+		if (level == Error and not m_priority_inited)
+			m_priority = High;
 
-	QIcon SimpleNotification::Logo(QIcon logo)
-	{
-		return std::exchange(m_logo, std::move(logo));
+		return static_cast<NotificationLevel>(ret);
 	}
 
 	QString SimpleNotification::FilterText() const
