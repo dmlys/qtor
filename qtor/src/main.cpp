@@ -223,13 +223,16 @@ namespace QtTools::NotificationSystem
 	{
 		Q_OBJECT
 
+		Q_PROPERTY(QWidget * parent   READ GetParent   WRITE SetParent)
+		Q_PROPERTY(QRect     geometry READ GetGeometry WRITE SetGeometry)
+
 	public:
 		virtual void AddNotification(QPointer<const Notification> widget) = 0;
 		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification> = 0;
 		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> = 0;
 		virtual auto NotificationsCount() const -> unsigned = 0;
 		
-		virtual void SetGeomerty(const QRect & geom) = 0;
+		virtual  void SetGeometry(const QRect & geom) = 0;
 		virtual QRect GetGeometry() const = 0;
 
 		virtual void SetParent(QWidget * widget) = 0;
@@ -261,12 +264,26 @@ namespace QtTools::NotificationSystem
 		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> override;
 		virtual auto NotificationsCount() const -> unsigned override;
 
-		virtual void SetGeomerty(const QRect & geom) override;
+		virtual void SetGeometry(const QRect & geom) override;
 		virtual QRect GetGeometry() const override;
 
 		virtual void SetParent(QWidget * widget) override;
 		virtual QWidget * GetParent() const override;
 	};
+
+	unsigned NotificationLayout::NotificationsCount() const
+	{
+		return m_items.size();
+	}
+
+	auto NotificationLayout::NotificationAt(unsigned index) -> QPointer<const Notification>
+	{
+		if (m_items.size() < index)
+			return m_items[index].notification;
+		else
+			return {};
+	}
+
 }
 
 

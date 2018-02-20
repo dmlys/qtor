@@ -38,7 +38,7 @@ namespace QtTools::NotificationSystem
 			if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
 			{
 				auto indexes = m_listView->selectionModel()->selectedIndexes();
-				auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_model->GetItem(idx.row())->Text(); });
+				auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_model->GetItem(idx.row())->ClipboardText(); });
 
 				QString text;
 				auto sep = "\n" + QString(80, '-') + "\n";

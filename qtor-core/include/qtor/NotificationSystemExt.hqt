@@ -65,14 +65,10 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		QDateTime m_timestamp;
-		QString m_title;
-		QString m_text;
-		QPixmap m_pixmap;
-
-	public:
-		virtual QDateTime Timestamp() const override;
-		virtual QString Text() const override;
-		virtual NotificationPopupWidget * CreatePopup() const override;
+		QString   m_title;
+		QString   m_text;
+		QIcon     m_logo;
+		QPixmap   m_pixmap;
 
 	protected:
 		static QMargins TextMargins(const QStyleOptionViewItem & option);
@@ -94,10 +90,24 @@ namespace QtTools::NotificationSystem
 		virtual bool editorEvent(QEvent * event, const QStyleOptionViewItem & option, std::any & cookie) const override;
 
 	public:
-		void setTitle(QString title)           { m_title = std::move(title); }
-		void setText(QString text)             { m_text = std::move(text); }
-		void setTimestamp(QDateTime timestamp) { m_timestamp = std::move(timestamp); }
-		void setPixmap(QPixmap pixmap)         { m_pixmap = std::move(pixmap); }
+		virtual NotificationPopupWidget * CreatePopup() const override;
+
+	public:
+		virtual QString Title() const override;
+		virtual QString Title(QString title) override;
+
+		virtual QString Text() const override;
+		virtual QString Text(QString text) override;
+
+		virtual QDateTime Timestamp() const override;
+		virtual QDateTime Timestamp(QDateTime timestamp) override;
+
+		virtual QIcon Logo() const override;
+		virtual QIcon Logo(QIcon logo) override;
+
+	public:
+		virtual QString FilterText() const override;
+		virtual QString ClipboardText() const override;
 
 	public:
 		SimpleNotification(QString title, QString text, QDateTime timestamp)

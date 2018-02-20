@@ -40,6 +40,22 @@ namespace QtTools::NotificationSystem
 	class NotificationCenter;
 	class NotificationView;
 
+	enum NotificationPriority
+	{
+		Low = -1,
+		Normal = 0,
+		High = 1,
+	};
+
+	//enum NotificationType
+	//{
+	//	Normal,  // implies Normal priority
+	//	Warn,    // implies Normal priority
+	//	Error,   // implies High   priority
+	//};
+
+
+
 	/// Simple notification system. More or less.
 	class NotificationCenter : public QObject
 	{
@@ -76,9 +92,32 @@ namespace QtTools::NotificationSystem
 	{
 		Q_OBJECT
 
+		Q_PROPERTY(QString title READ Title WRITE Title)
+		Q_PROPERTY(QString text  READ Text  WRITE Text)
+		Q_PROPERTY(QDateTime timestamp READ Timestamp WRITE Timestamp)
+		Q_PROPERTY(QIcon logo READ Logo WRITE Logo)
+
+		Q_PROPERTY(QString filterText    READ FilterText)
+		Q_PROPERTY(QString clipboardText READ ClipboardText)
+
 	public:
-		virtual QDateTime Timestamp() const = 0;
+		virtual QString Title() const = 0;
+		virtual QString Title(QString title) = 0;
+
 		virtual QString Text() const = 0;
+		virtual QString Text(QString text) = 0;
+		
+		virtual QDateTime Timestamp() const = 0;
+		virtual QDateTime Timestamp(QDateTime timestamp) = 0;
+
+		virtual QIcon Logo() const = 0;
+		virtual QIcon Logo(QIcon logo) = 0;
+
+	public:
+		virtual QString FilterText() const = 0;
+		virtual QString ClipboardText() const = 0;
+
+	public:
 		virtual NotificationPopupWidget * CreatePopup() const = 0;
 
 	public:
@@ -90,6 +129,8 @@ namespace QtTools::NotificationSystem
 	public:
 		virtual ~Notification() = default;
 	};
+
+
 
 	class AbstractNotificationModel : public QAbstractListModel
 	{
@@ -123,6 +164,8 @@ namespace QtTools::NotificationSystem
 	public:
 		using QAbstractListModel::QAbstractListModel;
 	};
+
+
 
 	
 	class NotificationView : public QFrame

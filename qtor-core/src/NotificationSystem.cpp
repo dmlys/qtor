@@ -5,20 +5,65 @@
 
 namespace QtTools::NotificationSystem
 {
+	QString SimpleNotification::Title() const
+	{
+		return m_title;
+	}
+
+	QString SimpleNotification::Title(QString title)
+	{
+		return std::exchange(m_title, std::move(title));
+	}
+
 	QString SimpleNotification::Text() const
 	{
-		QTextDocument doc;
-		doc.setHtml(m_text);
-		
-		return m_title % "  "
-			% m_timestamp.toString(Qt::DateFormat::DefaultLocaleShortDate)
-			% QStringLiteral("\n")
-			% doc.toPlainText();
+		return m_text;
+	}
+
+	QString SimpleNotification::Text(QString text)
+	{
+		return std::exchange(m_text, std::move(text));
 	}
 
 	QDateTime SimpleNotification::Timestamp() const
 	{
 		return m_timestamp;
+	}
+
+	QDateTime SimpleNotification::Timestamp(QDateTime timestamp)
+	{
+		return std::exchange(m_timestamp, std::move(timestamp));
+	}
+
+	QIcon SimpleNotification::Logo() const
+	{
+		return m_logo;
+	}
+
+	QIcon SimpleNotification::Logo(QIcon logo)
+	{
+		return std::exchange(m_logo, std::move(logo));
+	}
+
+	QString SimpleNotification::FilterText() const
+	{
+		QTextDocument doc;
+		doc.setHtml(m_text);
+
+		return m_title
+			% QStringLiteral("\n")
+			% doc.toPlainText();
+	}
+
+	QString SimpleNotification::ClipboardText() const
+	{
+		QTextDocument doc;
+		doc.setHtml(m_text);
+
+		return m_title % "  "
+			% m_timestamp.toString(Qt::DateFormat::DefaultLocaleShortDate)
+			% QStringLiteral("\n")
+			% doc.toPlainText();
 	}
 
 	viewed::refilter_type NotificationFilter::set_expr(QString search)
@@ -39,7 +84,7 @@ namespace QtTools::NotificationSystem
 
 	bool NotificationFilter::matches(const Notification & n) const noexcept
 	{
-		return n.Text().contains(m_filter, Qt::CaseInsensitive);		
+		return n.FilterText().contains(m_filter, Qt::CaseInsensitive);		
 	}
 
 	bool NotificationFilter::always_matches() const noexcept
