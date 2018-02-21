@@ -261,7 +261,10 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		virtual bool eventFilter(QObject * watched, QEvent * event) override;
-		virtual void relayout();
+
+	protected:
+		Q_SLOT virtual void Relayout();
+		Q_SLOT void ScheduleRelayout();
 
 	public:
 		virtual void AddNotification(QPointer<const Notification> notification) override;
@@ -278,6 +281,11 @@ namespace QtTools::NotificationSystem
 		virtual       void SetCorner(Qt::Corner corner) override;
 		virtual Qt::Corner GetCorner() const override;
 	};
+
+	void NotificationLayout::ScheduleRelayout()
+	{
+		QMetaObject::invokeMethod(this, "Relayout", Qt::QueuedConnection);
+	}
 
 	unsigned NotificationLayout::NotificationsCount() const
 	{
@@ -303,6 +311,7 @@ namespace QtTools::NotificationSystem
 		item.widget->close();
 		delete item.widget.data();
 
+		ScheduleRelayout();
 		return item.notification;
 	}
 
@@ -312,10 +321,41 @@ namespace QtTools::NotificationSystem
 		item.notification = std::move(notification);
 
 		m_items.push_back(std::move(item));
-		relayout();
+		ScheduleRelayout();
 	}
 
+	QWidget * NotificationLayout::GetParent() const
+	{
+		return m_parent;
+	}
 
+	void NotificationLayout::SetParent(QWidget * widget)
+	{
+		m_parent = widget;
+		ScheduleRelayout();
+	}
+
+	QRect NotificationLayout::GetGeometry() const
+	{
+		return m_geometry;
+	}
+
+	void NotificationLayout::SetGeometry(const QRect & geom)
+	{
+		m_geometry = geom;
+		ScheduleRelayout();
+	}
+
+	Qt::Corner NotificationLayout::GetCorner() const
+	{
+		return m_corner;
+	}
+
+	void NotificationLayout::SetCorner(Qt::Corner corner)
+	{
+		m_corner = corner;
+		ScheduleRelayout();
+	}
 }
 
 
