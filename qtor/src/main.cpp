@@ -223,8 +223,9 @@ namespace QtTools::NotificationSystem
 	{
 		Q_OBJECT
 
-		Q_PROPERTY(QWidget * parent   READ GetParent   WRITE SetParent)
-		Q_PROPERTY(QRect     geometry READ GetGeometry WRITE SetGeometry)
+		Q_PROPERTY(QWidget *  parent   READ GetParent   WRITE SetParent)
+		Q_PROPERTY(QRect      geometry READ GetGeometry WRITE SetGeometry)
+		Q_PROPERTY(Qt::Corner corner   READ GetCorder   WRITE SetCorner)
 
 	public:
 		virtual void AddNotification(QPointer<const Notification> widget) = 0;
@@ -232,11 +233,14 @@ namespace QtTools::NotificationSystem
 		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> = 0;
 		virtual auto NotificationsCount() const -> unsigned = 0;
 		
+		virtual void SetParent(QWidget * widget) = 0;
+		virtual QWidget * GetParent() const = 0;
+
 		virtual  void SetGeometry(const QRect & geom) = 0;
 		virtual QRect GetGeometry() const = 0;
 
-		virtual void SetParent(QWidget * widget) = 0;
-		virtual QWidget * GetParent() const = 0;
+		virtual       void SetCorner(Qt::Corner corner) = 0;
+		virtual Qt::Corner GetCorner() const = 0;
 	};
 
 	class NotificationLayout : public AbstractNotificationLayout
@@ -253,6 +257,7 @@ namespace QtTools::NotificationSystem
 		std::vector<Item> m_items;
 		QPointer<QWidget> m_parent;
 		QRect m_geometry;
+		Qt::Corner m_corner = Qt::BottomRightCorner;
 
 	protected:
 		virtual bool eventFilter(QObject * watched, QEvent * event) override;
@@ -264,11 +269,14 @@ namespace QtTools::NotificationSystem
 		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> override;
 		virtual auto NotificationsCount() const -> unsigned override;
 
-		virtual void SetGeometry(const QRect & geom) override;
-		virtual QRect GetGeometry() const override;
-
 		virtual void SetParent(QWidget * widget) override;
 		virtual QWidget * GetParent() const override;
+
+		virtual  void SetGeometry(const QRect & geom) override;
+		virtual QRect GetGeometry() const override;
+
+		virtual       void SetCorner(Qt::Corner corner) override;
+		virtual Qt::Corner GetCorner() const override;
 	};
 
 	unsigned NotificationLayout::NotificationsCount() const
