@@ -258,6 +258,10 @@ namespace QtTools::NotificationSystem
 		QPointer<QWidget> m_parent;
 		QRect m_geometry;
 		Qt::Corner m_corner = Qt::BottomRightCorner;
+		bool m_relayoutScheduled = false;
+
+	protected:
+		static QRect AlignRect(QRect rect, const QRect & parent, Qt::Corner corner);
 
 	protected:
 		virtual bool eventFilter(QObject * watched, QEvent * event) override;
@@ -282,10 +286,6 @@ namespace QtTools::NotificationSystem
 		virtual Qt::Corner GetCorner() const override;
 	};
 
-	void NotificationLayout::ScheduleRelayout()
-	{
-		QMetaObject::invokeMethod(this, "Relayout", Qt::QueuedConnection);
-	}
 
 	unsigned NotificationLayout::NotificationsCount() const
 	{
@@ -356,6 +356,54 @@ namespace QtTools::NotificationSystem
 		m_corner = corner;
 		ScheduleRelayout();
 	}
+
+	void NotificationLayout::ScheduleRelayout()
+	{
+		if (not m_relayoutScheduled)
+		{
+			QMetaObject::invokeMethod(this, "Relayout", Qt::QueuedConnection);
+			m_relayoutScheduled = true;
+		}
+	}
+
+	QRect NotificationLayout::AlignRect(QRect rect, const QRect & parent, Qt::Corner corner)
+	{
+		switch (corner)
+		{
+			case Qt::TopLeftCorner:
+				rect.moveTopLeft(parent.topLeft());
+				break;
+
+			case Qt::TopRightCorner:
+				rect.moveTopRight(parent.topRight());
+				break;
+
+			case Qt::BottomLeftCorner:
+				rect.moveBottomLeft(parent.bottomLeft());
+				break;
+
+			case Qt::BottomRightCorner:
+				rect.moveBottomRight(parent.bottomRight());
+				break;
+		}
+
+		return rect;
+	}
+
+	void NotificationLayout::Relayout()
+	{
+		QWidget * widget = nullptr;
+		if (m_parent)
+			widget = m_parent;
+		else
+			widget = qApp->desktop();
+
+
+		auto geom = AlignRect(m_geometry, widget->geometry(), m_corner);
+
+
+		m_relayoutScheduled = false;
+	}
 }
 
 
@@ -401,32 +449,35 @@ int main(int argc, char * argv[])
 	//
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	auto ttt = R"(Your options Are:
-<ol>
-<li>opt 1
-<li>opt 2
-</ol>
-opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
-)";
+//	auto ttt = R"(Your options Are:
+//<ol>
+//<li>opt 1
+//<li>opt 2
+//</ol>
+//opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
+//)";
+//
+//	std::error_code err {10066, ext::system_utf8_category()};
+//	std::string errmsg = ext::FormatError(err);
+//
+//	QtTools::NotificationSystem::NotificationCenter nsys;
+//	nsys.AddNotification("Title", "Text1");
+//	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
+//	nsys.AddNotification("Title", ttt);
+//	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+//
+//	auto model = nsys.CreateModel();
+//
+//	QtTools::NotificationSystem::NotificationView view;
+//	view.SetModel(model);
+//	view.show();
 
-	std::error_code err {10066, ext::system_utf8_category()};
-	std::string errmsg = ext::FormatError(err);
 
-	QtTools::NotificationSystem::NotificationCenter nsys;
-	nsys.AddNotification("Title", "Text1");
-	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddNotification("Title", ttt);
-	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	QDesktopWidget * desktop = qapp.desktop();
+	auto geom = desktop->availableGeometry(desktop);
+	auto geo2 = desktop->geometry();
+	auto geo3 = desktop->geometry();
 
-	auto model = nsys.CreateModel();
-
-	QtTools::NotificationSystem::NotificationView view;
-	view.SetModel(model);
-	view.show();
-
-
-	//QDesktopWidget * desktop = qapp.desktop();
-	//auto geom = desktop->availableGeometry(desktop);
 
 	//auto gwidth = std::max(400, geom.width() / 5);
 	//geom.setLeft(geom.right() - gwidth);
