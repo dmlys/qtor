@@ -258,10 +258,13 @@ namespace QtTools::NotificationSystem
 		QPointer<QWidget> m_parent;
 		QRect m_geometry;
 		Qt::Corner m_corner = Qt::BottomRightCorner;
+		NotificationCenter * m_owner = nullptr;
+		unsigned m_spacing = 2;
 		bool m_relayoutScheduled = false;
 
 	protected:
 		static QRect AlignRect(QRect rect, const QRect & parent, Qt::Corner corner);
+		QRect ParentGeometry() const;
 
 	protected:
 		virtual bool eventFilter(QObject * watched, QEvent * event) override;
@@ -390,17 +393,26 @@ namespace QtTools::NotificationSystem
 		return rect;
 	}
 
+	QRect NotificationLayout::ParentGeometry() const
+	{
+		if (m_parent)
+			return m_parent->geometry();
+		else
+			return qApp->desktop()->availableGeometry(m_owner->parent());
+	}
+
 	void NotificationLayout::Relayout()
 	{
-		QWidget * widget = nullptr;
-		if (m_parent)
-			widget = m_parent;
-		else
-			widget = qApp->desktop();
+		m_geometry = AlignRect(m_geometry, ParentGeometry(), m_corner);
 
+		for (const auto & item : m_items)
+		{
+			auto * wgt = item.widget.data();
+			wgt->setParent(m_parent);
+			wgt->move(m_geometry.topLeft());
+			auto hint = wgt->heightForWidth(m_geometry.width());
 
-		auto geom = AlignRect(m_geometry, widget->geometry(), m_corner);
-
+		}
 
 		m_relayoutScheduled = false;
 	}
@@ -449,48 +461,28 @@ int main(int argc, char * argv[])
 	//
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
-//	auto ttt = R"(Your options Are:
-//<ol>
-//<li>opt 1
-//<li>opt 2
-//</ol>
-//opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
-//)";
-//
-//	std::error_code err {10066, ext::system_utf8_category()};
-//	std::string errmsg = ext::FormatError(err);
-//
-//	QtTools::NotificationSystem::NotificationCenter nsys;
-//	nsys.AddNotification("Title", "Text1");
-//	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-//	nsys.AddNotification("Title", ttt);
-//	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
-//
-//	auto model = nsys.CreateModel();
-//
-//	QtTools::NotificationSystem::NotificationView view;
-//	view.SetModel(model);
-//	view.show();
+	auto ttt = R"(Your options Are:
+<ol>
+<li>opt 1
+<li>opt 2
+</ol>
+opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
+)";
 
+	std::error_code err {10066, ext::system_utf8_category()};
+	std::string errmsg = ext::FormatError(err);
 
-	QDesktopWidget * desktop = qapp.desktop();
-	auto geom = desktop->availableGeometry(desktop);
-	auto geo2 = desktop->geometry();
-	auto geo3 = desktop->geometry();
+	QtTools::NotificationSystem::NotificationCenter nsys;
+	nsys.AddNotification("Title", "Text1");
+	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
+	nsys.AddNotification("Title", ttt);
+	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 
+	auto model = nsys.CreateModel();
 
-	//auto gwidth = std::max(400, geom.width() / 5);
-	//geom.setLeft(geom.right() - gwidth);
-
-	//QLayout * layout = new QBoxLayout(QBoxLayout::BottomToTop);
-	//layout->setGeometry(geom);	
-
-	//for (unsigned u = 0; u < 3; ++u)
-	//{
-	//	NotificationPopupTest * wgt = new NotificationPopupTest;
-	//	wgt->show();
-	//	layout->addWidget(wgt);
-	//}
+	QtTools::NotificationSystem::NotificationView view;
+	view.SetModel(model);
+	view.show();
 
 	return qapp.exec();
 }

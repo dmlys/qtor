@@ -38,7 +38,6 @@ namespace qtor
 		const nullopt_t nullopt = std::nullopt;
 		using std::make_optional;
 		using std::get;
-		//using boost::get;
 
 		//using any = boost::any;
 		//using boost::any_cast;
@@ -47,6 +46,8 @@ namespace qtor
 		template <class ... types>
 		using variant = std::variant<types...>;
 	
+		using any = QVariant;
+
 
 		class bad_any_cast : public std::bad_cast
 		{
@@ -56,9 +57,6 @@ namespace qtor
 		public:
 			virtual const char * what() const noexcept override { return "bad_aby_cast"; }
 		};
-
-		using any = QVariant;
-
 
 		template <class ValueType>
 		ValueType * any_cast(QVariant * val)
