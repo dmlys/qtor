@@ -405,13 +405,52 @@ namespace QtTools::NotificationSystem
 	{
 		m_geometry = AlignRect(m_geometry, ParentGeometry(), m_corner);
 
+		 void (QRect::*setter)(const QPoint &);
+		QPoint(QRect::*getter)() const;
+		int spacing;
+
+		switch (m_corner)
+		{
+			case Qt::TopLeftCorner:
+				setter = &QRect::moveTopLeft;
+				getter = &QRect::topLeft;
+				spacing = m_spacing;
+				break;
+
+			case Qt::TopRightCorner:
+				setter = &QRect::moveTopRight;
+				getter = &QRect::topRight;
+				spacing = m_spacing;
+				break;
+
+			case Qt::BottomLeftCorner:
+				setter = &QRect::moveBottomLeft;
+				getter = &QRect::bottomLeft;
+				spacing = -m_spacing;
+				break;
+
+			case Qt::BottomRightCorner:
+				setter = &QRect::moveBottomRight;
+				getter = &QRect::bottomRight;
+				spacing = -m_spacing;
+				break;
+		}
+
+		QPoint cur = (m_geometry.*getter)();
 		for (const auto & item : m_items)
 		{
 			auto * wgt = item.widget.data();
-			wgt->setParent(m_parent);
-			wgt->move(m_geometry.topLeft());
-			auto hint = wgt->heightForWidth(m_geometry.width());
+			wgt->adjustSize();
 
+			QSize sz;
+			auto hint = wgt->heightForWidth(m_geometry.width());
+			auto geom = QRect(cur, sz);
+
+			wgt->setParent(m_parent);
+			wgt->setGeometry(geom);
+			wgt->move(m_geometry.topLeft());
+			
+			cur.ry() += spacing + sz.height();
 		}
 
 		m_relayoutScheduled = false;
