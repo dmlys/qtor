@@ -219,6 +219,7 @@ void NotificationPopupTest::setupUi()
 
 #include "layout.hqt"
 
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -289,8 +290,8 @@ int main(int argc, char * argv[])
 	auto * notif = new QtTools::NotificationSystem::SimpleNotification;
 	notif->Title("TestTitle");
 	notif->Text("Test");
-
 	auto * popup = new NotificationPopupTest;
+
 
 	layout.AddNotification(notif, popup);
 

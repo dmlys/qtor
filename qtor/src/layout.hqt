@@ -45,12 +45,15 @@ namespace QtTools::NotificationSystem
 		};
 
 	protected:
+		static constexpr unsigned ms_spacing = 2;
+
+		NotificationCenter * m_owner = nullptr;
 		std::vector<Item> m_items;
+
 		QPointer<QWidget> m_parent;
 		QRect m_geometry;
 		Qt::Corner m_corner = Qt::BottomRightCorner;
-		NotificationCenter * m_owner = nullptr;
-		unsigned m_spacing = 2;
+		
 		bool m_relayoutScheduled = false;
 
 	protected:

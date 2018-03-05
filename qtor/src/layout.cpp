@@ -195,7 +195,7 @@ namespace QtTools::NotificationSystem
 				sz.rheight() = hint;
 			}
 
-			cur.ry() += direction * m_spacing;
+			cur.ry() += direction * ms_spacing;
 
 			QRect geom(0, 0, sz.width(), sz.height());
 			(geom.*setter)(cur);			

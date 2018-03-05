@@ -139,7 +139,7 @@ namespace QtTools
 	/// boundingRectFor always returns passed rectangle as is, but shadow instead drawn in parent widget margins
 	/// (see NotificationPopupWidget description).
 	/// 
-	/// Also shadow only drawn only in non contentsRect area. 
+	/// Also shadow only drawn in non contentsRect area. 
 	/// Widget content itself is not affected by it(think of translucency).
 	class NotificationPopupWidget::DropShadowEffect : public QGraphicsDropShadowEffect
 	{
