@@ -42,7 +42,7 @@ namespace QtTools
 	///  |   contentsMargins() = FrameMargins() + ShadowMargins()     |
 	///  --------------------------------------------------------------
 	///  
-	///  Frame margins is a QMargin {framePen.width()...}
+	///  Frame margins is a QMargin {framePen.width(), ..., framePen.width()}
 	///  Shadow margins calculated as follows:
 	///      
 	///      return {

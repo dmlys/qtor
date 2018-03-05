@@ -169,18 +169,20 @@ protected:
 void NotificationPopupTest::setupUi()
 {
 	m_title = new QLabel(this);
-	m_text = new QLabel(this);
 	m_timestmap = new QLabel(this);
+	m_text = new QLabel(this);
+
+	// word wrapping actually turns heightForWidth support on,
+	// if an item on layout supports hasHeightForWidth - layout has it too
+	// if widget controlling layout has heightForWidth - widget has it too
+	m_title->setWordWrap(true);
+	m_timestmap->setWordWrap(true);
+	m_text->setWordWrap(true);
 
 	//QFrame * frame = new QFrame(this);
 	//frame->setFrameShape(QFrame::HLine);
 	//frame->setFrameShadow(QFrame::Plain);
-
-	auto pol = m_text->sizePolicy();
-	bool hhfw = pol.hasHeightForWidth();
-	pol.setHeightForWidth(true);
-	m_text->setSizePolicy(pol);
-
+		
 	QHBoxLayout * titleLayout = new QHBoxLayout;
 	titleLayout->addWidget(m_title);
 	titleLayout->addStretch(20);
@@ -213,251 +215,9 @@ void NotificationPopupTest::setupUi()
 //)");
 //)");
 	m_text->setText("Error");
-
 }
 
-
-namespace QtTools::NotificationSystem
-{
-	class AbstractNotificationLayout : public QObject
-	{
-		Q_OBJECT
-
-		Q_PROPERTY(QWidget *  parent   READ GetParent   WRITE SetParent)
-		Q_PROPERTY(QRect      geometry READ GetGeometry WRITE SetGeometry)
-		Q_PROPERTY(Qt::Corner corner   READ GetCorder   WRITE SetCorner)
-
-	public:
-		virtual void AddNotification(QPointer<const Notification> widget) = 0;
-		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification> = 0;
-		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> = 0;
-		virtual auto NotificationsCount() const -> unsigned = 0;
-		
-		virtual void SetParent(QWidget * widget) = 0;
-		virtual QWidget * GetParent() const = 0;
-
-		virtual  void SetGeometry(const QRect & geom) = 0;
-		virtual QRect GetGeometry() const = 0;
-
-		virtual       void SetCorner(Qt::Corner corner) = 0;
-		virtual Qt::Corner GetCorner() const = 0;
-	};
-
-	class NotificationLayout : public AbstractNotificationLayout
-	{
-	protected:
-		struct Item
-		{
-			QPointer<const Notification> notification;
-			QPointer<NotificationPopupWidget> widget;
-			QPointer<QAbstractAnimation> animation;
-		};
-
-	protected:
-		std::vector<Item> m_items;
-		QPointer<QWidget> m_parent;
-		QRect m_geometry;
-		Qt::Corner m_corner = Qt::BottomRightCorner;
-		NotificationCenter * m_owner = nullptr;
-		unsigned m_spacing = 2;
-		bool m_relayoutScheduled = false;
-
-	protected:
-		static QRect AlignRect(QRect rect, const QRect & parent, Qt::Corner corner);
-		QRect ParentGeometry() const;
-
-	protected:
-		virtual bool eventFilter(QObject * watched, QEvent * event) override;
-
-	protected:
-		Q_SLOT virtual void Relayout();
-		Q_SLOT void ScheduleRelayout();
-
-	public:
-		virtual void AddNotification(QPointer<const Notification> notification) override;
-		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification> override;
-		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification> override;
-		virtual auto NotificationsCount() const -> unsigned override;
-
-		virtual void SetParent(QWidget * widget) override;
-		virtual QWidget * GetParent() const override;
-
-		virtual  void SetGeometry(const QRect & geom) override;
-		virtual QRect GetGeometry() const override;
-
-		virtual       void SetCorner(Qt::Corner corner) override;
-		virtual Qt::Corner GetCorner() const override;
-	};
-
-
-	unsigned NotificationLayout::NotificationsCount() const
-	{
-		return static_cast<unsigned>(m_items.size());
-	}
-
-	auto NotificationLayout::NotificationAt(unsigned index) -> QPointer<const Notification>
-	{
-		if (m_items.size() >= index)
-			return {};
-		
-		return m_items[index].notification;
-	}
-
-	auto NotificationLayout::TakeNotification(unsigned index) -> QPointer<const Notification>
-	{
-		if (m_items.size() >= index)
-			return {};
-
-		auto item = std::move(m_items[index]);
-		m_items.erase(m_items.begin() + index);
-
-		item.widget->close();
-		delete item.widget.data();
-
-		ScheduleRelayout();
-		return item.notification;
-	}
-
-	void NotificationLayout::AddNotification(QPointer<const Notification> notification)
-	{
-		Item item;
-		item.notification = std::move(notification);
-
-		m_items.push_back(std::move(item));
-		ScheduleRelayout();
-	}
-
-	QWidget * NotificationLayout::GetParent() const
-	{
-		return m_parent;
-	}
-
-	void NotificationLayout::SetParent(QWidget * widget)
-	{
-		m_parent = widget;
-		ScheduleRelayout();
-	}
-
-	QRect NotificationLayout::GetGeometry() const
-	{
-		return m_geometry;
-	}
-
-	void NotificationLayout::SetGeometry(const QRect & geom)
-	{
-		m_geometry = geom;
-		ScheduleRelayout();
-	}
-
-	Qt::Corner NotificationLayout::GetCorner() const
-	{
-		return m_corner;
-	}
-
-	void NotificationLayout::SetCorner(Qt::Corner corner)
-	{
-		m_corner = corner;
-		ScheduleRelayout();
-	}
-
-	void NotificationLayout::ScheduleRelayout()
-	{
-		if (not m_relayoutScheduled)
-		{
-			QMetaObject::invokeMethod(this, "Relayout", Qt::QueuedConnection);
-			m_relayoutScheduled = true;
-		}
-	}
-
-	QRect NotificationLayout::AlignRect(QRect rect, const QRect & parent, Qt::Corner corner)
-	{
-		switch (corner)
-		{
-			case Qt::TopLeftCorner:
-				rect.moveTopLeft(parent.topLeft());
-				break;
-
-			case Qt::TopRightCorner:
-				rect.moveTopRight(parent.topRight());
-				break;
-
-			case Qt::BottomLeftCorner:
-				rect.moveBottomLeft(parent.bottomLeft());
-				break;
-
-			case Qt::BottomRightCorner:
-				rect.moveBottomRight(parent.bottomRight());
-				break;
-		}
-
-		return rect;
-	}
-
-	QRect NotificationLayout::ParentGeometry() const
-	{
-		if (m_parent)
-			return m_parent->geometry();
-		else
-			return qApp->desktop()->availableGeometry(m_owner->parent());
-	}
-
-	void NotificationLayout::Relayout()
-	{
-		m_geometry = AlignRect(m_geometry, ParentGeometry(), m_corner);
-
-		 void (QRect::*setter)(const QPoint &);
-		QPoint(QRect::*getter)() const;
-		int spacing;
-
-		switch (m_corner)
-		{
-			case Qt::TopLeftCorner:
-				setter = &QRect::moveTopLeft;
-				getter = &QRect::topLeft;
-				spacing = m_spacing;
-				break;
-
-			case Qt::TopRightCorner:
-				setter = &QRect::moveTopRight;
-				getter = &QRect::topRight;
-				spacing = m_spacing;
-				break;
-
-			case Qt::BottomLeftCorner:
-				setter = &QRect::moveBottomLeft;
-				getter = &QRect::bottomLeft;
-				spacing = -m_spacing;
-				break;
-
-			case Qt::BottomRightCorner:
-				setter = &QRect::moveBottomRight;
-				getter = &QRect::bottomRight;
-				spacing = -m_spacing;
-				break;
-		}
-
-		QPoint cur = (m_geometry.*getter)();
-		for (const auto & item : m_items)
-		{
-			auto * wgt = item.widget.data();
-			wgt->adjustSize();
-
-			QSize sz;
-			auto hint = wgt->heightForWidth(m_geometry.width());
-			auto geom = QRect(cur, sz);
-
-			wgt->setParent(m_parent);
-			wgt->setGeometry(geom);
-			wgt->move(m_geometry.topLeft());
-			
-			cur.ry() += spacing + sz.height();
-		}
-
-		m_relayoutScheduled = false;
-	}
-}
-
-
+#include "layout.hqt"
 
 int main(int argc, char * argv[])
 {
@@ -500,28 +260,49 @@ int main(int argc, char * argv[])
 	//
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	auto ttt = R"(Your options Are:
-<ol>
-<li>opt 1
-<li>opt 2
-</ol>
-opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
-)";
+	//	auto ttt = R"(Your options Are:
+	//<ol>
+	//<li>opt 1
+	//<li>opt 2
+	//</ol>
+	//opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
+	//)";
+	//
+	//	std::error_code err {10066, ext::system_utf8_category()};
+	//	std::string errmsg = ext::FormatError(err);
+	//
+	//	QtTools::NotificationSystem::NotificationCenter nsys;
+	//	nsys.AddNotification("Title", "Text1");
+	//	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
+	//	nsys.AddNotification("Title", ttt);
+	//	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	//
+	//	auto model = nsys.CreateModel();
+	//
+	//	QtTools::NotificationSystem::NotificationView view;
+	//	view.SetModel(model);
+	//	view.show();
 
-	std::error_code err {10066, ext::system_utf8_category()};
-	std::string errmsg = ext::FormatError(err);
+	QtTools::NotificationSystem::NotificationCenter center;
+	QtTools::NotificationSystem::NotificationLayout layout(center);
 
-	QtTools::NotificationSystem::NotificationCenter nsys;
-	nsys.AddNotification("Title", "Text1");
-	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddNotification("Title", ttt);
-	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	auto * notif = new QtTools::NotificationSystem::SimpleNotification;
+	notif->Title("TestTitle");
+	notif->Text("Test");
 
-	auto model = nsys.CreateModel();
+	auto * popup = new NotificationPopupTest;
 
-	QtTools::NotificationSystem::NotificationView view;
-	view.SetModel(model);
-	view.show();
+	layout.AddNotification(notif, popup);
+
+
+	notif = new QtTools::NotificationSystem::SimpleNotification;
+	notif->Title("TestTitle2");
+	notif->Text("Test2");
+
+	popup = new NotificationPopupTest;
+
+	layout.AddNotification(notif, popup);
+	layout.SetCorner(Qt::TopLeftCorner);
 
 	return qapp.exec();
 }
