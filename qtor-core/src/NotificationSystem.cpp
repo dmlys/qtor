@@ -193,5 +193,6 @@ namespace QtTools::NotificationSystem
 	void NotificationCenter::AddNotification(std::unique_ptr<const Notification> notification)
 	{
 		m_store->push_back(notification.release());
+		Q_EMIT NotificationAdded(m_store->back());
 	}
 }

@@ -37,7 +37,7 @@ namespace QtTools::NotificationSystem
 
 	NotificationPopupWidget * SimpleNotification::CreatePopup() const
 	{
-		return nullptr;
+		return new SimpleNotificationPopup(*this);
 	}
 
 	void SimpleNotification::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item)
@@ -331,6 +331,60 @@ namespace QtTools::NotificationSystem
 			
 			index = text.indexOf(m_searchString, index + length, Qt::CaseInsensitive);
 		}
+	}
+
+	/************************************************************************/
+	/*                   SimpleNotificationPopup                            */
+	/************************************************************************/
+	SimpleNotificationPopup::SimpleNotificationPopup(const SimpleNotification & notification, QWidget * parent /* = nullptr */)
+		: NotificationPopupWidget(parent, Qt::ToolTip)
+	{
+		m_notification = &notification;
+		setupUi();
+	}
+
+	void SimpleNotificationPopup::setupUi()
+	{
+		m_title     = new QLabel(this);
+		m_timestamp = new QLabel(this);
+		m_text      = new QLabel(this);
+
+		// word wrapping actually turns heightForWidth support on,
+		// if an item on layout supports hasHeightForWidth - layout has it too
+		// if widget controlling layout has heightForWidth - widget has it too
+		m_title->setWordWrap(true);
+		m_timestamp->setWordWrap(true);
+		m_text->setWordWrap(true);
+
+		QHBoxLayout * titleLayout = new QHBoxLayout;
+		titleLayout->addWidget(m_title);
+		titleLayout->addSpacing(20);
+		titleLayout->addWidget(m_timestamp, 0, Qt::AlignRight);
+
+		QBoxLayout * layout = new QVBoxLayout;
+		layout->setSpacing(0);
+		layout->setContentsMargins(6, 6 - 4, 6, 6);
+		layout->addLayout(titleLayout);
+		layout->addWidget(m_text);
+
+		setLayout(layout);
+
+		QColor color = QColor("yellow");
+		color.setAlpha(200);
+		SetBackgroundBrush(color);
+
+		SetShadowColor(Qt::black);
+
+		auto loc = locale();
+		auto timestamp = loc.toString(m_notification->Timestamp());
+		auto title = m_notification->Title();
+		auto text = m_notification->Text();
+
+		m_title->setText(title);
+		m_timestamp->setText(timestamp);
+		
+		m_text->setTextFormat(Qt::RichText);
+		m_text->setText(text);
 	}
 
 	/************************************************************************/

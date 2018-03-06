@@ -68,6 +68,9 @@ namespace QtTools::NotificationSystem
 		virtual void AddNotification(QString title, QString text, QDateTime timestamp = QDateTime::currentDateTime());
 
 	Q_SIGNALS:
+		void NotificationAdded(const Notification * notification);
+
+	Q_SIGNALS:
 		void LinkActivated(const Notification & notification, QString href);
 		void LinkHovered(const Notification & notification, QString href);
 		void LinkUnhovered(const Notification & notification, QString href);

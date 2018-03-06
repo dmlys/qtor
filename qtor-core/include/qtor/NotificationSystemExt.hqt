@@ -13,6 +13,9 @@
 
 #include <QtGui/QTextDocument>
 #include <QtGui/QSyntaxHighlighter>
+
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QAbstractItemDelegate>
 
 #include <qtor/NotificationSystem.hqt>
@@ -181,8 +184,15 @@ namespace QtTools::NotificationSystem
 
 	class SimpleNotificationPopup : public NotificationPopupWidget
 	{
+	protected:
+		QPointer<const Notification> m_notification;
+
+		QLabel * m_title;
+		QLabel * m_timestamp;
+		QLabel * m_text;
+
 	public:
-		SimpleNotificationPopup(const SimpleNotification & notification);
+		SimpleNotificationPopup(const SimpleNotification & notification, QWidget * parent = nullptr);
 
 	protected:
 		void setupUi();

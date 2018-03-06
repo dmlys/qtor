@@ -111,106 +111,6 @@
 //}
 
 
-class NotificationPopupLabel : public QtTools::NotificationPopupWidget
-{
-protected:
-	QLayout * m_layout = nullptr;
-	QLabel * m_label = nullptr;
-
-public:
-	QString text() const noexcept { return m_label->text(); }
-	void setText(QString text) { m_label->setText(text); }
-
-public:
-	NotificationPopupLabel(QWidget * parent = nullptr);
-};
-
-NotificationPopupLabel::NotificationPopupLabel(QWidget * parent /* = nullptr */)
-	: QtTools::NotificationPopupWidget(parent)
-{
-	m_label = new QLabel(this);
-	m_layout = new QHBoxLayout {this};
-	m_layout->addWidget(m_label);
-	setLayout(m_layout);
-
-	QColor color = QColor("yellow");
-	color.setAlpha(160);
-	SetBackgroundBrush(color);
-}
-
-
-
-
-class NotificationPopupTest : public QtTools::NotificationPopupWidget
-{
-protected:	
-	QLabel * m_title = nullptr;
-	QLabel * m_text = nullptr;
-	QLabel * m_timestmap = nullptr;
-
-public:
-	NotificationPopupTest(QWidget * parent = nullptr)
-		: QtTools::NotificationPopupWidget(parent/*, Qt::ToolTip*/)
-	{
-		setupUi();
-	}
-
-
-protected:
-	void setupUi();
-};
-
-void NotificationPopupTest::setupUi()
-{
-	m_title = new QLabel(this);
-	m_timestmap = new QLabel(this);
-	m_text = new QLabel(this);
-
-	// word wrapping actually turns heightForWidth support on,
-	// if an item on layout supports hasHeightForWidth - layout has it too
-	// if widget controlling layout has heightForWidth - widget has it too
-	m_title->setWordWrap(true);
-	m_timestmap->setWordWrap(true);
-	m_text->setWordWrap(true);
-
-	//QFrame * frame = new QFrame(this);
-	//frame->setFrameShape(QFrame::HLine);
-	//frame->setFrameShadow(QFrame::Plain);
-		
-	QHBoxLayout * titleLayout = new QHBoxLayout;
-	titleLayout->addWidget(m_title);
-	titleLayout->addStretch(20);
-	titleLayout->addWidget(m_timestmap, 0, Qt::AlignRight);
-
-	QBoxLayout * layout = new QVBoxLayout;
-	layout->setSpacing(0);
-	layout->setContentsMargins(6, 6 - 4, 6, 6);
-	layout->addLayout(titleLayout);
-	//layout->addWidget(frame);
-	layout->addWidget(m_text);
-
-	setLayout(layout);
-
-	QColor color = QColor("yellow");
-	color.setAlpha(200);
-	SetBackgroundBrush(color);
-
-	SetShadowColor(Qt::black);
-
-	m_title->setText("Title");
-	m_timestmap->setText("2017/05/02");
-	m_text->setTextFormat(Qt::RichText);
-//	m_text->setText(R"(Your options Are:
-//<ol>
-//<li>opt 1
-//<li>opt 2
-//</ol>
-//opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
-//)");
-//)");
-	m_text->setText("Error");
-}
-
 
 int main(int argc, char * argv[])
 {
@@ -253,47 +153,35 @@ int main(int argc, char * argv[])
 	//
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	//	auto ttt = R"(Your options Are:
-	//<ol>
-	//<li>opt 1
-	//<li>opt 2
-	//</ol>
-	//opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
-	//)";
-	//
-	//	std::error_code err {10066, ext::system_utf8_category()};
-	//	std::string errmsg = ext::FormatError(err);
-	//
-	//	QtTools::NotificationSystem::NotificationCenter nsys;
-	//	nsys.AddNotification("Title", "Text1");
-	//	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	//	nsys.AddNotification("Title", ttt);
-	//	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
-	//
-	//	auto model = nsys.CreateModel();
-	//
-	//	QtTools::NotificationSystem::NotificationView view;
-	//	view.SetModel(model);
-	//	view.show();
+	auto ttt = R"(Your options Are:
+<ol>
+<li>opt 1
+<li>opt 2
+</ol>
+opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
+)";
+	
+	std::error_code err {10066, ext::system_utf8_category()};
+	std::string errmsg = ext::FormatError(err);
+	
+	using namespace QtTools::NotificationSystem;
 
-	QtTools::NotificationSystem::NotificationCenter center;
+	QtTools::NotificationSystem::NotificationCenter nsys;
 	QtTools::NotificationSystem::NotificationLayout layout;
+	QtTools::NotificationSystem::NotificationView view;
+	
+	QObject::connect(&nsys, &NotificationCenter::NotificationAdded, 
+					 &layout, static_cast<void(NotificationLayout::*)(QPointer<const Notification>)>(&NotificationLayout::AddNotification));
 
-	auto * notif = new QtTools::NotificationSystem::SimpleNotification;
-	notif->Title("TestTitle");
-	notif->Text("Test");
-	auto * popup = new NotificationPopupTest;
-
-	layout.AddNotification(notif, popup);
-
-	notif = new QtTools::NotificationSystem::SimpleNotification;
-	notif->Title("TestTitle2");
-	notif->Text("Test2");
-
-	popup = new NotificationPopupTest;
-
-	layout.AddNotification(notif, popup);
-	//layout.SetCorner(Qt::TopLeftCorner);
+	nsys.AddNotification("Title", "Text1");
+	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
+	nsys.AddNotification("Title", ttt);
+	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	
+	auto model = nsys.CreateModel();
+	
+	view.SetModel(model);
+	view.show();
 
 	return qapp.exec();
 }
