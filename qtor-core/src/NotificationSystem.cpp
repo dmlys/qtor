@@ -1,7 +1,8 @@
-#include <QtCore/QStringBuilder>
-#include <QtTools/ToolsBase.hpp>
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
+
+#include <QtCore/QStringBuilder>
+#include <QtTools/ToolsBase.hpp>
 
 namespace QtTools::NotificationSystem
 {
@@ -162,7 +163,7 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
-	NotificationCenter::NotificationCenter(QWidget * parent /* = nullptr */)
+	NotificationCenter::NotificationCenter(QObject * parent /* = nullptr */)
 		: QObject(parent)
 	{
 		m_store = std::make_shared<NotificationStore>(this);

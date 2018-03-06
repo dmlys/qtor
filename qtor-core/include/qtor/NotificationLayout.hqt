@@ -1,0 +1,89 @@
+#pragma once
+#include <vector>
+
+#include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QString>
+#include <QtCore/QDateTime>
+#include <QtCore/QAbstractItemModel>
+#include <QtCore/QAbstractAnimation>
+
+#include <qtor/NotificationSystem.hqt>
+
+namespace QtTools
+{
+	class NotificationPopupWidget;
+}
+
+namespace QtTools::NotificationSystem
+{
+	class NotificationLayout : public QObject
+	{
+		Q_OBJECT
+
+	protected:
+		using GetPointPtr = QPoint(QRect::*)() const;
+		using MovePointPtr = void (QRect::*)(const QPoint &);
+
+		struct Item
+		{
+			QPointer<const Notification> notification;
+			QPointer<NotificationPopupWidget> widget;
+			QPointer<QAbstractAnimation> animation;
+		};
+
+	protected:
+		static constexpr unsigned ms_spacing = 2;
+
+	protected:
+		NotificationCenter * m_owner = nullptr;
+		std::vector<Item> m_items;
+
+		QPointer<QWidget> m_parent;
+		QRect m_geometry;
+		Qt::Corner m_corner = Qt::BottomRightCorner;
+		
+		bool m_relayoutScheduled = false;
+
+	protected:
+		static auto  DescribeCorner(Qt::Corner corner) -> std::tuple<GetPointPtr, MovePointPtr, int>;
+		static QRect AlignRect(QRect rect, const QRect & parent, Qt::Corner corner);
+		static QRect DefaultLayoutRect(const QRect & parent, Qt::Corner corner);
+
+	protected:
+		
+		virtual QRect ParentGeometry() const;
+		virtual QRect CalculateLayoutRect() const;
+
+	//protected:
+	//	virtual bool eventFilter(QObject * watched, QEvent * event) override;
+
+	protected:
+		Q_SLOT void ScheduleRelayout();
+		Q_SLOT void DoScheduledRelayout();
+
+		Q_SLOT virtual void Relayout();
+		Q_SLOT virtual void NotificationClosed();
+
+	public:
+		Q_SLOT virtual void AddNotification(QPointer<const Notification> notification);
+		Q_SLOT virtual void AddNotification(QPointer<const Notification> notification, NotificationPopupWidget * widget);
+
+		virtual auto NotificationsCount() const -> unsigned;
+		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification>;
+		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification>;
+
+		void SetParent(QWidget * widget);
+		QWidget * GetParent() const;
+
+		 void SetGeometry(const QRect & geom);
+		QRect GetGeometry() const;
+
+		      void SetCorner(Qt::Corner corner);
+		Qt::Corner GetCorner() const;
+
+	public:
+		NotificationLayout(QObject * parent = nullptr) : QObject(parent) {}
+		virtual ~NotificationLayout();
+	};
+}

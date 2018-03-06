@@ -87,11 +87,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <QtMOCCompile Include="src\layout.hqt" />
     <QtMOCCompile Include="src\TransmissionRemoteApp.hqt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\layout.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

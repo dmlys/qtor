@@ -1,7 +1,22 @@
 #pragma once
-#include <qtor/NotificationSystem.hqt>
+#include <memory> // for shared_ptr
+#include <any>
+
+#include <viewed/sfview_qtbase.hpp>
+#include <viewed/ptr_sequence_container.hpp>
+
+#include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QString>
+#include <QtCore/QDateTime>
+#include <QtCore/QAbstractItemModel>
+
 #include <QtGui/QTextDocument>
 #include <QtGui/QSyntaxHighlighter>
+#include <QtWidgets/QAbstractItemDelegate>
+
+#include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationPopupWidget.hqt>
 
 
 namespace QtTools::NotificationSystem
@@ -111,7 +126,7 @@ namespace QtTools::NotificationSystem
 		virtual QIcon Logo(QIcon logo) override  { return std::exchange(m_logo, std::move(logo)); }
 
 		virtual NotificationPriority Priority() const override;
-		virtual NotificationPriority Priority(NotificationPriority priority);
+		virtual NotificationPriority Priority(NotificationPriority priority) override;
 
 		virtual NotificationLevel Level() const override;
 		virtual NotificationLevel Level(NotificationLevel level) override;

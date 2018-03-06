@@ -2,26 +2,17 @@
 #include <memory>
 #include <any>
 
-#include <viewed/sfview_qtbase.hpp>
-#include <viewed/ptr_sequence_container.hpp>
-
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
 #include <QtCore/QAbstractItemModel>
+#include <QtWidgets/QStyleOption>
 
-#include <QtWidgets/QFrame>
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QListView>
-
-#include <QtTools/HeaderControlModel.hqt>
-#include <QtWidgets/QAbstractItemDelegate>
-
-#include <qtor/NotificationPopupWidget.hqt>
-
+namespace QtTools
+{
+	class NotificationPopupWidget;
+}
 
 namespace QtTools::NotificationSystem
 {
@@ -39,6 +30,8 @@ namespace QtTools::NotificationSystem
 
 	class NotificationCenter;
 	class NotificationView;
+	class NotificationLayout;
+	
 
 	enum NotificationPriority
 	{
@@ -74,17 +67,13 @@ namespace QtTools::NotificationSystem
 		virtual void AddNotification(std::unique_ptr<const Notification> notification);
 		virtual void AddNotification(QString title, QString text, QDateTime timestamp = QDateTime::currentDateTime());
 
-	public:
-		void setParent(QWidget * parent) { QObject::setParent(parent); }
-		auto parent() const -> QWidget * { return static_cast<QWidget *>(QObject::parent()); }
-
 	Q_SIGNALS:
 		void LinkActivated(const Notification & notification, QString href);
 		void LinkHovered(const Notification & notification, QString href);
 		void LinkUnhovered(const Notification & notification, QString href);
 
 	public:
-		NotificationCenter(QWidget * parent = nullptr);
+		NotificationCenter(QObject * parent = nullptr);
 		virtual ~NotificationCenter() = default;
 	};
 
@@ -174,82 +163,5 @@ namespace QtTools::NotificationSystem
 
 	public:
 		using QAbstractListModel::QAbstractListModel;
-	};
-
-
-
-	
-	class NotificationView : public QFrame
-	{
-		Q_OBJECT;
-
-	private:
-		using base_type = QFrame;
-
-	protected:
-		/// display model
-		std::shared_ptr<AbstractNotificationModel> m_model;
-
-		/// child widgets/graphical objects
-		QVBoxLayout * m_verticalLayout = nullptr;
-		QLineEdit   * m_rowFilter = nullptr;
-		QListView   * m_listView = nullptr;
-
-		// By default - SimpleNotificationDelegate 
-		QAbstractItemDelegate * m_listDelegate = nullptr;
-
-		/// hints for initial widget size
-		const QSize m_defMinSizeHint = QSize(640, 480);
-		QSize m_sizeHint = m_defMinSizeHint;
-
-		/// current filter string
-		QString m_filterString;
-
-	protected:
-		void ModelChanged();
-		void OnFilterChanged();
-
-	protected:
-		/// creates context menu for an item with idx,
-		/// if idx is not valid, common menu was requested
-		//virtual QMenu * CreateItemMenu(const QModelIndex & idx);
-		/// basic menu handler
-		//virtual void contextMenuEvent(QContextMenuEvent * ev) override;
-		// to change ListView clipboard handling
-		virtual bool eventFilter(QObject * watched, QEvent * event) override;
-
-	protected:
-		virtual void ConnectModel();
-		virtual void DisconnectModel();
-
-	public:
-		/// main layout
-		QVBoxLayout * GetLayout() const { return m_verticalLayout; }
-		/// filter field
-		QLineEdit * GetFilterWidget() const { return m_rowFilter; }
-		/// list view
-		QListView * GetTableView() const { return m_listView; }
-
-	public:
-		virtual void SetFilter(QString newFilter);
-		virtual auto GetFilter() const -> QString { return m_filterString; }
-		Q_SIGNAL void FilterChanged(QString newFilter);
-
-		/// initializes widget
-		/// @Param model specifies model, if null - deinitializes widget
-		virtual void SetModel(std::shared_ptr<AbstractNotificationModel> model);
-		virtual auto GetModel() const -> std::shared_ptr<AbstractNotificationModel> { return m_model; }
-
-		/// desired size
-		//QSize sizeHint() const override;
-
-	public:
-		NotificationView(QWidget * parent = nullptr);
-		~NotificationView() = default;
-
-	protected:
-		virtual void setupUi();
-		virtual void retranslateUi();
-		virtual void connectSignals();
 	};
 }

@@ -1,4 +1,6 @@
-#include <ext/join_into.hpp>
+#include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
+#include <qtor/NotificationView.hqt>
 
 #include <QtGui/QClipboard>
 #include <QtWidgets/QShortcut>
@@ -8,9 +10,9 @@
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QMenu>
 
+#include <ext/join_into.hpp>
 #include <QtTools/ToolsBase.hpp>
-#include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationSystemExt.hqt>
+
 
 
 namespace QtTools::NotificationSystem

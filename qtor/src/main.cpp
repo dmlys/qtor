@@ -29,13 +29,12 @@
 #include <qtor/Application.hqt>
 #include <TransmissionRemoteApp.hqt>
 
-#include <QtWidgets/QApplication>
-#include <QtGui/QColor>
-#include <QtCore/QDebug>
 
-#include <QtWidgets/QTextEdit>
-#include <QtWidgets/QPlainTextEdit>
-#include <QtWidgets/QShortcut>
+#include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
+#include <qtor/NotificationView.hqt>
+#include <qtor/NotificationLayout.hqt>
+#include <qtor/NotificationPopupWidget.hqt>
 
 //class http_method
 //{
@@ -111,11 +110,6 @@
 //	}
 //}
 
-#include <qtor/NotificationPopupWidget.hqt>
-#include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationSystemExt.hqt>
-#include <QtWidgets/QStyleFactory>
-#include <QtWidgets/QDesktopWidget>
 
 class NotificationPopupLabel : public QtTools::NotificationPopupWidget
 {
@@ -217,8 +211,6 @@ void NotificationPopupTest::setupUi()
 	m_text->setText("Error");
 }
 
-#include "layout.hqt"
-
 
 int main(int argc, char * argv[])
 {
@@ -285,16 +277,14 @@ int main(int argc, char * argv[])
 	//	view.show();
 
 	QtTools::NotificationSystem::NotificationCenter center;
-	QtTools::NotificationSystem::NotificationLayout layout(center);
+	QtTools::NotificationSystem::NotificationLayout layout;
 
 	auto * notif = new QtTools::NotificationSystem::SimpleNotification;
 	notif->Title("TestTitle");
 	notif->Text("Test");
 	auto * popup = new NotificationPopupTest;
 
-
 	layout.AddNotification(notif, popup);
-
 
 	notif = new QtTools::NotificationSystem::SimpleNotification;
 	notif->Title("TestTitle2");
@@ -303,7 +293,7 @@ int main(int argc, char * argv[])
 	popup = new NotificationPopupTest;
 
 	layout.AddNotification(notif, popup);
-	layout.SetCorner(Qt::TopLeftCorner);
+	//layout.SetCorner(Qt::TopLeftCorner);
 
 	return qapp.exec();
 }

@@ -1,9 +1,22 @@
-#include "layout.hqt"
+#include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
+#include <qtor/NotificationLayout.hqt>
+
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
 
 namespace QtTools::NotificationSystem
 {
+	NotificationLayout::~NotificationLayout()
+	{
+		for (auto & item : m_items)
+		{
+			// item.notification - we do not control it's lifetime;
+			delete item.animation.data();
+			delete item.widget.data();
+		}
+	}
+
 	unsigned NotificationLayout::NotificationsCount() const
 	{
 		return static_cast<unsigned>(m_items.size());
@@ -11,7 +24,7 @@ namespace QtTools::NotificationSystem
 
 	auto NotificationLayout::NotificationAt(unsigned index) -> QPointer<const Notification>
 	{
-		if (m_items.size() >= index)
+		if (index >= m_items.size())
 			return {};
 
 		return m_items[index].notification;
@@ -19,7 +32,7 @@ namespace QtTools::NotificationSystem
 
 	auto NotificationLayout::TakeNotification(unsigned index) -> QPointer<const Notification>
 	{
-		if (m_items.size() >= index)
+		if (index >= m_items.size())
 			return {};
 
 		auto item = std::move(m_items[index]);
@@ -27,6 +40,7 @@ namespace QtTools::NotificationSystem
 
 		item.widget->close();
 		delete item.widget.data();
+		delete item.animation.data();
 
 		ScheduleRelayout();
 		return item.notification;
@@ -38,17 +52,34 @@ namespace QtTools::NotificationSystem
 		item.notification = std::move(notification);
 		item.widget = widget;
 
-		m_items.push_back(std::move(item));
+		m_items.push_back(std::move(item));		
 		ScheduleRelayout();
+
+		widget->setAttribute(Qt::WA_DeleteOnClose, true);
+		connect(widget, &QObject::destroyed, this, &NotificationLayout::NotificationClosed);
 	}
 
 	void NotificationLayout::AddNotification(QPointer<const Notification> notification)
 	{
-		Item item;
-		item.notification = std::move(notification);
-		item.widget = item.notification->CreatePopup();
+		auto * popup = notification->CreatePopup();
+		AddNotification(std::move(notification), std::move(popup));
+	}
 
-		m_items.push_back(std::move(item));
+
+	void NotificationLayout::NotificationClosed()
+	{
+		auto * sender = QObject::sender();
+		if (not sender) return;
+
+		auto first = m_items.begin();
+		auto last = m_items.end();
+		auto it = std::find_if(first, last, [sender](auto & item) { return item.widget == sender; });
+		if (it == last) return;
+
+		auto item = std::move(*it);
+		delete item.animation.data();
+
+		m_items.erase(it);
 		ScheduleRelayout();
 	}
 
@@ -89,9 +120,15 @@ namespace QtTools::NotificationSystem
 	{
 		if (not m_relayoutScheduled)
 		{
-			QMetaObject::invokeMethod(this, "Relayout", Qt::QueuedConnection);
+			QMetaObject::invokeMethod(this, "DoScheduledRelayout", Qt::QueuedConnection);
 			m_relayoutScheduled = true;
 		}
+	}
+
+	void NotificationLayout::DoScheduledRelayout()
+	{
+		m_relayoutScheduled = false;
+		Relayout();
 	}
 
 	auto NotificationLayout::DescribeCorner(Qt::Corner corner) -> std::tuple<GetPointPtr, MovePointPtr, int>
@@ -206,7 +243,5 @@ namespace QtTools::NotificationSystem
 
 			cur.ry() += direction * sz.height();
 		}
-
-		m_relayoutScheduled = false;
 	}
 }
