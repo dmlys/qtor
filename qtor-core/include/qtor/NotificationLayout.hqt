@@ -36,7 +36,7 @@ namespace QtTools::NotificationSystem
 		static constexpr unsigned ms_spacing = 2;
 
 	protected:
-		NotificationCenter * m_owner = nullptr;
+		NotificationCenter * m_ncenter = nullptr;
 		std::vector<Item> m_items;
 
 		QPointer<QWidget> m_parent;
@@ -51,7 +51,6 @@ namespace QtTools::NotificationSystem
 		static QRect DefaultLayoutRect(const QRect & parent, Qt::Corner corner);
 
 	protected:
-		
 		virtual QRect ParentGeometry() const;
 		virtual QRect CalculateLayoutRect() const;
 
@@ -81,6 +80,9 @@ namespace QtTools::NotificationSystem
 
 		      void SetCorner(Qt::Corner corner);
 		Qt::Corner GetCorner() const;
+
+		void SetNotificationCenter(NotificationCenter * center) { m_ncenter = center; }
+		auto GetNotificationCenter() const { return m_ncenter; }
 
 	public:
 		NotificationLayout(QObject * parent = nullptr) : QObject(parent) {}

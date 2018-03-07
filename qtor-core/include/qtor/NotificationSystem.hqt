@@ -69,6 +69,8 @@ namespace QtTools::NotificationSystem
 
 	Q_SIGNALS:
 		void NotificationAdded(const Notification * notification);
+		void NotificationActivated(const Notification * notification);
+		void NotificationClosed(const Notification * notification);
 
 	Q_SIGNALS:
 		void LinkActivated(const Notification & notification, QString href);
