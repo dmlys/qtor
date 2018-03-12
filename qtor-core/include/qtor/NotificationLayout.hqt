@@ -42,7 +42,7 @@ namespace QtTools::NotificationSystem
 		QPointer<QWidget> m_parent;
 		QRect m_geometry;
 		Qt::Corner m_corner = Qt::BottomRightCorner;
-		
+
 		bool m_relayoutScheduled = false;
 
 	protected:
@@ -58,9 +58,10 @@ namespace QtTools::NotificationSystem
 	//	virtual bool eventFilter(QObject * watched, QEvent * event) override;
 
 	protected:
-		Q_SLOT void ScheduleRelayout();
-		Q_SLOT void DoScheduledRelayout();
+		Q_SLOT void ScheduleUpdate();
+		Q_SLOT void DoScheduledUpdate();
 
+		Q_SLOT virtual void Update();
 		Q_SLOT virtual void Relayout();
 		Q_SLOT virtual void NotificationClosed();
 

@@ -42,7 +42,7 @@ namespace QtTools::NotificationSystem
 		delete item.widget.data();
 		delete item.animation.data();
 
-		ScheduleRelayout();
+		ScheduleUpdate();
 		return item.notification;
 	}
 
@@ -53,7 +53,7 @@ namespace QtTools::NotificationSystem
 		item.widget = widget;
 
 		m_items.push_back(std::move(item));		
-		ScheduleRelayout();
+		ScheduleUpdate();
 
 		widget->setAttribute(Qt::WA_DeleteOnClose, true);
 		connect(widget, &QObject::destroyed, this, &NotificationLayout::NotificationClosed);
@@ -80,7 +80,7 @@ namespace QtTools::NotificationSystem
 		delete item.animation.data();
 
 		m_items.erase(it);
-		ScheduleRelayout();
+		ScheduleUpdate();
 	}
 
 	QWidget * NotificationLayout::GetParent() const
@@ -91,7 +91,7 @@ namespace QtTools::NotificationSystem
 	void NotificationLayout::SetParent(QWidget * widget)
 	{
 		m_parent = widget;
-		ScheduleRelayout();
+		ScheduleUpdate();
 	}
 
 	QRect NotificationLayout::GetGeometry() const
@@ -102,7 +102,7 @@ namespace QtTools::NotificationSystem
 	void NotificationLayout::SetGeometry(const QRect & geom)
 	{
 		m_geometry = geom;
-		ScheduleRelayout();
+		ScheduleUpdate();
 	}
 
 	Qt::Corner NotificationLayout::GetCorner() const
@@ -113,19 +113,19 @@ namespace QtTools::NotificationSystem
 	void NotificationLayout::SetCorner(Qt::Corner corner)
 	{
 		m_corner = corner;
-		ScheduleRelayout();
+		ScheduleUpdate();
 	}
 
-	void NotificationLayout::ScheduleRelayout()
+	void NotificationLayout::ScheduleUpdate()
 	{
 		if (not m_relayoutScheduled)
 		{
-			QMetaObject::invokeMethod(this, "DoScheduledRelayout", Qt::QueuedConnection);
+			QMetaObject::invokeMethod(this, "DoScheduledUpdate", Qt::QueuedConnection);
 			m_relayoutScheduled = true;
 		}
 	}
 
-	void NotificationLayout::DoScheduledRelayout()
+	void NotificationLayout::DoScheduledUpdate()
 	{
 		m_relayoutScheduled = false;
 		Relayout();
@@ -209,6 +209,11 @@ namespace QtTools::NotificationSystem
 			return AlignRect(m_geometry, parent, m_corner);
 		else
 			return DefaultLayoutRect(parent, m_corner);
+	}
+
+	void NotificationLayout::Update()
+	{
+		Relayout();
 	}
 
 	void NotificationLayout::Relayout()
