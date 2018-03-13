@@ -7,6 +7,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QAbstractAnimation>
+#include <QtCore/QPropertyAnimation>
 
 #include <qtor/NotificationSystem.hqt>
 
@@ -29,7 +30,8 @@ namespace QtTools::NotificationSystem
 		{
 			QPointer<const Notification> notification;
 			QPointer<NotificationPopupWidget> widget;
-			QPointer<QAbstractAnimation> animation;
+			QPointer<QAbstractAnimation> moveOutAnimation;
+			QPointer<QPropertyAnimation> slideAnimation;
 		};
 
 	protected:
@@ -40,10 +42,12 @@ namespace QtTools::NotificationSystem
 		std::vector<Item> m_items;
 
 		QPointer<QWidget> m_parent;
-		QRect m_geometry;
 		Qt::Corner m_corner = Qt::BottomRightCorner;
+		QRect m_geometry;
+		unsigned m_widgetsLimit = 5;
 
 		bool m_relayoutScheduled = false;
+		bool m_relocation = false;
 
 	protected:
 		static auto  DescribeCorner(Qt::Corner corner) -> std::tuple<GetPointPtr, MovePointPtr, int>;
@@ -61,14 +65,13 @@ namespace QtTools::NotificationSystem
 		Q_SLOT void ScheduleUpdate();
 		Q_SLOT void DoScheduledUpdate();
 
-		Q_SLOT virtual void Update();
-		Q_SLOT virtual void Relayout();
-		Q_SLOT virtual void NotificationClosed();
+		virtual void Update();
+		virtual void Relayout();
+		virtual void NotificationClosed();
+		virtual void ClearAnimatedWidgets();
 
 	public:
-		Q_SLOT virtual void AddNotification(QPointer<const Notification> notification);
-		Q_SLOT virtual void AddNotification(QPointer<const Notification> notification, NotificationPopupWidget * widget);
-
+		virtual void AddNotification(QPointer<const Notification> notification);
 		virtual auto NotificationsCount() const -> unsigned;
 		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification>;
 		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification>;

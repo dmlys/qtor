@@ -12,7 +12,7 @@ namespace QtTools::NotificationSystem
 		for (auto & item : m_items)
 		{
 			// item.notification - we do not control it's lifetime;
-			delete item.animation.data();
+			delete item.moveOutAnimation.data();
 			delete item.widget.data();
 		}
 	}
@@ -40,32 +40,21 @@ namespace QtTools::NotificationSystem
 
 		item.widget->close();
 		delete item.widget.data();
-		delete item.animation.data();
+		delete item.moveOutAnimation.data();
 
 		ScheduleUpdate();
 		return item.notification;
 	}
 
-	void NotificationLayout::AddNotification(QPointer<const Notification> notification, NotificationPopupWidget * widget)
+	void NotificationLayout::AddNotification(QPointer<const Notification> notification)
 	{
 		Item item;
 		item.notification = std::move(notification);
-		item.widget = widget;
 
 		m_items.push_back(std::move(item));		
 		ScheduleUpdate();
-
-		widget->setAttribute(Qt::WA_DeleteOnClose, true);
-		connect(widget, &QObject::destroyed, this, &NotificationLayout::NotificationClosed);
 	}
-
-	void NotificationLayout::AddNotification(QPointer<const Notification> notification)
-	{
-		auto * popup = notification->CreatePopup();
-		AddNotification(std::move(notification), std::move(popup));
-	}
-
-
+	
 	void NotificationLayout::NotificationClosed()
 	{
 		auto * sender = QObject::sender();
@@ -77,42 +66,9 @@ namespace QtTools::NotificationSystem
 		if (it == last) return;
 
 		auto item = std::move(*it);
-		delete item.animation.data();
+		delete item.moveOutAnimation.data();
 
 		m_items.erase(it);
-		ScheduleUpdate();
-	}
-
-	QWidget * NotificationLayout::GetParent() const
-	{
-		return m_parent;
-	}
-
-	void NotificationLayout::SetParent(QWidget * widget)
-	{
-		m_parent = widget;
-		ScheduleUpdate();
-	}
-
-	QRect NotificationLayout::GetGeometry() const
-	{
-		return m_geometry;
-	}
-
-	void NotificationLayout::SetGeometry(const QRect & geom)
-	{
-		m_geometry = geom;
-		ScheduleUpdate();
-	}
-
-	Qt::Corner NotificationLayout::GetCorner() const
-	{
-		return m_corner;
-	}
-
-	void NotificationLayout::SetCorner(Qt::Corner corner)
-	{
-		m_corner = corner;
 		ScheduleUpdate();
 	}
 
@@ -213,6 +169,12 @@ namespace QtTools::NotificationSystem
 
 	void NotificationLayout::Update()
 	{
+		if (m_relocation)
+		{
+			m_relocation = false;
+			ClearAnimatedWidgets();
+		}
+
 		Relayout();
 	}
 
@@ -221,9 +183,21 @@ namespace QtTools::NotificationSystem
 		auto [getter, setter, direction] = DescribeCorner(m_corner);
 		auto geometry = CalculateLayoutRect();
 
-		QPoint cur = (geometry.*getter)();
-		for (const auto & item : m_items)
+		unsigned idx = 0;
+		QPoint start = (geometry.*getter)();
+		QPoint cur = start;
+
+		for (auto & item : m_items)
 		{
+			if (not item.widget)
+			{
+				auto * widget = item.notification->CreatePopup();
+				widget->setAttribute(Qt::WA_DeleteOnClose, true);
+				connect(widget, &QObject::destroyed, this, &NotificationLayout::NotificationClosed);
+
+				item.widget = widget;
+			}
+
 			auto * wgt = item.widget.data();
 			wgt->adjustSize();
 
@@ -247,6 +221,66 @@ namespace QtTools::NotificationSystem
 			wgt->show();
 
 			cur.ry() += direction * sz.height();
+
+			if (++idx >= m_widgetsLimit)
+				break;
+
+			if (cur.y() - start.y() >= geometry.height())
+				break;
 		}
+	}
+
+	void NotificationLayout::ClearAnimatedWidgets()
+	{
+		auto func = [](auto & item)
+		{
+			auto * moveOutAnimation = item.moveOutAnimation.data();
+			auto * slideAnimation = item.slideAnimation.data();
+			auto * widget = item.widget.data();
+
+			delete moveOutAnimation;
+			delete slideAnimation;
+			delete widget;
+
+			return moveOutAnimation;
+		};
+
+		auto first = m_items.begin();
+		auto last = m_items.end();
+		first = std::remove_if(first, last, func);
+		m_items.erase(first, last);		
+	}
+
+	QWidget * NotificationLayout::GetParent() const
+	{
+		return m_parent;
+	}
+
+	void NotificationLayout::SetParent(QWidget * widget)
+	{
+		m_parent = widget;
+		ScheduleUpdate();
+	}
+
+	QRect NotificationLayout::GetGeometry() const
+	{
+		return m_geometry;
+	}
+
+	void NotificationLayout::SetGeometry(const QRect & geom)
+	{
+		m_geometry = geom;
+		ScheduleUpdate();
+	}
+
+	Qt::Corner NotificationLayout::GetCorner() const
+	{
+		return m_corner;
+	}
+
+	void NotificationLayout::SetCorner(Qt::Corner corner)
+	{
+		m_corner = corner;
+		ScheduleUpdate();
 	}
 }

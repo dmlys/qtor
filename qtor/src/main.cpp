@@ -177,6 +177,9 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
 	nsys.AddNotification("Title", ttt);
 	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
+	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 	
 	auto model = nsys.CreateModel();
 	
