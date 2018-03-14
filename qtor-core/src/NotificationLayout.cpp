@@ -7,15 +7,15 @@
 
 namespace QtTools::NotificationSystem
 {
-	NotificationLayout::~NotificationLayout()
+	NotificationLayout::Item::~Item()
 	{
-		for (auto & item : m_items)
-		{
-			// item.notification - we do not control it's lifetime;
-			delete item.moveOutAnimation.data();
-			delete item.widget.data();
-		}
+		delete slideAnimation.data();
+		delete moveOutAnimation.data();
+		delete widget.data();
 	}
+
+	NotificationLayout::~NotificationLayout() = default;
+
 
 	unsigned NotificationLayout::NotificationsCount() const
 	{
@@ -36,11 +36,9 @@ namespace QtTools::NotificationSystem
 			return {};
 
 		auto item = std::move(m_items[index]);
-		m_items.erase(m_items.begin() + index);
-
 		item.widget->close();
-		delete item.widget.data();
-		delete item.moveOutAnimation.data();
+
+		m_items.erase(m_items.begin() + index);
 
 		ScheduleUpdate();
 		return item.notification;
@@ -65,10 +63,9 @@ namespace QtTools::NotificationSystem
 		auto it = std::find_if(first, last, [sender](auto & item) { return item.widget == sender; });
 		if (it == last) return;
 
-		auto item = std::move(*it);
-		delete item.moveOutAnimation.data();
-
+		it->widget = nullptr;
 		m_items.erase(it);
+
 		ScheduleUpdate();
 	}
 
@@ -232,22 +229,9 @@ namespace QtTools::NotificationSystem
 
 	void NotificationLayout::ClearAnimatedWidgets()
 	{
-		auto func = [](auto & item)
-		{
-			auto * moveOutAnimation = item.moveOutAnimation.data();
-			auto * slideAnimation = item.slideAnimation.data();
-			auto * widget = item.widget.data();
-
-			delete moveOutAnimation;
-			delete slideAnimation;
-			delete widget;
-
-			return moveOutAnimation;
-		};
-
 		auto first = m_items.begin();
 		auto last = m_items.end();
-		first = std::remove_if(first, last, func);
+		first = std::remove_if(first, last, [](auto & item) { return item.moveOutAnimation; });
 		m_items.erase(first, last);		
 	}
 

@@ -32,6 +32,12 @@ namespace QtTools::NotificationSystem
 			QPointer<NotificationPopupWidget> widget;
 			QPointer<QAbstractAnimation> moveOutAnimation;
 			QPointer<QPropertyAnimation> slideAnimation;
+
+			Item() = default;
+			~Item();
+
+			Item(Item &&) = default;
+			Item & operator =(Item &&) = default;
 		};
 
 	protected:
