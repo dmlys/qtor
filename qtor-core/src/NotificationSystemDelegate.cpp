@@ -326,6 +326,12 @@ namespace QtTools::NotificationSystem
 	
 	void SimpleNotificationPopup::setupUi()
 	{
+		QColor color = QColor("yellow");
+		color.setAlpha(200);
+		SetBackgroundBrush(color);
+		SetShadowColor(Qt::black);
+
+
 		m_title     = new QLabel(this);
 		m_timestamp = new QLabel(this);
 		m_text      = new QLabel(this);
@@ -334,27 +340,15 @@ namespace QtTools::NotificationSystem
 		// if an item on layout supports hasHeightForWidth - layout has it too
 		// if widget controlling layout has heightForWidth - widget has it too
 		m_title->setWordWrap(true);
-		m_timestamp->setWordWrap(true);
+		//m_timestamp->setWordWrap(true);
 		m_text->setWordWrap(true);
 
-		QHBoxLayout * titleLayout = new QHBoxLayout;
-		titleLayout->addWidget(m_title);
-		titleLayout->addSpacing(20);
-		titleLayout->addWidget(m_timestamp, 0, Qt::AlignRight);
+		auto titleFont = this->font();
+		titleFont.setPointSize(titleFont.pointSize() * 11 / 10);
+		titleFont.setBold(true);
 
-		QBoxLayout * layout = new QVBoxLayout;
-		layout->setSpacing(0);
-		layout->setContentsMargins(6, 6 - 4, 6, 6);
-		layout->addLayout(titleLayout);
-		layout->addWidget(m_text);
-
-		setLayout(layout);
-
-		QColor color = QColor("yellow");
-		color.setAlpha(200);
-		SetBackgroundBrush(color);
-
-		SetShadowColor(Qt::black);
+		m_timestamp->setFont(titleFont);
+		m_title->setFont(titleFont);
 
 		auto loc = locale();
 		auto timestamp = loc.toString(m_notification->Timestamp());
@@ -366,6 +360,20 @@ namespace QtTools::NotificationSystem
 		
 		m_text->setTextFormat(Qt::RichText);
 		m_text->setText(text);
+
+
+		QHBoxLayout * titleLayout = new QHBoxLayout;
+		titleLayout->addWidget(m_title, 1);
+		titleLayout->addSpacing(20);
+		titleLayout->addWidget(m_timestamp, 0, Qt::AlignRight);
+
+		QBoxLayout * layout = new QVBoxLayout;
+		layout->setSpacing(0);
+		layout->setContentsMargins(6, 6 - 4, 6, 6);
+		layout->addLayout(titleLayout);
+		layout->addWidget(m_text);
+
+		setLayout(layout);
 	}
 
 	/************************************************************************/
