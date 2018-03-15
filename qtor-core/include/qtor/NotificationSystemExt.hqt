@@ -104,7 +104,6 @@ namespace QtTools::NotificationSystem
 	protected:
 		virtual void LinkActivated(QString href, const QStyleOptionViewItem & option) const;
 		virtual void LinkHovered(QString href, const QStyleOptionViewItem & option) const;
-		virtual void LinkUnhovered(QString href, const QStyleOptionViewItem & option) const;
 
 	public:
 		// item delegate methods
@@ -113,7 +112,7 @@ namespace QtTools::NotificationSystem
 		virtual bool editorEvent(QEvent * event, const QStyleOptionViewItem & option, std::any & cookie) const override;
 
 	public:
-		virtual NotificationPopupWidget * CreatePopup() const override;
+		virtual AbstractNotificationPopupWidget * CreatePopup() const override;
 
 	public:
 		virtual QString Title() const override        { return m_title;}
@@ -182,14 +181,43 @@ namespace QtTools::NotificationSystem
 		using QAbstractItemDelegate::QAbstractItemDelegate;
 	};
 
-	class SimpleNotificationPopup : public NotificationPopupWidget
+
+	class AbstractNotificationPopupWidget : public QtTools::NotificationPopupWidget
 	{
+		Q_OBJECT;
+
+		Q_PROPERTY(NotificationCenter * notificationCenter READ GetNotificationCenter WRITE SetNotificationCenter);
+
+	private:
+		using base_type = QtTools::NotificationPopupWidget;
+
+	protected:
+		NotificationCenter * m_center = nullptr;
+
+	public:
+		virtual auto GetNotificationCenter() const -> NotificationCenter *;
+		virtual void SetNotificationCenter(NotificationCenter * center);
+
+	Q_SIGNALS:
+		void NotificationCenterChanged(NotificationCenter * center);
+
+	public:
+		using base_type::base_type;
+	};
+
+	class SimpleNotificationPopup : public AbstractNotificationPopupWidget
+	{
+		Q_OBJECT;
+
 	protected:
 		QPointer<const Notification> m_notification;
 
 		QLabel * m_title;
 		QLabel * m_timestamp;
 		QLabel * m_text;
+
+	public:
+		void SetNotificationCenter(NotificationCenter * center) override;
 
 	public:
 		SimpleNotificationPopup(const SimpleNotification & notification, QWidget * parent = nullptr);

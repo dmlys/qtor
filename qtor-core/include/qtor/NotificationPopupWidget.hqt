@@ -97,7 +97,8 @@ namespace QtTools
 		virtual QAbstractAnimation * CreateMoveOutAnimation();
 
 	public Q_SLOTS:
-		virtual void MoveOutAndClose();
+		// returns moved out animation created
+		virtual QAbstractAnimation * MoveOutAndClose();
 
 	public:
 		QPointF ShadowOffset() const noexcept;
@@ -121,12 +122,12 @@ namespace QtTools
 		void ResetBackgroundBrush();
 
 	Q_SIGNALS:
-		void ShadowOffsetChanged();
-		void ShadowBlurRadiusChanged();
-		void ShadowColorChanged();
+		void ShadowOffsetChanged(QPointF offset);
+		void ShadowBlurRadiusChanged(qreal radius);
+		void ShadowColorChanged(QColor color);
 
-		void BackgroundBrushChanged();
-		void FramePenChanged();
+		void BackgroundBrushChanged(QBrush brush);
+		void FramePenChanged(QPen pen);
 
 		// fires when move out animation finishes
 		void MovedOut();
@@ -156,91 +157,4 @@ namespace QtTools
 		DropShadowEffect(NotificationPopupWidget * owner) 
 			: base_type(owner) {};
 	};
-
-
-	inline QPointF NotificationPopupWidget::ShadowOffset() const noexcept
-	{
-		return m_effect->offset();
-	}
-
-	inline void NotificationPopupWidget::SetShadowOffset(QPointF offset)
-	{
-		m_effect->setOffset(offset);
-		setContentsMargins((ShadowMargins() + FrameMargins()).toMargins());
-		Q_EMIT ShadowOffsetChanged();
-		update();
-	}
-
-	inline void NotificationPopupWidget::ResetShadowOffset()
-	{
-		SetShadowOffset({4.0, 4.0});
-	}
-
-	inline qreal NotificationPopupWidget::ShadowBlurRadius() const noexcept
-	{
-		return m_effect->blurRadius();
-	}
-
-	inline void NotificationPopupWidget::SetShadowBlurRadius(qreal radius)
-	{
-		m_effect->setBlurRadius(radius);
-		setContentsMargins((ShadowMargins() + FrameMargins()).toMargins());
-		Q_EMIT ShadowBlurRadiusChanged();
-	}
-
-	inline void NotificationPopupWidget::ResetShadowBlurRadius()
-	{
-		SetShadowBlurRadius(4.0);
-	}
-
-	inline QColor NotificationPopupWidget::ShadowColor() const noexcept
-	{
-		return m_effect->color();
-	}
-
-	inline void NotificationPopupWidget::SetShadowColor(QColor radius)
-	{
-		m_effect->setColor(radius);
-		Q_EMIT ShadowColorChanged();
-	}
-
-	inline void NotificationPopupWidget::ResetShadowColor()
-	{
-		SetShadowColor(palette().color(QPalette::Shadow));
-	}
-
-	inline QPen NotificationPopupWidget::FramePen() const noexcept
-	{
-		return m_framePen;
-	}
-
-	inline void NotificationPopupWidget::SetFramePen(QPen pen)
-	{
-		m_framePen = pen;
-		setContentsMargins((ShadowMargins() + FrameMargins()).toMargins());
-		Q_EMIT FramePenChanged();
-		update();
-	}
-
-	inline void NotificationPopupWidget::ResetFramePen()
-	{
-		SetFramePen(palette().color(QPalette::Shadow));
-	}
-
-	inline QBrush NotificationPopupWidget::BackgroundBrush() const noexcept
-	{
-		return m_backgroundBrush;
-	}
-
-	inline void NotificationPopupWidget::SetBackgroundBrush(QBrush brush)
-	{
-		m_backgroundBrush = brush;
-		Q_EMIT BackgroundBrushChanged();
-		update();
-	}
-
-	inline void NotificationPopupWidget::ResetBackgroundBrush()
-	{
-		SetBackgroundBrush(QBrush());
-	}
 }

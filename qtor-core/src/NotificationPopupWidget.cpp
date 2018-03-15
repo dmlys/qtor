@@ -161,7 +161,7 @@ namespace QtTools
 		return animation;
 	}
 
-	void NotificationPopupWidget::MoveOutAndClose()
+	QAbstractAnimation * NotificationPopupWidget::MoveOutAndClose()
 	{
 		auto * animation = CreateMoveOutAnimation();
 		connect(animation, &QPropertyAnimation::finished, this, &NotificationPopupWidget::close);
@@ -169,6 +169,8 @@ namespace QtTools
 
 		animation->setParent(this);
 		animation->start(animation->DeleteWhenStopped);
+
+		return animation;
 	}
 
 	NotificationPopupWidget::NotificationPopupWidget(QWidget * parent /* = nullptr */, Qt::WindowFlags flags /* = {} */)
@@ -193,5 +195,91 @@ namespace QtTools
 		
 		auto margins = ShadowMargins() + FrameMargins();
 		setContentsMargins(margins.toMargins());
+	}
+
+	QPointF NotificationPopupWidget::ShadowOffset() const noexcept
+	{
+		return m_effect->offset();
+	}
+
+	void NotificationPopupWidget::SetShadowOffset(QPointF offset)
+	{
+		m_effect->setOffset(offset);
+		setContentsMargins((ShadowMargins() + FrameMargins()).toMargins());
+		Q_EMIT ShadowOffsetChanged(offset);
+		update();
+	}
+
+	void NotificationPopupWidget::ResetShadowOffset()
+	{
+		SetShadowOffset({4.0, 4.0});
+	}
+
+	qreal NotificationPopupWidget::ShadowBlurRadius() const noexcept
+	{
+		return m_effect->blurRadius();
+	}
+
+	void NotificationPopupWidget::SetShadowBlurRadius(qreal radius)
+	{
+		m_effect->setBlurRadius(radius);
+		setContentsMargins((ShadowMargins() + FrameMargins()).toMargins());
+		Q_EMIT ShadowBlurRadiusChanged(radius);
+	}
+
+	void NotificationPopupWidget::ResetShadowBlurRadius()
+	{
+		SetShadowBlurRadius(4.0);
+	}
+
+	QColor NotificationPopupWidget::ShadowColor() const noexcept
+	{
+		return m_effect->color();
+	}
+
+	void NotificationPopupWidget::SetShadowColor(QColor color)
+	{
+		m_effect->setColor(color);
+		Q_EMIT ShadowColorChanged(color);
+	}
+
+	void NotificationPopupWidget::ResetShadowColor()
+	{
+		SetShadowColor(palette().color(QPalette::Shadow));
+	}
+
+	QPen NotificationPopupWidget::FramePen() const noexcept
+	{
+		return m_framePen;
+	}
+
+	void NotificationPopupWidget::SetFramePen(QPen pen)
+	{
+		m_framePen = pen;
+		setContentsMargins((ShadowMargins() + FrameMargins()).toMargins());
+		Q_EMIT FramePenChanged(std::move(pen));
+		update();
+	}
+
+	void NotificationPopupWidget::ResetFramePen()
+	{
+		SetFramePen(palette().color(QPalette::Shadow));
+	}
+
+	QBrush NotificationPopupWidget::BackgroundBrush() const noexcept
+	{
+		return m_backgroundBrush;
+	}
+
+	void NotificationPopupWidget::SetBackgroundBrush(QBrush brush)
+	{
+		m_backgroundBrush = brush;
+		Q_EMIT BackgroundBrushChanged(std::move(brush));
+		update();
+	}
+
+	void NotificationPopupWidget::ResetBackgroundBrush()
+	{
+		SetBackgroundBrush(QBrush());
 	}
 }

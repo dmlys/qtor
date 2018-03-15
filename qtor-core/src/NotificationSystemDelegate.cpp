@@ -13,6 +13,7 @@
 
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
+#include <qtor/NotificationView.hqt>
 
 
 namespace QtTools::NotificationSystem
@@ -35,7 +36,7 @@ namespace QtTools::NotificationSystem
 		return ms_ContentMargins + QtTools::Delegates::TextMargins(option);
 	}
 
-	NotificationPopupWidget * SimpleNotification::CreatePopup() const
+	AbstractNotificationPopupWidget * SimpleNotification::CreatePopup() const
 	{
 		return new SimpleNotificationPopup(*this);
 	}
@@ -247,26 +248,8 @@ namespace QtTools::NotificationSystem
 			auto oldHref = qvariant_cast<QString>(viewport->property(ms_OldHrefProperty));
 			if (href.isEmpty() xor oldHref.isEmpty())
 			{
-				// change from empty -> non empty or vice versa
-				if (href.isEmpty())
-				{
-					viewport->setProperty(ms_OldHrefProperty, ms_NullVariant);
-					LinkUnhovered(std::move(oldHref), option);
-				}
-				else
-				{
-					viewport->setProperty(ms_OldHrefProperty, href);
-					LinkHovered(std::move(href), option);
-				}
-			}
-			else
-			{
-				if (href != oldHref) // not empty and changed
-				{
-					viewport->setProperty(ms_OldHrefProperty, href);
-					LinkUnhovered(std::move(oldHref), option);
-					LinkHovered(std::move(href), option);
-				}
+				viewport->setProperty(ms_OldHrefProperty, href);
+				LinkHovered(std::move(href), option);
 			}
 
 			return true;
@@ -282,13 +265,10 @@ namespace QtTools::NotificationSystem
 
 	void SimpleNotification::LinkActivated(QString href, const QStyleOptionViewItem & option) const
 	{
-		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
-		if (not model) return;
-
-		auto center_ptr = model->GetNotificationCenter();
-		if (not center_ptr) return;
-
-		Q_EMIT center_ptr->LinkActivated(*this, std::move(href));
+		auto * view = dynamic_cast<const NotificationView *>(option.widget);
+		if (not view) return;
+		
+		Q_EMIT view->LinkActivated(std::move(href));
 	}
 
 	void SimpleNotification::LinkHovered(QString href, const QStyleOptionViewItem & option) const
@@ -296,27 +276,10 @@ namespace QtTools::NotificationSystem
 		auto * listView = qobject_cast<const QAbstractItemView *>(option.widget);
 		listView->viewport()->setCursor(Qt::PointingHandCursor);
 
-		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
-		if (not model) return;
+		auto * view = dynamic_cast<const NotificationView *>(option.widget);
+		if (not view) return;
 
-		auto center_ptr = model->GetNotificationCenter();
-		if (not center_ptr) return;
-
-		Q_EMIT center_ptr->LinkHovered(*this, std::move(href));
-	}
-
-	void SimpleNotification::LinkUnhovered(QString href, const QStyleOptionViewItem & option) const
-	{
-		auto * listView = qobject_cast<const QAbstractItemView *>(option.widget);
-		listView->viewport()->unsetCursor();
-
-		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
-		if (not model) return;
-
-		auto center_ptr = model->GetNotificationCenter();
-		if (not center_ptr) return;
-		
-		Q_EMIT center_ptr->LinkUnhovered(*this, std::move(href));
+		Q_EMIT view->LinkHovered(std::move(href));
 	}
 
 	void SimpleNotification::SearchHighlighter::highlightBlock(const QString & text)
@@ -336,13 +299,31 @@ namespace QtTools::NotificationSystem
 	/************************************************************************/
 	/*                   SimpleNotificationPopup                            */
 	/************************************************************************/
+	auto AbstractNotificationPopupWidget::GetNotificationCenter() const -> NotificationCenter *
+	{
+		return m_center;
+	}
+
+	void AbstractNotificationPopupWidget::SetNotificationCenter(NotificationCenter * center)
+	{
+		m_center = center;
+		Q_EMIT NotificationCenterChanged(center);
+	}
+
 	SimpleNotificationPopup::SimpleNotificationPopup(const SimpleNotification & notification, QWidget * parent /* = nullptr */)
-		: NotificationPopupWidget(parent, Qt::ToolTip)
+		: AbstractNotificationPopupWidget(parent, Qt::ToolTip)
 	{
 		m_notification = &notification;
 		setupUi();
 	}
 
+	void SimpleNotificationPopup::SetNotificationCenter(NotificationCenter * center)
+	{
+		if (m_center) m_center->disconnect(this);
+
+		AbstractNotificationPopupWidget::SetNotificationCenter(center);
+	}
+	
 	void SimpleNotificationPopup::setupUi()
 	{
 		m_title     = new QLabel(this);

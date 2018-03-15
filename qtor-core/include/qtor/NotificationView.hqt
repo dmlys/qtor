@@ -73,6 +73,10 @@ namespace QtTools::NotificationSystem
 
 		/// desired size
 		//QSize sizeHint() const override;
+		
+	Q_SIGNALS:
+		void LinkActivated(QString href) const;
+		void LinkHovered(QString href) const;
 
 	public:
 		NotificationView(QWidget * parent = nullptr);

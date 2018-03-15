@@ -11,10 +11,6 @@
 
 #include <qtor/NotificationSystem.hqt>
 
-namespace QtTools
-{
-	class NotificationPopupWidget;
-}
 
 namespace QtTools::NotificationSystem
 {
@@ -26,13 +22,15 @@ namespace QtTools::NotificationSystem
 		using GetPointPtr = QPoint(QRect::*)() const;
 		using MovePointPtr = void (QRect::*)(const QPoint &);
 
+		/// represents notification controlled by layout, holds some additional data
 		struct Item
 		{
 			QPointer<const Notification> notification;
-			QPointer<NotificationPopupWidget> widget;
+			QPointer<AbstractNotificationPopupWidget> widget;
 			QPointer<QAbstractAnimation> moveOutAnimation;
 			QPointer<QPropertyAnimation> slideAnimation;
 
+		public:
 			Item() = default;
 			~Item();
 
@@ -44,12 +42,12 @@ namespace QtTools::NotificationSystem
 		static constexpr unsigned ms_spacing = 2;
 
 	protected:
-		NotificationCenter * m_ncenter = nullptr;
 		std::vector<Item> m_items;
-
+		NotificationCenter * m_ncenter = nullptr;
 		QPointer<QWidget> m_parent;
-		Qt::Corner m_corner = Qt::BottomRightCorner;
+
 		QRect m_geometry;
+		Qt::Corner m_corner = Qt::BottomRightCorner;
 		unsigned m_widgetsLimit = 5;
 
 		bool m_relayoutScheduled = false;
@@ -63,9 +61,11 @@ namespace QtTools::NotificationSystem
 	protected:
 		virtual QRect ParentGeometry() const;
 		virtual QRect CalculateLayoutRect() const;
+		virtual auto CreatePopup(const Notification * notification) const -> AbstractNotificationPopupWidget *;
+		virtual void SlideWidget(Item & item, const QRect & hgeom, const QRect & lgeom) const;
 
-	//protected:
-	//	virtual bool eventFilter(QObject * watched, QEvent * event) override;
+	protected:
+		virtual bool eventFilter(QObject * watched, QEvent * event) override;
 
 	protected:
 		Q_SLOT void ScheduleUpdate();
@@ -93,6 +93,10 @@ namespace QtTools::NotificationSystem
 
 		void SetNotificationCenter(NotificationCenter * center) { m_ncenter = center; }
 		auto GetNotificationCenter() const { return m_ncenter; }
+
+	Q_SIGNALS:
+		void LinkActivated(QString href) const;
+		void LinkHovered(QString href) const;
 
 	public:
 		NotificationLayout(QObject * parent = nullptr) : QObject(parent) {}

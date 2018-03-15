@@ -110,7 +110,7 @@
 //	}
 //}
 
-
+#include <QtCore/QDebug>
 
 int main(int argc, char * argv[])
 {
@@ -172,6 +172,8 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	
 	QObject::connect(&nsys, &NotificationCenter::NotificationAdded, 
 					 &layout, static_cast<void(NotificationLayout::*)(QPointer<const Notification>)>(&NotificationLayout::AddNotification));
+
+	layout.SetCorner(Qt::TopRightCorner);
 
 	nsys.AddNotification("Title", "Text1");
 	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");

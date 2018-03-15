@@ -9,15 +9,12 @@
 #include <QtCore/QAbstractItemModel>
 #include <QtWidgets/QStyleOption>
 
-namespace QtTools
-{
-	class NotificationPopupWidget;
-}
 
 namespace QtTools::NotificationSystem
 {
 	class Notification;
 	class AbstractNotificationModel;
+	class AbstractNotificationPopupWidget;
 
 	class NotificationStore;
 	class NotificationModel;
@@ -72,11 +69,6 @@ namespace QtTools::NotificationSystem
 		void NotificationActivated(const Notification * notification);
 		void NotificationClosed(const Notification * notification);
 
-	Q_SIGNALS:
-		void LinkActivated(const Notification & notification, QString href);
-		void LinkHovered(const Notification & notification, QString href);
-		void LinkUnhovered(const Notification & notification, QString href);
-
 	public:
 		NotificationCenter(QObject * parent = nullptr);
 		virtual ~NotificationCenter() = default;
@@ -123,7 +115,7 @@ namespace QtTools::NotificationSystem
 		virtual QString ClipboardText() const = 0;
 
 	public:
-		virtual NotificationPopupWidget * CreatePopup() const = 0;
+		virtual AbstractNotificationPopupWidget * CreatePopup() const = 0;
 
 	public:
 		// item delegate methods

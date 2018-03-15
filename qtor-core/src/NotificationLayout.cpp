@@ -164,6 +164,47 @@ namespace QtTools::NotificationSystem
 			return DefaultLayoutRect(parent, m_corner);
 	}
 
+	auto NotificationLayout::CreatePopup(const Notification * notification) const 
+		-> AbstractNotificationPopupWidget *
+	{
+		auto * widget = notification->CreatePopup();
+		widget->setAttribute(Qt::WA_DeleteOnClose, true);
+		widget->setParent(m_parent);
+		widget->adjustSize();
+		widget->show();
+		widget->hide();
+
+		widget->SetNotificationCenter(m_ncenter);
+		widget->installEventFilter(ext::unconst(this));
+
+		connect(widget, &QObject::destroyed, this, &NotificationLayout::NotificationClosed);
+		
+		return widget;
+	}
+
+	void NotificationLayout::SlideWidget(Item & item, const QRect & hgeom, const QRect & lgeom) const
+	{
+		auto * animation = item.slideAnimation.data();
+		if (animation)
+		{
+			animation->pause();
+			animation->setStartValue(hgeom);
+			animation->setEndValue(lgeom);
+			animation->resume();
+		}
+		else
+		{
+			auto * widget = item.widget.data();
+			animation = new QPropertyAnimation(widget, "geometry", widget);
+			animation->setEasingCurve(QEasingCurve::InCirc);
+			animation->setStartValue(hgeom);
+			animation->setEndValue(lgeom);
+
+			animation->start(animation->DeleteWhenStopped);
+			item.slideAnimation = animation;
+		}
+	}
+
 	void NotificationLayout::Update()
 	{
 		if (m_relocation)
@@ -182,47 +223,71 @@ namespace QtTools::NotificationSystem
 
 		unsigned idx = 0;
 		QPoint start = (geometry.*getter)();
-		QPoint cur = start;
+		QPoint lcur = start;
+		QPoint hcur = start;
+
+		QRect hgeom, lgeom;
+		QSize sz;
 
 		for (auto & item : m_items)
 		{
-			if (not item.widget)
+			auto * widget = item.widget.data();
+			bool is_new = not widget;
+
+			if (item.moveOutAnimation)
 			{
-				auto * widget = item.notification->CreatePopup();
-				widget->setAttribute(Qt::WA_DeleteOnClose, true);
-				connect(widget, &QObject::destroyed, this, &NotificationLayout::NotificationClosed);
+				auto geom = widget->geometry();
+				sz = geom.size();
+				hcur = lcur = (geom.*getter)();
 
-				item.widget = widget;
+				goto loop_end;
 			}
+ 
+			lcur.ry() += direction * ms_spacing;
+			hcur.ry() += direction * ms_spacing;
 
-			auto * wgt = item.widget.data();
-			wgt->adjustSize();
-
-			QSize sz;
-			auto hint = wgt->heightForWidth(geometry.width());
+			if (is_new)
+			{
+				item.widget = widget = CreatePopup(item.notification);
+				widget->show();
+			}
+			
+			auto hint = widget->heightForWidth(geometry.width());
 			if (hint < 0)
-				sz = wgt->size();
+				sz = widget->size();
 			else
 			{
 				sz.rwidth() = geometry.width();
 				sz.rheight() = hint;
 			}
 
-			cur.ry() += direction * ms_spacing;
+			lgeom.setRect(0, 0, sz.width(), sz.height());
+			(lgeom.*setter)(lcur);
 
-			QRect geom(0, 0, sz.width(), sz.height());
-			(geom.*setter)(cur);			
+			if (is_new)
+			{
+				hgeom.setRect(0, 0, sz.width(), sz.height());
+				(hgeom.*setter)(hcur);
 
-			wgt->setParent(m_parent);
-			wgt->setGeometry(geom);
-			wgt->show();
+				widget->setGeometry(hgeom);
+			}
+			else
+			{
+				hgeom = widget->geometry();
+				hcur = (hgeom.*getter)();
+			}
+			
+			if (hcur != lcur)
+				SlideWidget(item, hgeom, lgeom);
 
-			cur.ry() += direction * sz.height();
+		loop_end:
+			lcur.ry() += direction * sz.height();
+			hcur.ry() += direction * sz.height();
 
 			if (++idx >= m_widgetsLimit)
 				break;
 
-			if (cur.y() - start.y() >= geometry.height())
+			if (std::abs(lcur.y() - start.y()) >= geometry.height())
 				break;
 		}
 	}
@@ -233,6 +298,29 @@ namespace QtTools::NotificationSystem
 		auto last = m_items.end();
 		first = std::remove_if(first, last, [](auto & item) { return item.moveOutAnimation; });
 		m_items.erase(first, last);		
+	}
+
+	bool NotificationLayout::eventFilter(QObject * watched, QEvent * event)
+	{
+		if (event->type() != QEvent::MouseButtonPress)
+			return false;
+
+		auto * ev = static_cast<QMouseEvent *>(event);
+		if (ev->button() != Qt::RightButton) return false;
+		
+		auto first = m_items.begin();
+		auto last = m_items.end();
+		auto it = std::find_if(first, last, [watched](auto & item) { return item.widget == watched; });
+		if (it == last) return false;
+
+		auto * widget = it->widget.data();
+
+		if (not widget->contentsRect().contains(ev->pos()))
+			return false;
+
+		if (not it->slideAnimation)
+			it->moveOutAnimation = widget->MoveOutAndClose();
+		return true;
 	}
 
 	QWidget * NotificationLayout::GetParent() const
