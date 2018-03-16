@@ -1,7 +1,11 @@
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
+#include <qtor/NotificationView.hqt>
+#include <qtor/NotificationViewExt.hqt>
 
 #include <QtCore/QStringBuilder>
+#include <QtCore/QThread>
+#include <QtGui/QTextDocument>
 #include <QtTools/ToolsBase.hpp>
 
 namespace QtTools::NotificationSystem
@@ -12,11 +16,35 @@ namespace QtTools::NotificationSystem
 
 	}
 
-	SimpleNotification::SimpleNotification(QString title, QString text, QDateTime timestamp)
-		: m_title(std::move(title)), m_text(std::move(text)), m_timestamp(std::move(timestamp)),
+	SimpleNotification::SimpleNotification(QString title, QString text, Qt::TextFormat textFmt,  QDateTime timestamp)
+		: m_title(std::move(title)), m_text(std::move(text)), m_textFmt(textFmt), m_timestamp(std::move(timestamp)),
 		  m_priority(Normal), m_level(Info), m_priority_inited(0), m_level_inited(0)
 	{
 
+	}
+
+	static QString toPlain(QString rich)
+	{
+		QTextDocument doc;
+		doc.setHtml(rich);
+
+		return doc.toPlainText();
+	}
+
+	QString SimpleNotification::PlainText() const
+	{
+		switch (m_textFmt)
+		{
+			case Qt::PlainText: return m_text;				
+			case Qt::RichText:  return toPlain(m_text);
+				
+			case Qt::AutoText:
+			default:
+				if (Qt::mightBeRichText(m_text))
+					return toPlain(m_text);
+				else
+					return m_text;				
+		}
 	}
 
 	auto SimpleNotification::Priority() const -> NotificationPriority
@@ -50,119 +78,6 @@ namespace QtTools::NotificationSystem
 		return static_cast<NotificationLevel>(ret);
 	}
 
-	QString SimpleNotification::FilterText() const
-	{
-		QTextDocument doc;
-		doc.setHtml(m_text);
-
-		return m_title
-			% QStringLiteral("\n")
-			% doc.toPlainText();
-	}
-
-	QString SimpleNotification::ClipboardText() const
-	{
-		QTextDocument doc;
-		doc.setHtml(m_text);
-
-		return m_title % "  "
-			% m_timestamp.toString(Qt::DateFormat::DefaultLocaleShortDate)
-			% QStringLiteral("\n")
-			% doc.toPlainText();
-	}
-
-	viewed::refilter_type NotificationFilter::set_expr(QString search)
-	{
-		if (search.compare(m_filter, Qt::CaseInsensitive) == 0)
-			return viewed::refilter_type::same;
-		else if (search.startsWith(m_filter, Qt::CaseInsensitive))
-		{
-			m_filter = std::move(search);
-			return viewed::refilter_type::incremental;
-		}
-		else
-		{
-			m_filter = std::move(search);
-			return viewed::refilter_type::full;
-		}
-	}
-
-	bool NotificationFilter::matches(const Notification & n) const noexcept
-	{
-		return n.FilterText().contains(m_filter, Qt::CaseInsensitive);		
-	}
-
-	bool NotificationFilter::always_matches() const noexcept
-	{
-		return m_filter.isEmpty();
-	}
-
-	NotificationModel::NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent /* = nullptr */)
-		: view_type(store.get()), base_type(parent)
-	{
-		assert(store);
-
-		m_owner_store = std::move(store);
-
-		// from view_base_type
-		connect_signals();
-		reinit_view();
-	}
-
-	auto NotificationModel::GetNotificationCenter() const -> QPointer<NotificationCenter>
-	{
-		return m_owner->GetNotificationCenter();
-	}
-
-	auto NotificationModel::GetItem(int row) const -> const Notification *
-	{
-		return m_store.at(row);
-	}
-
-	void NotificationModel::FilterBy(QString expr)
-	{
-		auto rtype = m_filter_pred.set_expr(expr);
-		refilter_and_notify(rtype);
-	}
-
-	int NotificationModel::FullRowCount() const
-	{
-		return qint(m_owner_store->size());
-	}
-
-	int NotificationModel::rowCount(const QModelIndex & parent /*= QModelIndex()*/) const
-	{
-		return qint(m_store.size());
-	}
-
-	void AbstractNotificationModel::SetFilter(QString expr)
-	{
-		m_filterStr = std::move(expr);
-		FilterBy(m_filterStr);
-		Q_EMIT FilterChanged(m_filterStr);
-	}
-
-	QVariant AbstractNotificationModel::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const
-	{
-		if (!index.isValid())
-			return {};
-
-		int row = index.row();
-		int column = index.column();
-
-		switch (role)
-		{
-			//case Qt::UserRole:
-			//	return QVariant::fromValue(GetItem(row));
-
-			case Qt::DisplayRole:
-			case Qt::ToolTipRole:
-				return GetItem(row)->Text();
-
-			default:          return {};
-		}
-	}
-
 	NotificationCenter::NotificationCenter(QObject * parent /* = nullptr */)
 		: QObject(parent)
 	{
@@ -184,15 +99,40 @@ namespace QtTools::NotificationSystem
 		return m_store;
 	}
 
-	void NotificationCenter::AddNotification(QString title, QString text, QDateTime timestamp /* = QDateTime::currentDateTime() */)
+	void NotificationCenter::AddNotification(QString title, QString text,
+		Qt::TextFormat fmt /* = Qt::AutoText */, QDateTime timestamp /* = QDateTime::currentDateTime() */)
 	{
-		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), std::move(timestamp));
+		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), fmt, std::move(timestamp));
+		notification->TextFmt(fmt);
+
 		AddNotification(std::move(notification));
 	}
 
-	void NotificationCenter::AddNotification(std::unique_ptr<const Notification> notification)
+	void NotificationCenter::DoAddNotification(const Notification * notification)
 	{
-		m_store->push_back(notification.release());
+		m_store->push_back(notification);
 		Q_EMIT NotificationAdded(m_store->back());
+	}
+
+	void NotificationCenter::AddNotification(std::unique_ptr<const Notification> notification)
+	{		
+		auto * thr = this->thread();
+		if (thr and thr == thr->currentThread())
+		{
+			return DoAddNotification(notification.release());
+		}
+		else
+		{
+			QMetaObject::invokeMethod(this, "DoAddNotification", Qt::QueuedConnection,
+				Q_ARG(const Notification *, notification.get()));
+
+			notification.release();
+		}
+	}
+
+	auto NotificationCenter::CreateNotification() const
+		-> std::unique_ptr<Notification>
+	{
+		return std::make_unique<SimpleNotification>();
 	}
 }

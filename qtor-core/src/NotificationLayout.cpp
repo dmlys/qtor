@@ -1,12 +1,19 @@
-#include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationSystemExt.hqt>
-#include <qtor/NotificationLayout.hqt>
-
+#include <QtCore/QEvent>
+#include <QtGui/QMouseEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
 
+#include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
+#include <qtor/NotificationLayout.hqt>
+#include <qtor/NotificationLayoutExt.hqt>
+
+
 namespace QtTools::NotificationSystem
 {
+	const NotificationLayout::CreatePopupFunction NotificationLayout::ms_defaultCreatePopup = 
+		[](const Notification & n) { return new NotificationPopupWidget(n); };
+
 	NotificationLayout::Item::~Item()
 	{
 		delete slideAnimation.data();
@@ -16,6 +23,40 @@ namespace QtTools::NotificationSystem
 
 	NotificationLayout::~NotificationLayout() = default;
 
+	NotificationLayout::NotificationLayout(NotificationCenter & center, QObject * parent /* = nullptr */)
+		: NotificationLayout(parent)
+	{
+		Init(center);
+	}
+
+	void NotificationLayout::Init(NotificationCenter & center)
+	{
+		SetNotificationCenter(&center);		
+	}
+
+	void NotificationLayout::SetNotificationCenter(NotificationCenter * center)
+	{
+		if (m_ncenter) m_ncenter->disconnect(this);
+		
+		m_ncenter = center;
+
+		if (m_ncenter)
+		{
+			connect(m_ncenter, &NotificationCenter::NotificationAdded,
+			        this, static_cast<void(NotificationLayout::*)(QPointer<const Notification>)>(&NotificationLayout::AddNotification));
+		}
+	}
+
+	void NotificationLayout::SetCreatePopupFunction(CreatePopupFunction func)
+	{
+		if (not func)
+		{
+			m_createPopup = ms_defaultCreatePopup;
+			return;
+		}
+
+		m_createPopup = std::move(func);
+	}
 
 	unsigned NotificationLayout::NotificationsCount() const
 	{
@@ -167,17 +208,17 @@ namespace QtTools::NotificationSystem
 	auto NotificationLayout::CreatePopup(const Notification * notification) const 
 		-> AbstractNotificationPopupWidget *
 	{
-		auto * widget = notification->CreatePopup();
+		auto * widget = m_createPopup(*notification);
 		widget->setAttribute(Qt::WA_DeleteOnClose, true);
 		widget->setParent(m_parent);
 		widget->adjustSize();
-		widget->show();
 		widget->hide();
 
-		widget->SetNotificationCenter(m_ncenter);
 		widget->installEventFilter(ext::unconst(this));
 
 		connect(widget, &QObject::destroyed, this, &NotificationLayout::NotificationClosed);
+		connect(widget, &AbstractNotificationPopupWidget::LinkActivated, this, &NotificationLayout::LinkActivated);
+		connect(widget, &AbstractNotificationPopupWidget::LinkHovered,   this, &NotificationLayout::LinkHovered);
 		
 		return widget;
 	}

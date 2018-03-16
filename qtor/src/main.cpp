@@ -31,10 +31,8 @@
 
 
 #include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationSystemExt.hqt>
 #include <qtor/NotificationView.hqt>
 #include <qtor/NotificationLayout.hqt>
-#include <qtor/NotificationPopupWidget.hqt>
 
 //class http_method
 //{
@@ -170,23 +168,19 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	QtTools::NotificationSystem::NotificationLayout layout;
 	QtTools::NotificationSystem::NotificationView view;
 	
-	QObject::connect(&nsys, &NotificationCenter::NotificationAdded, 
-					 &layout, static_cast<void(NotificationLayout::*)(QPointer<const Notification>)>(&NotificationLayout::AddNotification));
+	layout.Init(nsys);
+	//layout.SetCorner(Qt::TopRightCorner);
 
-	layout.SetCorner(Qt::TopRightCorner);
+	view.Init(nsys);
+	view.show();
 
 	nsys.AddNotification("Title", "Text1");
 	nsys.AddNotification("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddNotification("Title", ttt);
+	nsys.AddNotification("Title", ttt, Qt::RichText);
 	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
 	nsys.AddNotification("Title", QtTools::ToQString(errmsg));
-	
-	auto model = nsys.CreateModel();
-	
-	view.SetModel(model);
-	view.show();
 
 	return qapp.exec();
 }

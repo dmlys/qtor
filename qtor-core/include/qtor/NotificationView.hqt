@@ -10,6 +10,12 @@
 
 namespace QtTools::NotificationSystem
 {
+	class AbstractNotificationModel; // extends QAbstractItemModel, used by NotificationView
+	class NotificationModel;         // default notification AbstractNotificationModel implementation
+	class NotificationViewDelegate;  // default notification delegate
+
+	/// QListView based notification view widget.
+	/// Consists of QListView + QLineEdit filter.
 	class NotificationView : public QFrame
 	{
 		Q_OBJECT;
@@ -26,7 +32,7 @@ namespace QtTools::NotificationSystem
 		QLineEdit   * m_rowFilter = nullptr;
 		QListView   * m_listView = nullptr;
 
-		// By default - SimpleNotificationDelegate 
+		// By default - NotificationViewDelegate 
 		QAbstractItemDelegate * m_listDelegate = nullptr;
 
 		/// hints for initial widget size
@@ -41,11 +47,16 @@ namespace QtTools::NotificationSystem
 		void OnFilterChanged();
 
 	protected:
+		/// Get text suitable for clipboard
+		virtual QString ClipboardText(const Notification & n) const;
+		/// Joins clipboard text from items and sets it into clipboard
+		virtual void CopySelectedIntoClipboard();
+
 		/// creates context menu for an item with idx,
 		/// if idx is not valid, common menu was requested
-		//virtual QMenu * CreateItemMenu(const QModelIndex & idx);
+		virtual QMenu * CreateItemMenu(const QModelIndex & idx);
 		/// basic menu handler
-		//virtual void contextMenuEvent(QContextMenuEvent * ev) override;
+		virtual void contextMenuEvent(QContextMenuEvent * ev) override;
 		// to change ListView clipboard handling
 		virtual bool eventFilter(QObject * watched, QEvent * event) override;
 
@@ -71,6 +82,8 @@ namespace QtTools::NotificationSystem
 		virtual void SetModel(std::shared_ptr<AbstractNotificationModel> model);
 		virtual auto GetModel() const -> std::shared_ptr<AbstractNotificationModel> { return m_model; }
 
+		virtual void Init(NotificationCenter & center);
+
 		/// desired size
 		//QSize sizeHint() const override;
 		
@@ -80,11 +93,49 @@ namespace QtTools::NotificationSystem
 
 	public:
 		NotificationView(QWidget * parent = nullptr);
+		NotificationView(NotificationCenter & center, QWidget * parent = nullptr);
 		~NotificationView() = default;
+
+		Q_DISABLE_COPY(NotificationView);
 
 	protected:
 		virtual void setupUi();
 		virtual void retranslateUi();
 		virtual void connectSignals();
+	};
+
+
+	/// Abstract model for NotificationView
+	class AbstractNotificationModel : public QAbstractListModel
+	{
+		Q_OBJECT;
+
+	private:
+		using base_type = QAbstractListModel;
+		using self_type = AbstractNotificationModel;
+
+	protected:
+		QString m_filterStr;
+
+	protected:
+		virtual void FilterBy(QString expr) = 0;
+
+	public:
+		virtual QPointer<NotificationCenter> GetNotificationCenter() const = 0;
+		virtual const Notification & GetItem(int row) const = 0;
+
+		virtual int FullRowCount() const = 0;
+
+	public:
+		void SetFilter(QString expr);
+		auto GetFilter() const noexcept { return m_filterStr; }
+		Q_SIGNAL void FilterChanged(QString expr);
+
+	public:
+		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
+		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+
+	public:
+		using QAbstractListModel::QAbstractListModel;
 	};
 }

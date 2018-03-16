@@ -56,10 +56,12 @@
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\NotificationLayout.cpp" />
+    <ClCompile Include="src\NotificationLayoutExt.cpp" />
     <ClCompile Include="src\NotificationPopupWidget.cpp" />
-    <ClCompile Include="src\NotificationSystemDelegate.cpp" />
     <ClCompile Include="src\NotificationSystem.cpp" />
     <ClCompile Include="src\NotificationView.cpp" />
+    <ClCompile Include="src\NotificationViewDelegate.cpp" />
+    <ClCompile Include="src\NotificationViewExt.cpp" />
     <ClCompile Include="src\sparse_container.cpp" />
     <ClCompile Include="src\torrent.cpp" />
     <ClCompile Include="src\TorrentListDelegate.cpp" />
@@ -74,10 +76,13 @@
     <QtMOCCompile Include="include\qtor\MainWindow.hqt" />
     <QtMOCCompile Include="include\qtor\Application.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationLayout.hqt" />
+    <QtMOCCompile Include="include\qtor\NotificationLayoutExt.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationPopupWidget.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationSystem.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationSystemExt.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationView.hqt" />
+    <QtMOCCompile Include="include\qtor\NotificationViewDelegate.hqt" />
+    <QtMOCCompile Include="include\qtor\NotificationViewExt.hqt" />
     <QtMOCCompile Include="include\qtor\TorrentListDelegate.hqt" />
     <QtMOCCompile Include="include\qtor\TorrentsView.hqt" />
   </ItemGroup>

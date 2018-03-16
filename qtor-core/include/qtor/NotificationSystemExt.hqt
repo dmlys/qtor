@@ -1,118 +1,36 @@
 #pragma once
 #include <memory> // for shared_ptr
-#include <any>
 
-#include <viewed/sfview_qtbase.hpp>
 #include <viewed/ptr_sequence_container.hpp>
+#include <viewed/sfview_qtbase.hpp>
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
-#include <QtCore/QAbstractItemModel>
-
-#include <QtGui/QTextDocument>
-#include <QtGui/QSyntaxHighlighter>
-
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QBoxLayout>
-#include <QtWidgets/QAbstractItemDelegate>
+#include <QtGui/QIcon>
 
 #include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationPopupWidget.hqt>
 
 
 namespace QtTools::NotificationSystem
 {
+	/// default simple notification implementation
 	class SimpleNotification : public Notification
 	{
 	protected:
-		/// search highlighter
-		class SearchHighlighter;
-
-		/// cached calculated various parts of drawn content.
-		struct LaidoutItem
-		{
-			// First time delegate is called with sizeHint, 
-			// option->rect contains basic rectangle where item can placed, 
-			// it can be whole listView viewport area.
-			// 
-			// Second time delegate is called with paint,
-			// and option->rect holds proper region calculated based on previous sizeHint calculation.
-			// 
-			// hintTopLeft holds option->rect topLeft point
-			// so on second call we can just adjust calculated previously parts rectangles
-
-			// address of item for which this item was computed
-			const SimpleNotification * notification = nullptr;
-			QPoint hintTopLeft;  // see above description
-
-			QPixmap pixmap;      // notification pixmap
-			QString timestamp;   // notification datetime
-			QString title;       // notification title
-			QString text;        // notification text
-
-			// searchStr, optional, comes from some search field,
-			// not from notification itself
-			QString searchStr;   
-
-			// option from sizeHint/paint call(update on each call), 
-			// lifetime the same, this is just for a convenience.
-			const QStyleOptionViewItem * option = nullptr;
-
-			QFont baseFont;      // basic font, baseFont = option->font;
-			QFont titleFont;     // title text font, 1.1 * baseFont, bold.
-			QFont timestampFont; // timestamp font, baseFont
-			QFont textFont;      // baseFont
-
-			QRect titleRect;     // rectangle occupied by title text, without all margins
-			QRect timestampRect; // rectangle occupied by datetime text, without all margins
-			QRect textRect;      // rectangle occupied by text, without all margins
-			QRect pixmapRect;    // rectangle occupied by icon, without all margins
-			QRect totalRect;     // rectangle occupied by union of all rectangles, including all margins
-
-			// cached prepared and calculated QTextDocument for text
-			// shared_ptr only for convenience(pimpl + copyable), logically - unique
-			std::shared_ptr<QTextDocument> textdocptr;
-		};
-
-	protected:
-		static const QMargins ms_ContentMargins; // { 0, 1, 0, 1 };
-		static const unsigned ms_Spacing;  // 1
-		static const QTextCharFormat ms_searchFormat;
-
-	protected:
 		QDateTime m_timestamp;
 		QString   m_title;
-		QString   m_text;
+		QString   m_text;		
 		QIcon     m_logo;
 		QPixmap   m_pixmap;
+
+		Qt::TextFormat m_textFmt = Qt::AutoText;
 
 		int m_priority        : 2;  // = Normal
 		int m_level           : 2;  // = Info
 		int m_priority_inited : 1;  // = 0
 		int m_level_inited    : 1;  // = 0
-
-	protected:
-		static QMargins TextMargins(const QStyleOptionViewItem & option);
-		static void PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item);
-
-		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
-		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
-		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;
-
-	protected:
-		virtual void LinkActivated(QString href, const QStyleOptionViewItem & option) const;
-		virtual void LinkHovered(QString href, const QStyleOptionViewItem & option) const;
-
-	public:
-		// item delegate methods
-		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const override;
-		virtual QSize sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const override;
-		virtual bool editorEvent(QEvent * event, const QStyleOptionViewItem & option, std::any & cookie) const override;
-
-	public:
-		virtual AbstractNotificationPopupWidget * CreatePopup() const override;
 
 	public:
 		virtual QString Title() const override        { return m_title;}
@@ -121,11 +39,16 @@ namespace QtTools::NotificationSystem
 		virtual QString Text() const override         { return m_text; }
 		virtual QString Text(QString text) override   { return std::exchange(m_text, std::move(text)); }
 
+		virtual Qt::TextFormat TextFmt() const override             { return m_textFmt; }
+		virtual Qt::TextFormat TextFmt(Qt::TextFormat fmt) override { return std::exchange(m_textFmt, fmt); }
+
+		virtual QString PlainText() const override;
+
 		virtual QDateTime Timestamp() const override              { return m_timestamp; }
 		virtual QDateTime Timestamp(QDateTime timestamp) override { return std::exchange(m_timestamp, std::move(timestamp)); }
 
-		virtual QIcon Logo() const override      { return m_logo; }
-		virtual QIcon Logo(QIcon logo) override  { return std::exchange(m_logo, std::move(logo)); }
+		//virtual QIcon Logo() const override      { return m_logo; }
+		//virtual QIcon Logo(QIcon logo) override  { return std::exchange(m_logo, std::move(logo)); }
 
 		virtual NotificationPriority Priority() const override;
 		virtual NotificationPriority Priority(NotificationPriority priority) override;
@@ -134,177 +57,26 @@ namespace QtTools::NotificationSystem
 		virtual NotificationLevel Level(NotificationLevel level) override;
 
 	public:
-		virtual QString FilterText() const override;
-		virtual QString ClipboardText() const override;
-
-	public:
 		SimpleNotification();
-		SimpleNotification(QString title, QString text, QDateTime timestamp);
+		SimpleNotification(QString title, QString text, Qt::TextFormat fmt, QDateTime timestamp);
 		~SimpleNotification() = default;
 	};
 
-	/// search highlighter
-	class SimpleNotification::SearchHighlighter : public QSyntaxHighlighter
-	{
-	protected:
-		QString m_searchString;
-		QTextCharFormat m_searchFormat;
-
-	protected:
-		virtual void highlightBlock(const QString &text) override;
-
-	public:
-		void SetSearchText(QString text) { m_searchString = std::move(text); }
-		auto GetSearchText() const       { return m_searchString; }
-
-		void SetFormat(const QTextCharFormat & format) { m_searchFormat = format; }
-		auto Getformat() const                         { return m_searchFormat; }
-
-	public:
-		using QSyntaxHighlighter::QSyntaxHighlighter;
-	};
-
-	class SimpleNotificationDelegate : public QAbstractItemDelegate
-	{
-	protected:
-		mutable std::any m_cachedItem;
-
-	protected:
-		void init(const QStyleOptionViewItem & option, const QModelIndex & index) const;
-
-	public:
-		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
-		virtual QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
-		virtual bool editorEvent(QEvent * event, QAbstractItemModel * model, const QStyleOptionViewItem & option, const QModelIndex & index) override;
-
-	public:
-		using QAbstractItemDelegate::QAbstractItemDelegate;
-	};
-
-
-	class AbstractNotificationPopupWidget : public QtTools::NotificationPopupWidget
-	{
-		Q_OBJECT;
-
-		Q_PROPERTY(NotificationCenter * notificationCenter READ GetNotificationCenter WRITE SetNotificationCenter);
-
-	private:
-		using base_type = QtTools::NotificationPopupWidget;
-
-	protected:
-		NotificationCenter * m_center = nullptr;
-
-	public:
-		virtual auto GetNotificationCenter() const -> NotificationCenter *;
-		virtual void SetNotificationCenter(NotificationCenter * center);
-
-	Q_SIGNALS:
-		void NotificationCenterChanged(NotificationCenter * center);
-
-	public:
-		using base_type::base_type;
-	};
-
-	class SimpleNotificationPopup : public AbstractNotificationPopupWidget
-	{
-		Q_OBJECT;
-
-	protected:
-		QPointer<const Notification> m_notification;
-
-		QLabel * m_title;
-		QLabel * m_timestamp;
-		QLabel * m_text;
-
-	public:
-		void SetNotificationCenter(NotificationCenter * center) override;
-
-	public:
-		SimpleNotificationPopup(const SimpleNotification & notification, QWidget * parent = nullptr);
-
-	protected:
-		void setupUi();
-	};
 
 	class NotificationStore :
 		public viewed::ptr_sequence_container<const Notification>
-	{
+    {
 		using self_type = NotificationStore;
 		using base_type = viewed::ptr_sequence_container<const Notification>;
 
-	private:
-		QPointer<NotificationCenter> m_center;
+    private:
+        QPointer<NotificationCenter> m_center;
 
-	public:
-		QPointer<NotificationCenter> GetNotificationCenter() const { return m_center; }
+    public:
+        QPointer<NotificationCenter> GetNotificationCenter() const { return m_center; }
 
-	public:
-		NotificationStore(QPointer<NotificationCenter> center)
+    public:
+        NotificationStore(QPointer<NotificationCenter> center)
 			: m_center(std::move(center)) {}
-	};
-
-
-	class TimestampPred
-	{
-	public:
-		bool operator()(const Notification * n1, const Notification * n2) const
-		{
-			return operator()(*n1, *n2);
-		}
-
-		bool operator()(const Notification & n1, const Notification & n2) const
-		{
-			return n1.Timestamp() < n2.Timestamp();
-		}
-	};
-
-
-	class NotificationFilter
-	{
-	private:
-		QString m_filter;
-
-	public:
-		// same, incremental
-		viewed::refilter_type set_expr(QString search);
-
-		bool matches(const Notification & n) const noexcept;
-		bool always_matches() const noexcept;
-
-		bool operator()(const Notification & n) const noexcept { return matches(n); }
-		bool operator()(const Notification * n) const noexcept { return matches(*n); }
-		explicit operator bool() const noexcept { return not always_matches(); }
-	};
-
-	class NotificationModel :
-		public AbstractNotificationModel,
-		public viewed::sfview_qtbase<NotificationStore, viewed::null_sorter, NotificationFilter>
-	{
-		using self_type = NotificationModel;
-		using view_type = viewed::sfview_qtbase<NotificationStore, viewed::null_sorter, NotificationFilter>;
-		using base_type = AbstractNotificationModel;
-
-	private:
-		using view_type::m_owner;
-		using view_type::m_store; // vector of pointers
-		using view_type::m_sort_pred;
-		using view_type::m_filter_pred;
-
-	private:
-		std::shared_ptr<NotificationStore> m_owner_store;
-
-	public:
-		virtual QPointer<NotificationCenter> GetNotificationCenter() const override;
-		virtual const Notification * GetItem(int row) const override;
-		virtual void FilterBy(QString expr) override;
-
-		virtual int FullRowCount() const override;
-		int rowCount(const QModelIndex & parent = QModelIndex()) const override;
-
-	public:
-		NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent = nullptr);
-		~NotificationModel() = default;
-
-		Q_DISABLE_COPY(NotificationModel);
-	};
+    };
 }

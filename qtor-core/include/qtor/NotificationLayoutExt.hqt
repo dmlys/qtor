@@ -1,0 +1,52 @@
+#pragma once
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QBoxLayout>
+
+#include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationLayout.hqt>
+#include <qtor/NotificationPopupWidget.hqt>
+
+namespace QtTools::NotificationSystem
+{
+	/// AbstractNotificationPopupWidget managed by NotificationLayout
+	class AbstractNotificationPopupWidget : public QtTools::NotificationPopupWidget
+	{
+		Q_OBJECT;
+
+	private:
+		using base_type = QtTools::NotificationPopupWidget;
+
+	protected:
+		NotificationCenter * m_center = nullptr;
+
+	Q_SIGNALS:
+		void LinkHovered(QString href);
+		void LinkActivated(QString href);
+
+	public:
+		using base_type::base_type;
+	};
+
+
+	/// default implementation AbstractNotificationPopupWidget 
+	class NotificationPopupWidget : public AbstractNotificationPopupWidget
+	{
+		Q_OBJECT;
+
+	protected:
+		QPointer<const Notification> m_notification;
+
+		QLabel * m_title;
+		QLabel * m_timestamp;
+		QLabel * m_text;
+
+	public:
+		NotificationPopupWidget(const Notification & notification, QWidget * parent = nullptr);
+
+	protected:
+		void setupUi();
+		void connectSignals();
+	};
+
+}

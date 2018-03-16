@@ -1,34 +1,46 @@
 #pragma once
 #include <memory>
-#include <any>
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
-#include <QtCore/QAbstractItemModel>
-#include <QtWidgets/QStyleOption>
 
 
 namespace QtTools::NotificationSystem
 {
-	class Notification;
-	class AbstractNotificationModel;
-	class AbstractNotificationPopupWidget;
+	/// QtTools::NotificationSystem holds Simple Notification system, more or less.
+	/// Notification - notification interface, it's a simple interface, 
+	///                it does not responsible for drawing/showing/etc itself.
+	///                
+	/// SimpleNotification - default notification implementation
+	/// 
+	/// NotificationCenter - this is sort of main class, where notifications are added, queried, etc.
+	/// some theses:
+	///   * it's a model holding notifications(do not confuse with QAbstractItemModel);
+	///   * views are completely separated classes, center does not know anything about them,
+	///     but can be used to provide data, the same way QAbstractItemModel is used;
+	///     
+	/// NotificationView - QListView based view can be used to display notifications as list,
+	///   declared and defined in NotificationView.hqt
+	///   
+	/// NotificationLayout - special class that layouts notification popups on some widget/desktop.
+	///   declared and defined in NotificationLayout.hqt
 
-	class NotificationStore;
-	class NotificationModel;
-	class TimestampPred;
-	class NotificationFilter;
-	class SimpleNotification;
-
-	class SimpleNotificationDelegate;
-	class SimpleNotificationPopup;
-
+	// base classes
+	class Notification;	
 	class NotificationCenter;
-	class NotificationView;
-	class NotificationLayout;
-	
+
+	// some default implementations, defined in NotificationSystemExt.hqt
+	class SimpleNotification; // default notification implementation
+	class NotificationStore;  // notification store
+
+	class AbstractNotificationModel; // extends QAbstractItemModel, used by NotificationView
+	class NotificationModel;         // default notification AbstractNotificationModel implementation
+
+	class TimestampPred;      // NotificationModel predicate used for sorting by timestamp
+	class NotificationFilter; // NotificationModel predicate used for filtering
+
 
 	enum NotificationPriority
 	{
@@ -45,8 +57,9 @@ namespace QtTools::NotificationSystem
 	};
 
 
-
-	/// Simple notification system. More or less.
+	/// This is notification center, notifications are submitted here through AddNotification method.
+	/// Different class views/layouts/other can be used to show/notify user.
+	/// All methods are not thread safe, except mentioned otherwise.
 	class NotificationCenter : public QObject
 	{
 		Q_OBJECT
@@ -54,42 +67,85 @@ namespace QtTools::NotificationSystem
 	protected:
 		std::shared_ptr<NotificationStore> m_store;
 
+	protected:
+		Q_INVOKABLE virtual void DoAddNotification(const Notification * notification);
+
 	public:
+		/// creates new AbstractNotificationModel, model is connected to internal store 
+		/// and automatically adjusted to store changes(new notifications)		
+		/// (model emits appropriate Qt signals: layoutAboutToBeChanged, layoutChanged).
+		/// Model itself is NOT thread safe
+		/// 
+		/// NOTE: this is for NotificationView(it holds filter/sort predicates), and it somewhat breaks OOP design,
+		///   AbstractNotificationModel is related to NotificationView, and NotificationCenter should not know about both.
+		///   For simplicity it here for now
 		virtual std::shared_ptr<AbstractNotificationModel> CreateModel();
 
+	public:
+		/// gets internal NotificationsStore(returns always the same object), store itself is NOT thread safe
 		virtual std::shared_ptr<      NotificationStore> GetStore();
 		virtual std::shared_ptr<const NotificationStore> GetStore() const;
 
 	public:
+		/// adds new notification into internal store
+		/// this method is thread safe, notification will be added from a thread this center belongs to.
+		/// (via qt signal Qt::QueuedConnection)
 		virtual void AddNotification(std::unique_ptr<const Notification> notification);
-		virtual void AddNotification(QString title, QString text, QDateTime timestamp = QDateTime::currentDateTime());
+
+		/// constructs new default notifications with title, text, timestamp 
+		/// and adds it into into internal store.
+		/// this method is thread safe, notification will be added from a thread this center belongs to.
+		/// (via qt signal Qt::QueuedConnection)
+		virtual void AddNotification(QString title, QString text, Qt::TextFormat textFmt = Qt::AutoText, QDateTime timestamp = QDateTime::currentDateTime());
+
+		/// creates new empty default notification, 
+		/// you can initialize it in any way suitable for you, and then add it to the center.
+		///
+		/// This method is thread thread safe, but notification returned isn't, 
+		/// after you add it - it should not be changed in any way,
+		/// unless default implementation supports it(by default it's not).
+		virtual auto CreateNotification() const -> std::unique_ptr<Notification>;
 
 	Q_SIGNALS:
+		/// emitted whenever a new notification is added
 		void NotificationAdded(const Notification * notification);
-		void NotificationActivated(const Notification * notification);
-		void NotificationClosed(const Notification * notification);
 
 	public:
 		NotificationCenter(QObject * parent = nullptr);
 		virtual ~NotificationCenter() = default;
+
+		Q_DISABLE_COPY(NotificationCenter);
 	};
 
 
-
+	/// This is a notification interface, by default notification is not thread safe in any way,
+	/// but some implementations can provide another guaranties.
+	/// 
+	/// This is a simple object providing some simple properties, title, text, etc
+	/// By default It does not holds any logic for showing/drawing/etc(see below)
+	/// 
+	/// By default views should be sufficient with provided properties, but if they need more:
+	///  they can either query some other interface/class via dynamic_cast or use qt properties,
+	///  like notification->property("contact")
 	class Notification : public QObject
 	{
 		Q_OBJECT
 
-		Q_PROPERTY(QString title READ Title WRITE Title)
-		Q_PROPERTY(QString text  READ Text  WRITE Text)
+		/// Notification title
+		Q_PROPERTY(QString title       READ Title     WRITE Title)
+		/// Notification main text
+		Q_PROPERTY(QString text           READ Text      WRITE Text)
+		Q_PROPERTY(QString plainText      READ PlainText           )
+		/// Notification main text: plain or fmt, by default - auto
+		Q_PROPERTY(Qt::TextFormat textFmt READ TextFmt   WRITE TextFmt)
+		/// Notification timestamp
 		Q_PROPERTY(QDateTime timestamp READ Timestamp WRITE Timestamp)
-		Q_PROPERTY(QIcon logo READ Logo WRITE Logo)
-
-		Q_PROPERTY(QString filterText    READ FilterText)
-		Q_PROPERTY(QString clipboardText READ ClipboardText)
 
 		Q_PROPERTY(NotificationPriority priority READ Priority WRITE Priority)
 		Q_PROPERTY(NotificationLevel    level    READ Level    WRITE Level)
+
+		///// Some icon 
+		//Q_PROPERTY(QIcon logo          READ Logo      WRITE Logo)
 
 	public:
 		virtual QString Title() const = 0;
@@ -98,11 +154,18 @@ namespace QtTools::NotificationSystem
 		virtual QString Text() const = 0;
 		virtual QString Text(QString text) = 0;
 		
+		virtual Qt::TextFormat TextFmt() const = 0;
+		virtual Qt::TextFormat TextFmt(Qt::TextFormat fmt) = 0;
+
+		// same as text, but if test is a rich text, this method will return plain version of it
+		virtual QString PlainText() const = 0;
+
+
 		virtual QDateTime Timestamp() const = 0;
 		virtual QDateTime Timestamp(QDateTime timestamp) = 0;
 
-		virtual QIcon Logo() const = 0;
-		virtual QIcon Logo(QIcon logo) = 0;
+		//virtual QIcon Logo() const = 0;
+		//virtual QIcon Logo(QIcon logo) = 0;
 
 		virtual NotificationPriority Priority() const = 0;
 		virtual NotificationPriority Priority(NotificationPriority priority) = 0;
@@ -111,54 +174,6 @@ namespace QtTools::NotificationSystem
 		virtual NotificationLevel Level(NotificationLevel level) = 0;
 
 	public:
-		virtual QString FilterText() const = 0;
-		virtual QString ClipboardText() const = 0;
-
-	public:
-		virtual AbstractNotificationPopupWidget * CreatePopup() const = 0;
-
-	public:
-		// item delegate methods
-		virtual void paint(QPainter * painter, const QStyleOptionViewItem & option, std::any & cookie) const = 0;
-		virtual QSize sizeHint(const QStyleOptionViewItem & option, std::any & cookie) const = 0;
-		virtual bool editorEvent(QEvent * event, const QStyleOptionViewItem & option, std::any & cookie) const = 0;
-
-	public:
 		virtual ~Notification() = default;
-	};
-
-
-
-	class AbstractNotificationModel : public QAbstractListModel
-	{
-		Q_OBJECT;
-
-	private:
-		using base_type = QAbstractListModel;
-		using self_type = AbstractNotificationModel;
-
-	protected:
-		QString m_filterStr;
-
-	protected:
-		virtual void FilterBy(QString expr) = 0;
-
-	public:
-		virtual QPointer<NotificationCenter> GetNotificationCenter() const = 0;
-		virtual const Notification * GetItem(int row) const = 0;		
-		
-		virtual int FullRowCount() const = 0;
-
-	public:
-		void SetFilter(QString expr);
-		auto GetFilter() const noexcept { return m_filterStr; }
-		Q_SIGNAL void FilterChanged(QString expr);
-
-	public:
-		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
-		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-
-	public:
-		using QAbstractListModel::QAbstractListModel;
 	};
 }

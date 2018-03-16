@@ -1,19 +1,22 @@
 #pragma once
 #include <vector>
+#include <functional>
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QString>
-#include <QtCore/QDateTime>
-#include <QtCore/QAbstractItemModel>
 #include <QtCore/QAbstractAnimation>
 #include <QtCore/QPropertyAnimation>
+#include <QtWidgets/QWidget>
 
 #include <qtor/NotificationSystem.hqt>
 
 
 namespace QtTools::NotificationSystem
 {
+	// forward declarations
+	class AbstractNotificationPopupWidget;
+
+
 	class NotificationLayout : public QObject
 	{
 		Q_OBJECT
@@ -38,10 +41,15 @@ namespace QtTools::NotificationSystem
 			Item & operator =(Item &&) = default;
 		};
 
-	protected:
-		static constexpr unsigned ms_spacing = 2;
+	public:
+		using CreatePopupFunction = std::function<AbstractNotificationPopupWidget *(const Notification &)>;
 
 	protected:
+		static constexpr unsigned ms_spacing = 2;
+		static const CreatePopupFunction ms_defaultCreatePopup;
+
+	protected:		
+		CreatePopupFunction m_createPopup = ms_defaultCreatePopup;
 		std::vector<Item> m_items;
 		NotificationCenter * m_ncenter = nullptr;
 		QPointer<QWidget> m_parent;
@@ -68,8 +76,8 @@ namespace QtTools::NotificationSystem
 		virtual bool eventFilter(QObject * watched, QEvent * event) override;
 
 	protected:
-		Q_SLOT void ScheduleUpdate();
-		Q_SLOT void DoScheduledUpdate();
+		Q_INVOKABLE void ScheduleUpdate();
+		Q_INVOKABLE void DoScheduledUpdate();
 
 		virtual void Update();
 		virtual void Relayout();
@@ -91,8 +99,15 @@ namespace QtTools::NotificationSystem
 		      void SetCorner(Qt::Corner corner);
 		Qt::Corner GetCorner() const;
 
-		void SetNotificationCenter(NotificationCenter * center) { m_ncenter = center; }
+		void SetNotificationCenter(NotificationCenter * center);
 		auto GetNotificationCenter() const { return m_ncenter; }
+
+		/// you can override popup creation, 
+		/// returning different AbstractNotificationPopupWidget implementation
+		void SetCreatePopupFunction(CreatePopupFunction func);
+		auto GetCreatePopupFunction() const { return m_createPopup; }
+
+		virtual void Init(NotificationCenter & center);
 
 	Q_SIGNALS:
 		void LinkActivated(QString href) const;
@@ -100,6 +115,7 @@ namespace QtTools::NotificationSystem
 
 	public:
 		NotificationLayout(QObject * parent = nullptr) : QObject(parent) {}
+		NotificationLayout(NotificationCenter & center, QObject * parent = nullptr);
 		virtual ~NotificationLayout();
 	};
 }

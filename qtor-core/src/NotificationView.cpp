@@ -1,8 +1,6 @@
-#include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationSystemExt.hqt>
-#include <qtor/NotificationView.hqt>
-
+#include <QtCore/QStringBuilder>
 #include <QtGui/QClipboard>
+
 #include <QtWidgets/QShortcut>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
@@ -13,6 +11,11 @@
 #include <ext/join_into.hpp>
 #include <QtTools/ToolsBase.hpp>
 
+#include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
+#include <qtor/NotificationView.hqt>
+#include <qtor/NotificationViewExt.hqt>
+#include <qtor/NotificationViewDelegate.hqt>
 
 
 namespace QtTools::NotificationSystem
@@ -32,6 +35,72 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
+	QString NotificationView::ClipboardText(const Notification & n) const
+	{
+		auto title = n.Title();
+		auto text = n.PlainText();
+		auto timestamp = n.Timestamp().toString(Qt::DateFormat::DefaultLocaleShortDate);
+
+		return title % "  " % timestamp
+		     % QStringLiteral("\n")
+		     % text;
+	}
+
+	void NotificationView::CopySelectedIntoClipboard()
+	{
+		using boost::adaptors::transformed;
+		//const QChar newPar = QChar::ParagraphSeparator;
+		const auto plainSep = "\n" + QString(80, '-') + "\n";
+		const auto richSep = QStringLiteral("<hr>");
+
+		QString plainText, richText;
+
+		auto indexes = m_listView->selectionModel()->selectedIndexes();
+		auto plainTexts = indexes | transformed([this](auto & idx) { return ClipboardText(m_model->GetItem(idx.row())); });
+		auto richTexts  = indexes | transformed([this](auto & idx) { return m_model->GetItem(idx.row()).Text(); });
+
+		ext::join_into(plainTexts, plainSep, plainText);
+		ext::join_into(richTexts, richSep, richText);
+
+		QMimeData * mime = new QMimeData;
+		mime->setText(plainText);
+		mime->setHtml(richText);
+
+		qApp->clipboard()->setMimeData(mime);
+	}
+
+	QMenu * NotificationView::CreateItemMenu(const QModelIndex & idx)
+	{
+		if (not idx.isValid()) return nullptr;
+
+		QAction * action;
+		auto * menu = new QMenu(this);
+		connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater); // auto delete on hide
+
+		action = new QAction(tr("&Copy"), menu);
+		connect(action, &QAction::triggered, this, &NotificationView::CopySelectedIntoClipboard);
+		menu->addAction(action);
+
+		return menu;
+	}
+
+	void NotificationView::contextMenuEvent(QContextMenuEvent * ev)
+	{
+		ev->accept();
+		auto pos = ev->globalPos();
+
+		auto * viewport = m_listView->viewport();
+		auto viewPos = viewport->mapFromGlobal(pos);
+
+		// process only menu from QListView
+		if (not viewport->contentsRect().contains(viewPos))
+			return;
+
+		auto idx = m_listView->indexAt(viewPos);
+		auto * menu = CreateItemMenu(idx);
+		if (menu) menu->popup(pos);
+	}
+
 	bool NotificationView::eventFilter(QObject * watched, QEvent * event)
 	{
 		if (event->type() == QEvent::KeyPress)
@@ -39,14 +108,7 @@ namespace QtTools::NotificationSystem
 			auto * keyEvent = static_cast<QKeyEvent *>(event);
 			if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
 			{
-				auto indexes = m_listView->selectionModel()->selectedIndexes();
-				auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_model->GetItem(idx.row())->ClipboardText(); });
-
-				QString text;
-				auto sep = "\n" + QString(80, '-') + "\n";
-				ext::join_into(texts, sep, text);
-
-				qApp->clipboard()->setText(text);
+				CopySelectedIntoClipboard();
 				return true;
 			}
 		}
@@ -94,11 +156,22 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
+	void NotificationView::Init(NotificationCenter & center)
+	{
+		SetModel(center.CreateModel());
+	}
+
 	NotificationView::NotificationView(QWidget * parent /* = nullptr */) : QFrame(parent)
 	{
 		setupUi();
 		connectSignals();
 		retranslateUi();
+	}
+
+	NotificationView::NotificationView(NotificationCenter & center, QWidget * parent /* = nullptr */)
+		: NotificationView(parent)
+	{
+		Init(center);
 	}
 
 	void NotificationView::connectSignals()
@@ -126,7 +199,7 @@ namespace QtTools::NotificationSystem
 		m_listView->setWordWrap(true);
 		m_listView->setMouseTracking(true);
 
-		m_listDelegate = new SimpleNotificationDelegate(this);
+		m_listDelegate = new NotificationViewDelegate(this);
 		m_listView->setItemDelegate(m_listDelegate);
 		m_listView->installEventFilter(this);
 
