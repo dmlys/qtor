@@ -155,7 +155,6 @@ namespace QtTools::NotificationSystem
 
 	QRect NotificationLayout::DefaultLayoutRect(const QRect & parent, Qt::Corner corner)
 	{
-		auto * desktop = qApp->desktop();
 		QFont font = qApp->font();
 		QFontMetrics fm(font);
 

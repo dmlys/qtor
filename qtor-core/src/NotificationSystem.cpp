@@ -1,7 +1,5 @@
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
-#include <qtor/NotificationView.hqt>
-#include <qtor/NotificationViewExt.hqt>
 
 #include <QtCore/QStringBuilder>
 #include <QtCore/QThread>
@@ -82,11 +80,6 @@ namespace QtTools::NotificationSystem
 		: QObject(parent)
 	{
 		m_store = std::make_shared<NotificationStore>(this);
-	}
-
-	auto NotificationCenter::CreateModel() -> std::shared_ptr<AbstractNotificationModel>
-	{
-		return std::make_shared<NotificationModel>(m_store);
 	}
 
 	auto NotificationCenter::GetStore() -> std::shared_ptr<NotificationStore>

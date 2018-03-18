@@ -35,11 +35,6 @@ namespace QtTools::NotificationSystem
 	class SimpleNotification; // default notification implementation
 	class NotificationStore;  // notification store
 
-	class AbstractNotificationModel; // extends QAbstractItemModel, used by NotificationView
-	class NotificationModel;         // default notification AbstractNotificationModel implementation
-
-	class TimestampPred;      // NotificationModel predicate used for sorting by timestamp
-	class NotificationFilter; // NotificationModel predicate used for filtering
 
 
 	enum NotificationPriority
@@ -69,17 +64,6 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		Q_INVOKABLE virtual void DoAddNotification(const Notification * notification);
-
-	public:
-		/// creates new AbstractNotificationModel, model is connected to internal store 
-		/// and automatically adjusted to store changes(new notifications)		
-		/// (model emits appropriate Qt signals: layoutAboutToBeChanged, layoutChanged).
-		/// Model itself is NOT thread safe
-		/// 
-		/// NOTE: this is for NotificationView(it holds filter/sort predicates), and it somewhat breaks OOP design,
-		///   AbstractNotificationModel is related to NotificationView, and NotificationCenter should not know about both.
-		///   For simplicity it here for now
-		virtual std::shared_ptr<AbstractNotificationModel> CreateModel();
 
 	public:
 		/// gets internal NotificationsStore(returns always the same object), store itself is NOT thread safe

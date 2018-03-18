@@ -158,7 +158,8 @@ namespace QtTools::NotificationSystem
 
 	void NotificationView::Init(NotificationCenter & center)
 	{
-		SetModel(center.CreateModel());
+		auto model = std::make_shared<NotificationModel>(center.GetStore());
+		SetModel(std::move(model));
 	}
 
 	NotificationView::NotificationView(QWidget * parent /* = nullptr */) : QFrame(parent)
