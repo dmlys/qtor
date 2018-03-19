@@ -288,7 +288,20 @@ namespace QtTools::NotificationSystem
 		}
 
 		if (msecs != 0)
-			QTimer::singleShot(msecs, popup, &QWidget::close);
+		{
+			auto moveOut = [popup, that = ext::unconst(this)]() mutable
+			{
+				auto first = that->m_items.begin();
+				auto last = that->m_items.end();
+				auto it = std::find_if(first, last, [popup](auto & item) { return item.widget == popup; });
+
+				if (it != last and not it->slideAnimation and not it->moveOutAnimation)
+					it->moveOutAnimation = it->widget->MoveOutAndClose();
+			};
+
+			QTimer::singleShot(msecs, popup, moveOut);
+		}
+			
 	}
 
 	auto NotificationLayout::MakePopup(const Notification * notification) const 
@@ -445,8 +458,9 @@ namespace QtTools::NotificationSystem
 		if (not widget->contentsRect().contains(ev->pos()))
 			return false;
 
-		if (not it->slideAnimation)
+		if (not it->slideAnimation and not it->moveOutAnimation)
 			it->moveOutAnimation = widget->MoveOutAndClose();
+
 		return true;
 	}
 

@@ -61,9 +61,9 @@ namespace QtTools::NotificationSystem
 
 		// some format parameters
 		
-		QColor m_errorColor; // red, with 200 alpha
+		QColor m_errorColor; // red    with 200 alpha
 		QColor m_warnColor;  // yellow with 200 alpha
-		QColor m_infoColor;  // grey with 200 alpha
+		QColor m_infoColor;  // silvmer with 200 alpha
 
 		std::chrono::milliseconds m_errorTimeout = {}; // no timeout
 		std::chrono::milliseconds m_warnTimeout = std::chrono::seconds(10);

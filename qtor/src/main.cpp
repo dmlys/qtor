@@ -37,7 +37,7 @@
 #include <qtor/NotificationSystemExt.hqt>
 #include <qtor/NotificationView.hqt>
 #include <qtor/NotificationLayout.hqt>
-#include <qtor/NotificationLayoutExt.hqt>
+
 
 //class http_method
 //{
@@ -136,6 +136,11 @@ int main(int argc, char * argv[])
 	QApplication qapp {argc, argv};
 
 	std::cout << QtTools::ScreenInfo << endl;
+
+	QVariant var = QColor("red");
+	QBrush br = qvariant_cast<QBrush>(var);
+
+	assert(br != Qt::NoBrush);
 
 //#ifdef Q_OS_WIN
 //	// On windows the highlighted colors for inactive widgets are the
