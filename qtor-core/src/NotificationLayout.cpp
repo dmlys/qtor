@@ -1,4 +1,10 @@
+#include <tuple>
+#include <ext/utility.hpp>
+
 #include <QtCore/QEvent>
+#include <QtCore/QTimer>
+#include <QtCore/QMetaObject>
+#include <QtCore/QMetaMethod>
 #include <QtGui/QMouseEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
@@ -10,9 +16,15 @@
 
 
 namespace QtTools::NotificationSystem
-{
+{	
 	const NotificationLayout::CreatePopupFunction NotificationLayout::ms_defaultCreatePopup = 
-		[](const Notification & n) { return new NotificationPopupWidget(n); };
+		[](const Notification & n, const NotificationLayout & that)
+		{
+			auto * widget = that.CreatePopup(n);
+			that.CustomizePopup(n, widget);
+			that.ConfigureExpiration(n, widget);
+			return widget;
+		};
 
 	NotificationLayout::Item::~Item()
 	{
@@ -22,6 +34,25 @@ namespace QtTools::NotificationSystem
 	}
 
 	NotificationLayout::~NotificationLayout() = default;
+
+
+	void NotificationLayout::InitColors()
+	{
+		m_errorColor = QColor("red");
+		m_errorColor.setAlpha(200);
+
+		m_warnColor = QColor("yellow");
+		m_warnColor.setAlpha(200);
+
+		m_infoColor = QColor("silver");
+		m_infoColor.setAlpha(200);
+	}
+
+	NotificationLayout::NotificationLayout(QObject * parent /* = nullptr */)
+		: QObject(parent)
+	{
+		InitColors();
+	}
 
 	NotificationLayout::NotificationLayout(NotificationCenter & center, QObject * parent /* = nullptr */)
 		: NotificationLayout(parent)
@@ -204,10 +235,66 @@ namespace QtTools::NotificationSystem
 			return DefaultLayoutRect(parent, m_corner);
 	}
 
-	auto NotificationLayout::CreatePopup(const Notification * notification) const 
+	auto NotificationLayout::CreatePopup(const Notification & notification) const
 		-> AbstractNotificationPopupWidget *
 	{
-		auto * widget = m_createPopup(*notification);
+		// try create using Q_INVOKABLE createPopup method of notification,
+		// if failed fallback to NotificationPopupWidget.
+		auto * meta = notification.metaObject();
+		int index = meta->indexOfMethod("createPopup()");
+		if (index >= 0)
+		{
+			AbstractNotificationPopupWidget * result = nullptr;
+			QMetaMethod method = meta->method(index);
+			if (method.invoke(ext::unconst(&notification), Qt::DirectConnection, Q_RETURN_ARG(QtTools::NotificationSystem::AbstractNotificationPopupWidget *, result)))
+				return result;
+		}
+				
+		return new NotificationPopupWidget(notification);
+	}
+
+	void NotificationLayout::CustomizePopup(const Notification & n, AbstractNotificationPopupWidget * popup) const
+	{	
+		if (auto color = qvariant_cast<QColor>(n.property("backgroundColor")); color.isValid())
+			popup->SetBackgroundBrush(color);
+		else if (auto brush = qvariant_cast<QBrush>(n.property("backgroundBrush")); brush != Qt::NoBrush)
+			popup->SetBackgroundBrush(brush);
+		else
+		{
+			static constexpr auto getter = [](auto val) { return val; };
+			unsigned lvl = n.Level() - NotificationLevel::Error;
+
+			auto colors = GetColors();
+			auto color = ext::visit(colors, lvl, getter);
+			popup->SetBackgroundBrush(color);
+		}
+	}
+
+	void NotificationLayout::ConfigureExpiration(const Notification & n, AbstractNotificationPopupWidget * popup) const
+	{
+		int msecs = 0;
+
+		auto prop = n.property("expirationTimeout");
+		if (prop.canConvert<int>())
+			msecs = qvariant_cast<int>(prop);
+		else
+		{
+			static constexpr auto getter = [](auto val) { return val; };
+			unsigned lvl = n.Level() - NotificationLevel::Error;
+
+			auto timeouts = GetExpirationTimeouts();
+			std::chrono::milliseconds timeout = ext::visit(timeouts, lvl, getter);
+			msecs = timeout.count();
+		}
+
+		if (msecs != 0)
+			QTimer::singleShot(msecs, popup, &QWidget::close);
+	}
+
+	auto NotificationLayout::MakePopup(const Notification * notification) const 
+		-> AbstractNotificationPopupWidget *
+	{
+		auto * widget = m_createPopup(*notification, *this);
 		widget->setAttribute(Qt::WA_DeleteOnClose, true);
 		widget->setParent(m_parent);
 		widget->adjustSize();
@@ -271,6 +358,9 @@ namespace QtTools::NotificationSystem
 
 		for (auto & item : m_items)
 		{
+			if (idx++ >= m_widgetsLimit)
+				break;
+
 			auto * widget = item.widget.data();
 			bool is_new = not widget;
 
@@ -288,7 +378,7 @@ namespace QtTools::NotificationSystem
 
 			if (is_new)
 			{
-				item.widget = widget = CreatePopup(item.notification);
+				item.widget = widget = MakePopup(item.notification);
 				widget->show();
 			}
 			
@@ -323,9 +413,6 @@ namespace QtTools::NotificationSystem
 		loop_end:
 			lcur.ry() += direction * sz.height();
 			hcur.ry() += direction * sz.height();
-
-			if (++idx >= m_widgetsLimit)
-				break;
 
 			if (std::abs(lcur.y() - start.y()) >= geometry.height())
 				break;
@@ -363,20 +450,10 @@ namespace QtTools::NotificationSystem
 		return true;
 	}
 
-	QWidget * NotificationLayout::GetParent() const
-	{
-		return m_parent;
-	}
-
 	void NotificationLayout::SetParent(QWidget * widget)
 	{
 		m_parent = widget;
 		ScheduleUpdate();
-	}
-
-	QRect NotificationLayout::GetGeometry() const
-	{
-		return m_geometry;
 	}
 
 	void NotificationLayout::SetGeometry(const QRect & geom)
@@ -385,14 +462,39 @@ namespace QtTools::NotificationSystem
 		ScheduleUpdate();
 	}
 
-	Qt::Corner NotificationLayout::GetCorner() const
-	{
-		return m_corner;
-	}
-
 	void NotificationLayout::SetCorner(Qt::Corner corner)
 	{
 		m_corner = corner;
 		ScheduleUpdate();
+	}
+
+	void NotificationLayout::SetWidgetsLimit(unsigned limit)
+	{
+		m_widgetsLimit = limit;
+	}
+
+	auto NotificationLayout::GetColors() const -> std::tuple<QColor, QColor, QColor>
+	{
+		return std::make_tuple(m_errorColor, m_warnColor, m_infoColor);
+	}
+
+	void NotificationLayout::SetColors(QColor error, QColor warning, QColor info)
+	{
+		m_errorColor = error;
+		m_warnColor = warning;
+		m_infoColor = info;
+	}
+
+	auto NotificationLayout::GetExpirationTimeouts() const
+		-> std::tuple<std::chrono::milliseconds, std::chrono::milliseconds, std::chrono::milliseconds>
+	{
+		return std::make_tuple(m_errorTimeout, m_warnTimeout, m_infoTimeout);
+	}
+
+	void NotificationLayout::SetExpirationTimeouts(std::chrono::milliseconds error, std::chrono::milliseconds warning, std::chrono::milliseconds info)
+	{
+		m_errorTimeout = error;
+		m_warnTimeout = warning;
+		m_infoTimeout = info;
 	}
 }

@@ -18,9 +18,9 @@ namespace QtTools::NotificationSystem
 	
 	void NotificationPopupWidget::setupUi()
 	{
-		QColor color = QColor("yellow");
-		color.setAlpha(200);
-		SetBackgroundBrush(color);
+		//QColor color = QColor("yellow");
+		//color.setAlpha(200);
+		//SetBackgroundBrush(color);
 		SetShadowColor(Qt::black);
 
 

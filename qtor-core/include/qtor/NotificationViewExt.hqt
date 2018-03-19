@@ -12,6 +12,7 @@
 #include <QtCore/QAbstractItemModel>
 
 #include <qtor/NotificationSystem.hqt>
+#include <qtor/NotificationSystemExt.hqt>
 #include <qtor/NotificationView.hqt>
 
 namespace QtTools::NotificationSystem

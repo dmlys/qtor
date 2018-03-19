@@ -90,7 +90,11 @@
     <QtMOCCompile Include="src\TransmissionRemoteApp.hqt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ScreenInfo.cpp" />
     <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ScreenInfo.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

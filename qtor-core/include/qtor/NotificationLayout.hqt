@@ -1,6 +1,8 @@
 #pragma once
+#include <tuple>
 #include <vector>
-#include <functional>
+#include <chrono>     // for std::chrono::duration
+#include <functional> // for std::function
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -42,7 +44,7 @@ namespace QtTools::NotificationSystem
 		};
 
 	public:
-		using CreatePopupFunction = std::function<AbstractNotificationPopupWidget *(const Notification &)>;
+		using CreatePopupFunction = std::function<AbstractNotificationPopupWidget *(const Notification & n, const NotificationLayout & that)>;
 
 	protected:
 		static constexpr unsigned ms_spacing = 2;
@@ -50,16 +52,30 @@ namespace QtTools::NotificationSystem
 
 	protected:		
 		CreatePopupFunction m_createPopup = ms_defaultCreatePopup;
-		std::vector<Item> m_items;
+
 		NotificationCenter * m_ncenter = nullptr;
 		QPointer<QWidget> m_parent;
-
 		QRect m_geometry;
 		Qt::Corner m_corner = Qt::BottomRightCorner;
 		unsigned m_widgetsLimit = 5;
 
+		// some format parameters
+		
+		QColor m_errorColor; // red, with 200 alpha
+		QColor m_warnColor;  // yellow with 200 alpha
+		QColor m_infoColor;  // grey with 200 alpha
+
+		std::chrono::milliseconds m_errorTimeout = {}; // no timeout
+		std::chrono::milliseconds m_warnTimeout = std::chrono::seconds(10);
+		std::chrono::milliseconds m_infoTimeout = std::chrono::seconds(5);
+
+		std::vector<Item> m_items;
+		
 		bool m_relayoutScheduled = false;
 		bool m_relocation = false;
+
+	protected:
+		void InitColors();
 
 	protected:
 		static auto  DescribeCorner(Qt::Corner corner) -> std::tuple<GetPointPtr, MovePointPtr, int>;
@@ -69,7 +85,7 @@ namespace QtTools::NotificationSystem
 	protected:
 		virtual QRect ParentGeometry() const;
 		virtual QRect CalculateLayoutRect() const;
-		virtual auto CreatePopup(const Notification * notification) const -> AbstractNotificationPopupWidget *;
+		virtual auto MakePopup(const Notification * notification) const -> AbstractNotificationPopupWidget *;
 		virtual void SlideWidget(Item & item, const QRect & hgeom, const QRect & lgeom) const;
 
 	protected:
@@ -85,25 +101,41 @@ namespace QtTools::NotificationSystem
 		virtual void ClearAnimatedWidgets();
 
 	public:
+		/// default popup creation, can be overridden via inheritance, it's called by default CreatePopupFunction.
+		/// Note that function can be replaced to completely different one, which does not call those methods at all.
+		virtual auto CreatePopup(const Notification & notification) const -> AbstractNotificationPopupWidget *;
+		virtual void CustomizePopup(const Notification & notification, AbstractNotificationPopupWidget * popup) const;
+		virtual void ConfigureExpiration(const Notification & notification, AbstractNotificationPopupWidget * popup) const;
+
+	public:
 		virtual void AddNotification(QPointer<const Notification> notification);
 		virtual auto NotificationsCount() const -> unsigned;
 		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification>;
 		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification>;
 
 		void SetParent(QWidget * widget);
-		QWidget * GetParent() const;
+		auto GetParent() const { return m_parent; }
 
-		 void SetGeometry(const QRect & geom);
-		QRect GetGeometry() const;
+		auto GetGeometry() const { return m_geometry; }
+		void SetGeometry(const QRect & geom);
 
-		      void SetCorner(Qt::Corner corner);
-		Qt::Corner GetCorner() const;
+		auto GetCorner() const { return m_corner; }
+		void SetCorner(Qt::Corner corner);
+
+		auto GetWidgetsLimit() const { return m_widgetsLimit; }
+		void SetWidgetsLimit(unsigned limit);
 
 		void SetNotificationCenter(NotificationCenter * center);
 		auto GetNotificationCenter() const { return m_ncenter; }
 
-		/// you can override popup creation, 
-		/// returning different AbstractNotificationPopupWidget implementation
+		auto GetColors() const -> std::tuple<QColor, QColor, QColor>;
+		void SetColors(QColor error, QColor warning, QColor info);
+
+		auto GetExpirationTimeouts() const -> std::tuple<std::chrono::milliseconds, std::chrono::milliseconds, std::chrono::milliseconds>;
+		void SetExpirationTimeouts(std::chrono::milliseconds error, std::chrono::milliseconds warning, std::chrono::milliseconds info);
+
+		/// popup creation can be overridden,
+		/// returning different AbstractNotificationPopupWidget implementation/customization.
 		void SetCreatePopupFunction(CreatePopupFunction func);
 		auto GetCreatePopupFunction() const { return m_createPopup; }
 
@@ -114,7 +146,7 @@ namespace QtTools::NotificationSystem
 		void LinkHovered(QString href) const;
 
 	public:
-		NotificationLayout(QObject * parent = nullptr) : QObject(parent) {}
+		NotificationLayout(QObject * parent = nullptr);
 		NotificationLayout(NotificationCenter & center, QObject * parent = nullptr);
 		virtual ~NotificationLayout();
 	};

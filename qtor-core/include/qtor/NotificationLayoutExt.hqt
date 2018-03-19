@@ -48,5 +48,4 @@ namespace QtTools::NotificationSystem
 		void setupUi();
 		void connectSignals();
 	};
-
 }

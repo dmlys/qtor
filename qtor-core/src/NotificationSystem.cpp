@@ -92,19 +92,16 @@ namespace QtTools::NotificationSystem
 		return m_store;
 	}
 
-	void NotificationCenter::AddNotification(QString title, QString text,
-		Qt::TextFormat fmt /* = Qt::AutoText */, QDateTime timestamp /* = QDateTime::currentDateTime() */)
-	{
-		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), fmt, std::move(timestamp));
-		notification->TextFmt(fmt);
-
-		AddNotification(std::move(notification));
-	}
-
 	void NotificationCenter::DoAddNotification(const Notification * notification)
 	{
 		m_store->push_back(notification);
 		Q_EMIT NotificationAdded(m_store->back());
+	}
+
+	auto NotificationCenter::CreateNotification() const
+		-> std::unique_ptr<Notification>
+	{
+		return std::make_unique<SimpleNotification>();
 	}
 
 	void NotificationCenter::AddNotification(std::unique_ptr<const Notification> notification)
@@ -123,9 +120,27 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
-	auto NotificationCenter::CreateNotification() const
-		-> std::unique_ptr<Notification>
+	void NotificationCenter::AddInfo(QString title, QString text, Qt::TextFormat fmt /* = Qt::AutoText */, QDateTime timestamp /* = QDateTime::currentDateTime() */)
 	{
-		return std::make_unique<SimpleNotification>();
+		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), fmt, std::move(timestamp));
+		notification->Level(Info);
+
+		AddNotification(std::move(notification));
+	}
+
+	void NotificationCenter::AddWarning(QString title, QString text, Qt::TextFormat fmt /* = Qt::AutoText */, QDateTime timestamp /* = QDateTime::currentDateTime() */)
+	{
+		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), fmt, std::move(timestamp));
+		notification->Level(Warn);
+
+		AddNotification(std::move(notification));
+	}
+
+	void NotificationCenter::AddError(QString title, QString text, Qt::TextFormat fmt /* = Qt::AutoText */, QDateTime timestamp /* = QDateTime::currentDateTime() */)
+	{
+		auto notification = std::make_unique<SimpleNotification>(std::move(title), std::move(text), fmt, std::move(timestamp));
+		notification->Level(Error);
+
+		AddNotification(std::move(notification));
 	}
 }

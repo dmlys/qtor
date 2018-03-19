@@ -46,9 +46,9 @@ namespace QtTools::NotificationSystem
 
 	enum NotificationLevel
 	{
-		Info,    // implies Normal priority
-		Warn,    // implies Normal priority
 		Error,   // implies High   priority
+		Warn,    // implies Normal priority
+		Info,    // implies Normal priority
 	};
 
 
@@ -71,24 +71,27 @@ namespace QtTools::NotificationSystem
 		virtual std::shared_ptr<const NotificationStore> GetStore() const;
 
 	public:
-		/// adds new notification into internal store
-		/// this method is thread safe, notification will be added from a thread this center belongs to.
-		/// (via qt signal Qt::QueuedConnection)
-		virtual void AddNotification(std::unique_ptr<const Notification> notification);
-
-		/// constructs new default notifications with title, text, timestamp 
-		/// and adds it into into internal store.
-		/// this method is thread safe, notification will be added from a thread this center belongs to.
-		/// (via qt signal Qt::QueuedConnection)
-		virtual void AddNotification(QString title, QString text, Qt::TextFormat textFmt = Qt::AutoText, QDateTime timestamp = QDateTime::currentDateTime());
-
 		/// creates new empty default notification, 
 		/// you can initialize it in any way suitable for you, and then add it to the center.
 		///
 		/// This method is thread thread safe, but notification returned isn't, 
 		/// after you add it - it should not be changed in any way,
 		/// unless default implementation supports it(by default it's not).
-		virtual auto CreateNotification() const -> std::unique_ptr<Notification>;
+		virtual auto CreateNotification() const->std::unique_ptr<Notification>;
+		/// adds new notification into internal store
+		/// this method is thread safe, notification will be added from a thread this center belongs to.
+		/// (via qt signal Qt::QueuedConnection)
+		virtual void AddNotification(std::unique_ptr<const Notification> notification);
+
+	public:
+		/// set of convenience methods
+		/// all next methods create notification via CreateNotification, fill some data, 
+		/// and add notification via AddNotification 
+		
+		/// Adds new Info notifications with title, text, timestamp 
+		void AddInfo(QString title, QString text, Qt::TextFormat textFmt = Qt::AutoText, QDateTime timestamp = QDateTime::currentDateTime());
+		void AddWarning(QString title, QString text, Qt::TextFormat textFmt = Qt::AutoText, QDateTime timestamp = QDateTime::currentDateTime());
+		void AddError(QString title, QString text, Qt::TextFormat textFmt = Qt::AutoText, QDateTime timestamp = QDateTime::currentDateTime());
 
 	Q_SIGNALS:
 		/// emitted whenever a new notification is added

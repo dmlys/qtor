@@ -27,8 +27,8 @@ namespace QtTools::NotificationSystem
 
 		Qt::TextFormat m_textFmt = Qt::AutoText;
 
-		int m_priority        : 2;  // = Normal
-		int m_level           : 2;  // = Info
+		int m_priority        : 3;  // = Normal
+		int m_level           : 3;  // = Info
 		int m_priority_inited : 1;  // = 0
 		int m_level_inited    : 1;  // = 0
 
