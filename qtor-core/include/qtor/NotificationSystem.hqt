@@ -109,11 +109,15 @@ namespace QtTools::NotificationSystem
 	/// but some implementations can provide another guaranties.
 	/// 
 	/// This is a simple object providing some simple properties, title, text, etc
-	/// By default It does not holds any logic for showing/drawing/etc(see below)
+	/// By default it does not holds any logic for showing/drawing/etc(see below)
 	/// 
 	/// By default views should be sufficient with provided properties, but if they need more:
 	///  they can either query some other interface/class via dynamic_cast or use qt properties,
 	///  like notification->property("contact")
+	///  
+	/// Note that Notification text can hold rich text, but default view implementations use QLabal:
+	/// while it supports anything QTextDocument supports, it's not very suited for complex rich text with lists, tables, etc.
+	/// Hyperlinks, bold, color - are absolutely fine
 	class Notification : public QObject
 	{
 		Q_OBJECT
@@ -123,7 +127,7 @@ namespace QtTools::NotificationSystem
 		/// Notification main text
 		Q_PROPERTY(QString text           READ Text      WRITE Text)
 		Q_PROPERTY(QString plainText      READ PlainText           )
-		/// Notification main text: plain or fmt, by default - auto
+		/// Notification main text: plain or rich, by default - auto
 		Q_PROPERTY(Qt::TextFormat textFmt READ TextFmt   WRITE TextFmt)
 		/// Notification timestamp
 		Q_PROPERTY(QDateTime timestamp READ Timestamp WRITE Timestamp)

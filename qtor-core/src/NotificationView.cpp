@@ -55,7 +55,7 @@ namespace QtTools::NotificationSystem
 
 		QString plainText, richText;
 
-		auto indexes = m_listView->selectionModel()->selectedIndexes();
+		auto indexes = m_listView->selectionModel()->selectedRows();
 		auto plainTexts = indexes | transformed([this](auto & idx) { return ClipboardText(m_model->GetItem(idx.row())); });
 		auto richTexts  = indexes | transformed([this](auto & idx) { return m_model->GetItem(idx.row()).Text(); });
 
