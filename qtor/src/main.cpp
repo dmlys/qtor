@@ -137,29 +137,29 @@ int main(int argc, char * argv[])
 
 	std::cout << QtTools::ScreenInfo << endl;
 
-//#ifdef Q_OS_WIN
-//	// On windows the highlighted colors for inactive widgets are the
-//	// same as non highlighted colors.This is a regression from Qt 4.
-//	// https://bugreports.qt-project.org/browse/QTBUG-41060
-//	auto palette = qapp.palette();
-//	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
-//	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
-//	qapp.setPalette(palette);
-//#endif
+#ifdef Q_OS_WIN
+	// On windows the highlighted colors for inactive widgets are the
+	// same as non highlighted colors.This is a regression from Qt 4.
+	// https://bugreports.qt-project.org/browse/QTBUG-41060
+	auto palette = qapp.palette();
+	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
+	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
+	qapp.setPalette(palette);
+#endif
 
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("bin/data.db"s);
 
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
-	//
-	//qtor::TransmissionRemoteApp app {std::move(source)};
-	//qtor::MainWindow mainWindow;
-	//
-	//mainWindow.Init(app);
-	//mainWindow.show();
-	//
-	//QTimer::singleShot(100, [&app] { app.Connect(); });
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
+	
+	qtor::TransmissionRemoteApp app {std::move(source)};
+	qtor::MainWindow mainWindow;
+	
+	mainWindow.Init(app);
+	mainWindow.show();
+	
+	QTimer::singleShot(100, [&app] { app.Connect(); });
 
 	auto ttt = R"(
 <style type="text/css">
@@ -185,8 +185,9 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	QtTools::NotificationSystem::NotificationView view;
 	
 	layout.Init(nsys);
-	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
+	layout.SetParent(&mainWindow);
 	layout.SetCorner(Qt::TopRightCorner);
+	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
 	view.Init(nsys);
 	view.show();

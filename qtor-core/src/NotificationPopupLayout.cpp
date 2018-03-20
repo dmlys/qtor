@@ -165,7 +165,7 @@ namespace QtTools::NotificationSystem
 		QFont font = qApp->font();
 		QFontMetrics fm(font);
 
-		// calculate default rect based on parent geom and corner
+		// calculate default rect based on parent rect and corner
 		const auto minimumWidth = fm.averageCharWidth() * 40;
 		const auto maximumWidth = fm.averageCharWidth() * 60;
 
@@ -189,10 +189,10 @@ namespace QtTools::NotificationSystem
 		return rect;
 	}
 
-	QRect NotificationPopupLayout::ParentGeometry() const
+	QRect NotificationPopupLayout::ParentRect() const
 	{
 		if (m_parent)
-			return m_parent->geometry();
+			return m_parent->rect();
 		else
 		{
 			auto * desktop = qApp->desktop();
@@ -203,12 +203,12 @@ namespace QtTools::NotificationSystem
 
 	QRect NotificationPopupLayout::CalculateLayoutRect() const
 	{
-		QRect parent = ParentGeometry();
+		QRect parentRect = ParentRect();
 
 		if (not m_geometry.isNull())
-			return AlignRect(m_geometry, parent, m_corner);
+			return AlignRect(m_geometry, parentRect, m_corner);
 		else
-			return DefaultLayoutRect(parent, m_corner);
+			return DefaultLayoutRect(parentRect, m_corner);
 	}
 
 	auto NotificationPopupLayout::CreatePopup(const Notification & notification) const

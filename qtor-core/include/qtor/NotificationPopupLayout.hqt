@@ -99,7 +99,7 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		/// returns parent geometry or desktop available geometry
-		virtual QRect ParentGeometry() const;
+		virtual QRect ParentRect() const;
 		/// calculates rect where popups should be placed based on m_geometry and parent geometry
 		virtual QRect CalculateLayoutRect() const;
 		/// Makes popup via m_createPopup and does some additional internal configuration like,

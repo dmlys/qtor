@@ -141,18 +141,18 @@ namespace QtTools
 	{
 		auto * animation = new QPropertyAnimation(this, "geometry", this);
 
-		QRectF parentGeom;
+		QRectF parentRect;
 		auto * parent = this->parentWidget();
 		if (parent)
-			parentGeom = parent->geometry();
+			parentRect = parent->rect();
 		else
-			parentGeom = qApp->desktop()->availableGeometry(this);
+			parentRect = qApp->desktop()->availableGeometry(this);
 
 		QRectF start = this->geometry();
 		QSizeF size = start.size();
-		QRectF finish = parentGeom.right() - start.right() < start.left() - parentGeom.left()
-			? QRectF(QPointF(parentGeom.right(), start.top()), size)
-			: QRectF(QPointF(parentGeom.left() - size.width(), start.top()), size);
+		QRectF finish = parentRect.right() - start.right() < start.left() - parentRect.left()
+			? QRectF(QPointF(parentRect.right(), start.top()), size)
+			: QRectF(QPointF(parentRect.left() - size.width(), start.top()), size);
 
 		animation->setStartValue(start);
 		animation->setEndValue(finish);
