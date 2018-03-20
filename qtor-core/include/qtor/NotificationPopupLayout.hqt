@@ -19,9 +19,12 @@ namespace QtTools::NotificationSystem
 	class AbstractNotificationPopupWidget;
 
 
-	class NotificationLayout : public QObject
+	/// This class controls and lays out popup widgets in a stack,
+	/// sort of like some applications show popups via system tray.
+	/// Popups can be laid out on desktop or in some widget.
+	class NotificationPopupLayout : public QObject
 	{
-		Q_OBJECT
+		Q_OBJECT;
 
 	protected:
 		using GetPointPtr = QPoint(QRect::*)() const;
@@ -31,7 +34,7 @@ namespace QtTools::NotificationSystem
 		struct Item
 		{
 			QPointer<const Notification> notification;
-			QPointer<AbstractNotificationPopupWidget> widget;
+			QPointer<AbstractNotificationPopupWidget> popup;
 			QPointer<QAbstractAnimation> moveOutAnimation;
 			QPointer<QPropertyAnimation> slideAnimation;
 
@@ -44,7 +47,7 @@ namespace QtTools::NotificationSystem
 		};
 
 	public:
-		using CreatePopupFunction = std::function<AbstractNotificationPopupWidget *(const Notification & n, const NotificationLayout & that)>;
+		using CreatePopupFunction = std::function<AbstractNotificationPopupWidget *(const Notification & n, const NotificationPopupLayout & that)>;
 
 	protected:
 		static constexpr unsigned ms_spacing = 2;
@@ -52,23 +55,27 @@ namespace QtTools::NotificationSystem
 
 	protected:		
 		CreatePopupFunction m_createPopup = ms_defaultCreatePopup;
-
+		/// NotificationCenter we are belonging
 		NotificationCenter * m_ncenter = nullptr;
+		/// our parent widget, or desktop if null
 		QPointer<QWidget> m_parent;
+		/// our parent widget geometry where popups are liad out
 		QRect m_geometry;
+		/// rect corner where popups are liad out
 		Qt::Corner m_corner = Qt::BottomRightCorner;
+		/// popups simultaneous limit
 		unsigned m_widgetsLimit = 5;
 
 		// some format parameters
-		
 		QColor m_errorColor; // red    with 200 alpha
 		QColor m_warnColor;  // yellow with 200 alpha
-		QColor m_infoColor;  // silvmer with 200 alpha
+		QColor m_infoColor;  // silver with 200 alpha
 
 		std::chrono::milliseconds m_errorTimeout = {}; // no timeout
 		std::chrono::milliseconds m_warnTimeout = std::chrono::seconds(10);
 		std::chrono::milliseconds m_infoTimeout = std::chrono::seconds(5);
 
+		// popup items
 		std::vector<Item> m_items;
 		
 		bool m_relayoutScheduled = false;
@@ -78,41 +85,57 @@ namespace QtTools::NotificationSystem
 		void InitColors();
 
 	protected:
+		/// translates corner into QRect corner points and y coordinate increment sign:
+		///  Qt::TopLeftCorner     -> &QRect::topLeft,     &QRect::moveTopLeft,     +1
+		///  ...
+		///  Qt::BottomRightCorner -> &QRect::bottomRight, &QRect::moveBottomRight, -1
+		///  
+		/// Using those one can work with QRect without branching in respect of given corner
 		static auto  DescribeCorner(Qt::Corner corner) -> std::tuple<GetPointPtr, MovePointPtr, int>;
+		/// Aligns rect into parent by corner.
 		static QRect AlignRect(QRect rect, const QRect & parent, Qt::Corner corner);
+		/// calculates default layout rectangle(SetGeometry was not called, or called with invalid rect)
 		static QRect DefaultLayoutRect(const QRect & parent, Qt::Corner corner);
 
 	protected:
+		/// returns parent geometry or desktop available geometry
 		virtual QRect ParentGeometry() const;
+		/// calculates rect where popups should be placed based on m_geometry and parent geometry
 		virtual QRect CalculateLayoutRect() const;
+		/// Makes popup via m_createPopup and does some additional internal configuration like,
+		/// setting parent, installing event filter, etc
 		virtual auto MakePopup(const Notification * notification) const -> AbstractNotificationPopupWidget *;
-		virtual void SlideWidget(Item & item, const QRect & hgeom, const QRect & lgeom) const;
+		/// starts or adjusts slide popup animation
+		virtual void SlidePopup(Item & item, const QRect & hgeom, const QRect & lgeom) const;
+		/// starts(if not already) or schedules(it animation can not be started immediately)
+		/// move out animation(animation itself provided by popup)
+		virtual void MoveOutPopup(Item & item);
 
 	protected:
+		/// handles mouse right click - move out popup
 		virtual bool eventFilter(QObject * watched, QEvent * event) override;
 
 	protected:
 		Q_INVOKABLE void ScheduleUpdate();
 		Q_INVOKABLE void DoScheduledUpdate();
 
+		/// handles notification popup closure
+		Q_SLOT virtual void NotificationPopupClosed();
+
 		virtual void Update();
-		virtual void Relayout();
-		virtual void NotificationClosed();
+		virtual void Relayout();		
 		virtual void ClearAnimatedWidgets();
 
 	public:
 		/// default popup creation, can be overridden via inheritance, it's called by default CreatePopupFunction.
-		/// Note that function can be replaced to completely different one, which does not call those methods at all.
+		/// Note that function can be replaced to completely different one, which does not call those methods at all.		
 		virtual auto CreatePopup(const Notification & notification) const -> AbstractNotificationPopupWidget *;
+		/// Called by CreatePopup method, customizes popup by GetColors()
 		virtual void CustomizePopup(const Notification & notification, AbstractNotificationPopupWidget * popup) const;
+		/// Called by CreatePopup method, configurates expiration timeouts on popup
 		virtual void ConfigureExpiration(const Notification & notification, AbstractNotificationPopupWidget * popup) const;
 
 	public:
-		virtual void AddNotification(QPointer<const Notification> notification);
-		virtual auto NotificationsCount() const -> unsigned;
-		virtual auto NotificationAt(unsigned index) -> QPointer<const Notification>;
-		virtual auto TakeNotification(unsigned index) -> QPointer<const Notification>;
-
 		void SetParent(QWidget * widget);
 		auto GetParent() const { return m_parent; }
 
@@ -139,15 +162,21 @@ namespace QtTools::NotificationSystem
 		void SetCreatePopupFunction(CreatePopupFunction func);
 		auto GetCreatePopupFunction() const { return m_createPopup; }
 
+	public:
 		virtual void Init(NotificationCenter & center);
+
+	public:
+		virtual void AddPopup(AbstractNotificationPopupWidget * popup);
+		virtual void AddNotification(QPointer<const Notification> notification);
+		virtual auto NotificationsCount() const -> unsigned;
 
 	Q_SIGNALS:
 		void LinkActivated(QString href) const;
 		void LinkHovered(QString href) const;
 
 	public:
-		NotificationLayout(QObject * parent = nullptr);
-		NotificationLayout(NotificationCenter & center, QObject * parent = nullptr);
-		virtual ~NotificationLayout();
+		NotificationPopupLayout(QObject * parent = nullptr);
+		NotificationPopupLayout(NotificationCenter & center, QObject * parent = nullptr);
+		virtual ~NotificationPopupLayout();
 	};
 }

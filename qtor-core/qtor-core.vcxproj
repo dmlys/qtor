@@ -55,8 +55,8 @@
     <ClCompile Include="src\MainWindow.cpp" />
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\Application.cpp" />
-    <ClCompile Include="src\NotificationLayout.cpp" />
-    <ClCompile Include="src\NotificationLayoutExt.cpp" />
+    <ClCompile Include="src\NotificationPopupLayout.cpp" />
+    <ClCompile Include="src\NotificationPopupLayoutExt.cpp" />
     <ClCompile Include="src\NotificationPopupWidget.cpp" />
     <ClCompile Include="src\NotificationSystem.cpp" />
     <ClCompile Include="src\NotificationView.cpp" />
@@ -75,8 +75,8 @@
     <QtMOCCompile Include="include\qtor\formatter.hqt" />
     <QtMOCCompile Include="include\qtor\MainWindow.hqt" />
     <QtMOCCompile Include="include\qtor\Application.hqt" />
-    <QtMOCCompile Include="include\qtor\NotificationLayout.hqt" />
-    <QtMOCCompile Include="include\qtor\NotificationLayoutExt.hqt" />
+    <QtMOCCompile Include="include\qtor\NotificationPopupLayout.hqt" />
+    <QtMOCCompile Include="include\qtor\NotificationPopupLayoutExt.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationPopupWidget.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationSystem.hqt" />
     <QtMOCCompile Include="include\qtor\NotificationSystemExt.hqt" />

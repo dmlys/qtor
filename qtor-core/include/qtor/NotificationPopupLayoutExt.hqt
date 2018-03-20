@@ -4,7 +4,7 @@
 #include <QtWidgets/QBoxLayout>
 
 #include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationLayout.hqt>
+#include <qtor/NotificationPopupLayout.hqt>
 #include <qtor/NotificationPopupWidget.hqt>
 
 namespace QtTools::NotificationSystem
@@ -34,7 +34,7 @@ namespace QtTools::NotificationSystem
 	{
 		Q_OBJECT;
 
-	protected:
+	public:
 		QPointer<const Notification> m_notification;
 
 		QLabel * m_title;
@@ -42,7 +42,7 @@ namespace QtTools::NotificationSystem
 		QLabel * m_text;
 
 	public:
-		NotificationPopupWidget(const Notification & notification, QWidget * parent = nullptr);
+		NotificationPopupWidget(const Notification & notification, QWidget * parent = nullptr, Qt::WindowFlags flags = Qt::ToolTip);
 
 	protected:
 		void setupUi();

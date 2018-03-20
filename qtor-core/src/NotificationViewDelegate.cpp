@@ -53,12 +53,12 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
-	void NotificationViewDelegate::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item)
+	void NotificationViewDelegate::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item) const
 	{
 		QPaintDevice * device = const_cast<QWidget *>(item.option->widget);
 
 		textDoc.setDefaultTextOption(QtTools::Delegates::TextLayout::PrepareTextOption(*item.option));
-		textDoc.setDocumentMargin(0); // be default it's == 4
+		textDoc.setDocumentMargin(0); // by default it's == 4
 		textDoc.setDefaultFont(item.textFont);
 		textDoc.documentLayout()->setPaintDevice(device);
 		SetText(textDoc, item.textFormat, item.text);		

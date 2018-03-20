@@ -81,8 +81,8 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		static QMargins TextMargins(const QStyleOptionViewItem & option);
-		static void PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item);
-
+		
+		virtual void PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item) const;
 		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
 		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
 		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;

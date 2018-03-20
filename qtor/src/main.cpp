@@ -36,7 +36,7 @@
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationSystemExt.hqt>
 #include <qtor/NotificationView.hqt>
-#include <qtor/NotificationLayout.hqt>
+#include <qtor/NotificationPopupLayout.hqt>
 
 
 //class http_method
@@ -137,11 +137,6 @@ int main(int argc, char * argv[])
 
 	std::cout << QtTools::ScreenInfo << endl;
 
-	QVariant var = QColor("red");
-	QBrush br = qvariant_cast<QBrush>(var);
-
-	assert(br != Qt::NoBrush);
-
 //#ifdef Q_OS_WIN
 //	// On windows the highlighted colors for inactive widgets are the
 //	// same as non highlighted colors.This is a regression from Qt 4.
@@ -166,7 +161,13 @@ int main(int argc, char * argv[])
 	//
 	//QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	auto ttt = R"(Your options Are:
+	auto ttt = R"(
+<style type="text/css">
+   ol, ul {
+     margin: 0 0 0 20
+   }
+</style>
+Your options Are:
 <ol>
 <li>opt 1
 <li>opt 2
@@ -180,22 +181,23 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	using namespace QtTools::NotificationSystem;
 
 	QtTools::NotificationSystem::NotificationCenter nsys;
-	QtTools::NotificationSystem::NotificationLayout layout;
+	QtTools::NotificationSystem::NotificationPopupLayout layout;
 	QtTools::NotificationSystem::NotificationView view;
 	
 	layout.Init(nsys);
-	//layout.SetCorner(Qt::TopRightCorner);
+	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
+	layout.SetCorner(Qt::TopRightCorner);
 
 	view.Init(nsys);
 	view.show();
 
-	nsys.AddInfo("Title", "Text1");
-	nsys.AddInfo("Title", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddInfo("Title", ttt, Qt::RichText);
-	nsys.AddError("Title", QtTools::ToQString(errmsg));
-	nsys.AddWarning("Title", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title1", "Text1");
+	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+	nsys.AddInfo("Title3", ttt, Qt::RichText);
+	nsys.AddError("Title4", QtTools::ToQString(errmsg));
+	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
 
 	auto nf = nsys.CreateNotification();
 	nf->Title("Custom");

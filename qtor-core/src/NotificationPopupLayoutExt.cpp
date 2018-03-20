@@ -3,13 +3,13 @@
 #include <QtWidgets/QBoxLayout>
 
 #include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationLayout.hqt>
-#include <qtor/NotificationLayoutExt.hqt>
+#include <qtor/NotificationPopupLayout.hqt>
+#include <qtor/NotificationPopupLayoutExt.hqt>
 
 namespace QtTools::NotificationSystem
 {
-	NotificationPopupWidget::NotificationPopupWidget(const Notification & notification, QWidget * parent /* = nullptr */)
-		: AbstractNotificationPopupWidget(parent, Qt::ToolTip)
+	NotificationPopupWidget::NotificationPopupWidget(const Notification & notification, QWidget * parent /* = nullptr */, Qt::WindowFlags flags /* = */)
+		: AbstractNotificationPopupWidget(parent, flags)
 	{
 		m_notification = &notification;
 		setupUi();
@@ -53,7 +53,6 @@ namespace QtTools::NotificationSystem
 
 		m_text->setTextFormat(tfmt);
 		m_text->setText(text);
-
 
 		QHBoxLayout * titleLayout = new QHBoxLayout;
 		titleLayout->addWidget(m_title, 1);
