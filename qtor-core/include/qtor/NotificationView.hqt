@@ -52,13 +52,11 @@ namespace QtTools::NotificationSystem
 		/// Joins clipboard text from items and sets it into clipboard
 		virtual void CopySelectedIntoClipboard();
 
-		/// creates context menu for an item with idx,
-		/// if idx is not valid, common menu was requested
-		virtual QMenu * CreateItemMenu(const QModelIndex & idx);
-		/// basic menu handler
-		virtual void contextMenuEvent(QContextMenuEvent * ev) override;
-		// to change ListView clipboard handling
-		virtual bool eventFilter(QObject * watched, QEvent * event) override;
+		///// creates context menu for an item with idx,
+		///// if idx is not valid, common menu was requested
+		//virtual QMenu * CreateItemMenu(const QModelIndex & idx);
+		///// basic menu handler
+		//virtual void contextMenuEvent(QContextMenuEvent * ev) override;
 
 	protected:
 		virtual void ConnectModel();
@@ -99,9 +97,10 @@ namespace QtTools::NotificationSystem
 		Q_DISABLE_COPY(NotificationView);
 
 	protected:
-		virtual void setupUi();
-		virtual void retranslateUi();
-		virtual void connectSignals();
+		void setupUi();
+		void setupActions();
+		void retranslateUi();
+		void connectSignals();
 	};
 
 

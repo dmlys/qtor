@@ -9,7 +9,7 @@ namespace qtor
 {
 	const sparse_container::any_type sparse_container::ms_empty;
 
-	bool sparse_container_comparator::operator()(const sparse_container & c1, const sparse_container & c2) const noexcept
+	bool sparse_container_comparator::operator()(const sparse_container & c1, const sparse_container & c2) const
 	{
 		const auto & v1 = c1.get_item(m_key);
 		const auto & v2 = c2.get_item(m_key);
@@ -171,7 +171,7 @@ namespace qtor
 		);
 	}
 
-	bool sparse_container_filter::matches(const sparse_container & c) const noexcept
+	bool sparse_container_filter::matches(const sparse_container & c) const
 	{
 		bool result = true;
 
@@ -184,7 +184,7 @@ namespace qtor
 		return false;
 	}
 
-	bool sparse_container_filter::matches(const sparse_container::any_type & val) const noexcept
+	bool sparse_container_filter::matches(const sparse_container::any_type & val) const
 	{
 		auto * str = any_cast<string_type>(&val);
 		return str and icontains(*str, m_filter);

@@ -476,4 +476,9 @@ namespace qtor
 		Draw(painter, m_cachedItem);
 		painter->restore();
 	}
+
+	bool TorrentListDelegate::helpEvent(QHelpEvent * event, QAbstractItemView * view, const QStyleOptionViewItem & option, const QModelIndex & index)
+	{
+		return false;
+	}
 }

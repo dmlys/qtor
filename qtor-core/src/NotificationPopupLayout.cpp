@@ -10,7 +10,6 @@
 #include <QtWidgets/QDesktopWidget>
 
 #include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationSystemExt.hqt>
 #include <qtor/NotificationPopupLayout.hqt>
 #include <qtor/NotificationPopupLayoutExt.hqt>
 

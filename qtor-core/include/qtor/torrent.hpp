@@ -6,7 +6,6 @@
 #include <qtor/sparse_container.hpp>
 
 #include <QtTools/ToolsBase.hpp>
-#include <QtCore/QMetaType>
 
 namespace qtor
 {
@@ -111,20 +110,20 @@ namespace qtor
 #define QTOR_TORRENT_DEFINE_ENUM(AO, ID, NAME, A3, TYPE) ID,
 
 #define QTOR_TORRENT_DEFINE_PROPERTY(AO, ID, NAME, A3, TYPE)                                                                   \
-	auto NAME(TYPE val)        -> self_type &            { return static_cast<self_type &>(set_item(ID, std::move(val))); }    \
-	auto NAME() const noexcept -> optional<TYPE>         { return get_item<TYPE>(ID); }                                        \
-	/*auto NAME() noexcept       -> optional<TYPE &>       { return get_item<TYPE>(ID); }  */                                  \
-	                                                                                                                           \
-	template <class Type>                                                                                                      \
-	std::enable_if_t<std::is_convertible_v<std::decay_t<Type>, TYPE>, self_type &>                                             \
-	NAME(optional<Type> val)                                                                                                   \
-	{                                                                                                                          \
-		return static_cast<self_type &>(set_item(ID, std::move(val)));                                                         \
-	}                                                                                                                          \
+	auto NAME(TYPE val) -> self_type &     { return static_cast<self_type &>(set_item(ID, std::move(val))); }    \
+	auto NAME() const   -> optional<TYPE>  { return get_item<TYPE>(ID); }                                        \
+	/*auto NAME()         -> optional<TYPE &>       { return get_item<TYPE>(ID); }  */                           \
+	                                                                                                             \
+	template <class Type>                                                                                        \
+	std::enable_if_t<std::is_convertible_v<std::decay_t<Type>, TYPE>, self_type &>                               \
+	NAME(optional<Type> val)                                                                                     \
+	{                                                                                                            \
+		return static_cast<self_type &>(set_item(ID, std::move(val)));                                           \
+	}                                                                                                            \
 
 
 
-	class torrent;
+	class  torrent;
 	struct torrent_file;
 	struct torrent_peer;
 

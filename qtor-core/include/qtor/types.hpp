@@ -22,6 +22,7 @@ namespace qtor
 		//typedef std::string    string_type;
 		typedef QString        string_type;
 		typedef std::uint64_t  uint64_type;
+		typedef std::int64_t   int64_type;
 		typedef int            int_type;
 		typedef unsigned int   uint_type;
 		typedef uint64_type    speed_type;

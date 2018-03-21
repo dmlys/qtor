@@ -32,9 +32,8 @@
 #include <qtor/Application.hqt>
 #include <TransmissionRemoteApp.hqt>
 
-
+#include <ScreenInfo.hpp>
 #include <qtor/NotificationSystem.hqt>
-#include <qtor/NotificationSystemExt.hqt>
 #include <qtor/NotificationView.hqt>
 #include <qtor/NotificationPopupLayout.hqt>
 
@@ -113,11 +112,6 @@
 //	}
 //}
 
-#include <ScreenInfo.hpp>
-
-#include <QtCore/QMetaObject>
-#include <QtCore/QMetaMethod>
-
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -147,11 +141,11 @@ int main(int argc, char * argv[])
 	qapp.setPalette(palette);
 #endif
 
-	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	//source->set_address("bin/data.db"s);
+	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	source->set_address("bin/data.db"s);
 
-	auto source = std::make_shared<qtor::transmission::data_source>();
-	source->set_address("http://melkiy:9091/transmission/rpc"s);
+	//auto source = std::make_shared<qtor::transmission::data_source>();
+	//source->set_address("http://melkiy:9091/transmission/rpc"s);
 	
 	qtor::TransmissionRemoteApp app {std::move(source)};
 	qtor::MainWindow mainWindow;
@@ -180,10 +174,16 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	
 	using namespace QtTools::NotificationSystem;
 
-	QtTools::NotificationSystem::NotificationCenter nsys;
-	QtTools::NotificationSystem::NotificationPopupLayout layout;
-	QtTools::NotificationSystem::NotificationView view;
+	NotificationCenter nsys;
+	NotificationPopupLayout layout;
+	NotificationView view;
 	
+	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered,
+	                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
+
+	QObject::connect(&view, &NotificationView::LinkHovered,
+	                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
+
 	layout.Init(nsys);
 	layout.SetParent(&mainWindow);
 	layout.SetCorner(Qt::TopRightCorner);

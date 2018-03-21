@@ -74,11 +74,13 @@ namespace qtor
 		void OnFilterChanged();		
 
 	protected:
-		void OnSortingChanged(int column, Qt::SortOrder order);
+		virtual void OnSortingChanged(int column, Qt::SortOrder order);
 		/// creates menu for sorting items in a view
-		QMenu * CreateSortMenu();
+		virtual QMenu * CreateSortMenu();
 
 	protected:
+		/// Joins clipboard text from items and sets it into clipboard
+		virtual void CopySelectedIntoClipboard();
 		/// creates context menu for an item with idx,
 		/// if idx is not valid, common menu was requested
 		virtual QMenu * CreateItemMenu(const QModelIndex & idx);
@@ -141,8 +143,8 @@ namespace qtor
 		~TorrentsView();
 
 	protected:
-		virtual void setupUi();
-		virtual void retranslateUi();
-		virtual void connectSignals();
+		void setupUi();
+		void retranslateUi();
+		void connectSignals();
 	};
 }

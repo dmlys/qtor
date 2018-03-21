@@ -25,19 +25,19 @@ namespace qtor
 		static const any_type ms_empty;
 
 	public:
-		const auto & items() const noexcept { return m_items; }
+		const auto & items() const { return m_items; }
 
-		void remove_item(index_type key) noexcept;
+		void remove_item(index_type key);
 		
 		auto set_item(index_type key, any_type val)  -> sparse_container &;
 		template <class Type> auto set_item(index_type key, Type val)           -> sparse_container &;
 		template <class Type> auto set_item(index_type key, optional<Type> val) -> sparse_container &;
 		
-		auto get_item(index_type key) noexcept       -> any_type &;
-		auto get_item(index_type key) const noexcept -> const any_type &;
+		auto get_item(index_type key)       ->       any_type &;
+		auto get_item(index_type key) const -> const any_type &;
 
-		//template <class Type> optional<Type &>       get_item(index_type key) noexcept;
-		template <class Type> optional<Type> get_item(index_type key) const noexcept;
+		//template <class Type> optional<Type &>       get_item(index_type key);
+		template <class Type> optional<Type> get_item(index_type key) const;
 	};
 
 
@@ -85,7 +85,7 @@ namespace qtor
 		bool m_ascending = true;
 
 	public:
-		bool operator()(const sparse_container & c1, const sparse_container & c2) const noexcept;
+		bool operator()(const sparse_container & c1, const sparse_container & c2) const;
 
 		sparse_container_comparator() = default;
 		sparse_container_comparator(sparse_container::index_type key, bool ascending)
@@ -111,11 +111,11 @@ namespace qtor
 		viewed::refilter_type set_expr(string_type search);
 		viewed::refilter_type set_expr(string_type search, index_array items);
 
-		bool matches(const sparse_container & c) const noexcept;
-		bool matches(const sparse_container::any_type & val) const noexcept;
+		bool matches(const sparse_container & c) const;
+		bool matches(const sparse_container::any_type & val) const;
 		bool always_matches() const noexcept;
 
-		bool operator()(const sparse_container & c) const noexcept { return matches(c); }
+		bool operator()(const sparse_container & c) const { return matches(c); }
 		explicit operator bool() const noexcept { return not always_matches(); }
 	};
 
@@ -124,7 +124,7 @@ namespace qtor
 	/************************************************************************/
 	/*                   inline and template methods                        */
 	/************************************************************************/
-	inline void sparse_container::remove_item(index_type key) noexcept
+	inline void sparse_container::remove_item(index_type key)
 	{
 		m_items.erase(key);
 	}
@@ -153,12 +153,12 @@ namespace qtor
 		return *this;
 	}
 
-	inline auto sparse_container::get_item(index_type key) noexcept -> any_type &
+	inline auto sparse_container::get_item(index_type key) -> any_type &
 	{
 		return m_items[key];
 	}
 
-	inline auto sparse_container::get_item(index_type key) const noexcept -> const any_type &
+	inline auto sparse_container::get_item(index_type key) const -> const any_type &
 	{
 		auto it = m_items.find(key);
 		if (it == m_items.end()) return ms_empty;
@@ -166,7 +166,7 @@ namespace qtor
 	}
 
 	//template <class Type>
-	//optional<Type &> sparse_container::get_item(index_type key) noexcept
+	//optional<Type &> sparse_container::get_item(index_type key)
 	//{
 	//	auto it = m_items.find(key);
 	//	if (it == m_items.end()) return nullopt;
@@ -179,7 +179,7 @@ namespace qtor
 	//}
 
 	template <class Type>
-	optional<Type> sparse_container::get_item(index_type key) const noexcept
+	optional<Type> sparse_container::get_item(index_type key) const
 	{
 		auto it = m_items.find(key);
 		if (it == m_items.end()) return nullopt;

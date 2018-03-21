@@ -276,9 +276,14 @@ namespace QtTools::NotificationSystem
 		return false;
 	}
 
+	bool NotificationViewDelegate::helpEvent(QHelpEvent * event, QAbstractItemView * view, const QStyleOptionViewItem & option, const QModelIndex & index)
+	{
+		return false;
+	}
+
 	void NotificationViewDelegate::LinkActivated(QString href, const QStyleOptionViewItem & option) const
 	{
-		auto * view = dynamic_cast<const NotificationView *>(option.widget);
+		auto * view = dynamic_cast<const NotificationView *>(parent());
 		if (not view) return;
 		
 		Q_EMIT view->LinkActivated(std::move(href));
@@ -292,7 +297,7 @@ namespace QtTools::NotificationSystem
 		else
 			listView->viewport()->setCursor(Qt::PointingHandCursor);
 
-		auto * view = dynamic_cast<const NotificationView *>(option.widget);
+		auto * view = dynamic_cast<const NotificationView *>(parent());
 		if (not view) return;
 
 		Q_EMIT view->LinkHovered(std::move(href));

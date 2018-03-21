@@ -186,6 +186,18 @@ namespace qtor
 		QApplication::restoreOverrideCursor();
 	}
 
+	void TorrentsView::CopySelectedIntoClipboard()
+	{
+		auto indexes = m_listView->selectionModel()->selectedRows();
+		auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_listDelegate->GetText(idx); });
+
+		QString text;
+		auto sep = "\n" + QString(80, '-') + "\n";
+		ext::join_into(texts, sep, text);
+
+		qApp->clipboard()->setText(text);
+	}
+
 	QMenu * TorrentsView::CreateItemMenu(const QModelIndex & idx)
 	{
 		QAction * action;
@@ -314,14 +326,7 @@ namespace qtor
 			auto * keyEvent = static_cast<QKeyEvent *>(event);
 			if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
 			{
-				auto indexes = m_listView->selectionModel()->selectedIndexes();
-				auto texts = indexes | boost::adaptors::transformed([this](auto & idx) { return m_listDelegate->GetText(idx); });
-
-				QString text;
-				auto sep = "\n" + QString(80, '-') + "\n";
-				ext::join_into(texts, sep, text);
-
-				qApp->clipboard()->setText(text);
+				CopySelectedIntoClipboard();
 				return true;
 			}
 		}

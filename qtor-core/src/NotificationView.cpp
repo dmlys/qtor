@@ -69,52 +69,33 @@ namespace QtTools::NotificationSystem
 		qApp->clipboard()->setMimeData(mime);
 	}
 
-	QMenu * NotificationView::CreateItemMenu(const QModelIndex & idx)
-	{
-		if (not idx.isValid()) return nullptr;
+	//QMenu * NotificationView::CreateItemMenu(const QModelIndex & idx)
+	//{
+	//	if (not idx.isValid()) return nullptr;
 
-		QAction * action;
-		auto * menu = new QMenu(this);
-		connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater); // auto delete on hide
+	//	auto * menu = new QMenu(this);
+	//	connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater); // auto delete on hide
 
-		action = new QAction(tr("&Copy"), menu);
-		connect(action, &QAction::triggered, this, &NotificationView::CopySelectedIntoClipboard);
-		menu->addAction(action);
+	//	menu->addActions(actions());
+	//	return menu;
+	//}
 
-		return menu;
-	}
+	//void NotificationView::contextMenuEvent(QContextMenuEvent * ev)
+	//{
+	//	ev->accept();
+	//	auto pos = ev->globalPos();
 
-	void NotificationView::contextMenuEvent(QContextMenuEvent * ev)
-	{
-		ev->accept();
-		auto pos = ev->globalPos();
+	//	auto * viewport = m_listView->viewport();
+	//	auto viewPos = viewport->mapFromGlobal(pos);
 
-		auto * viewport = m_listView->viewport();
-		auto viewPos = viewport->mapFromGlobal(pos);
+	//	// process only menu from QListView
+	//	if (not viewport->contentsRect().contains(viewPos))
+	//		return;
 
-		// process only menu from QListView
-		if (not viewport->contentsRect().contains(viewPos))
-			return;
-
-		auto idx = m_listView->indexAt(viewPos);
-		auto * menu = CreateItemMenu(idx);
-		if (menu) menu->popup(pos);
-	}
-
-	bool NotificationView::eventFilter(QObject * watched, QEvent * event)
-	{
-		if (event->type() == QEvent::KeyPress)
-		{
-			auto * keyEvent = static_cast<QKeyEvent *>(event);
-			if (keyEvent->matches(QKeySequence::Copy) and m_listView == watched)
-			{
-				CopySelectedIntoClipboard();
-				return true;
-			}
-		}
-
-		return false;
-	}
+	//	auto idx = m_listView->indexAt(viewPos);
+	//	auto * menu = CreateItemMenu(idx);
+	//	if (menu) menu->popup(pos);
+	//}
 
 	/************************************************************************/
 	/*                    Init Methods                                      */
@@ -166,6 +147,7 @@ namespace QtTools::NotificationSystem
 	{
 		setupUi();
 		connectSignals();
+		setupActions();
 		retranslateUi();
 	}
 
@@ -201,11 +183,22 @@ namespace QtTools::NotificationSystem
 		m_listView->setMouseTracking(true);
 
 		m_listDelegate = new NotificationViewDelegate(this);
-		m_listView->setItemDelegate(m_listDelegate);
-		m_listView->installEventFilter(this);
+		m_listView->setItemDelegate(m_listDelegate);		
 
 		m_verticalLayout->addWidget(m_rowFilter);
 		m_verticalLayout->addWidget(m_listView);
+	}
+
+	void NotificationView::setupActions()
+	{
+		for (auto * action : actions()) removeAction(action);
+
+		auto * copyAction = new QAction(tr("&Copy"), this);
+		copyAction->setShortcut(QKeySequence::Copy);
+		connect(copyAction, &QAction::triggered, this, &NotificationView::CopySelectedIntoClipboard);
+
+		addAction(copyAction);
+		setContextMenuPolicy(Qt::ActionsContextMenu);
 	}
 
 	void NotificationView::retranslateUi()
