@@ -121,6 +121,7 @@ namespace QtTools::NotificationSystem
 
 		/// handles notification popup closure
 		Q_SLOT virtual void NotificationPopupClosed();
+		Q_SLOT virtual void ParentResized();
 
 		virtual void Update();
 		virtual void Relayout();		

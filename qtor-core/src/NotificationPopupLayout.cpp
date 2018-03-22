@@ -5,7 +5,9 @@
 #include <QtCore/QTimer>
 #include <QtCore/QMetaObject>
 #include <QtCore/QMetaMethod>
+#include <QtGui/QScreen>
 #include <QtGui/QMouseEvent>
+#include <QtGui/QResizeEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
 
@@ -127,8 +129,9 @@ namespace QtTools::NotificationSystem
 
 	void NotificationPopupLayout::DoScheduledUpdate()
 	{
+		Update();
 		m_relayoutScheduled = false;
-		Relayout();
+		m_relocation = false;
 	}
 
 	auto NotificationPopupLayout::DescribeCorner(Qt::Corner corner) -> std::tuple<GetPointPtr, MovePointPtr, int>
@@ -326,10 +329,13 @@ namespace QtTools::NotificationSystem
 		auto * animation = item.slideAnimation.data();
 		if (animation)
 		{
-			animation->pause();
-			animation->setStartValue(hgeom);
-			animation->setEndValue(lgeom);
-			animation->resume();
+			if (animation->state() == animation->Running)
+			{
+				animation->pause();
+				animation->setStartValue(hgeom);
+				animation->setEndValue(lgeom);
+				animation->resume();
+			}			
 		}
 		else
 		{
@@ -363,10 +369,7 @@ namespace QtTools::NotificationSystem
 	void NotificationPopupLayout::Update()
 	{
 		if (m_relocation)
-		{
-			m_relocation = false;
 			ClearAnimatedWidgets();
-		}
 
 		Relayout();
 	}
@@ -474,11 +477,24 @@ namespace QtTools::NotificationSystem
 		auto first = m_items.begin();
 		auto last = m_items.end();
 		first = std::remove_if(first, last, [](auto & item) { return item.moveOutAnimation; });
-		m_items.erase(first, last);		
+		m_items.erase(first, last);
+	}
+
+	void NotificationPopupLayout::ParentResized()
+	{
+		m_relocation = true;
+		ScheduleUpdate();
 	}
 
 	bool NotificationPopupLayout::eventFilter(QObject * watched, QEvent * event)
 	{
+		if (event->type() == QEvent::Resize)
+		{
+			auto * rev = static_cast<QResizeEvent *>(event);
+			ParentResized();
+			return false;
+		}
+
 		if (event->type() != QEvent::MouseButtonPress)
 			return false;
 
@@ -501,13 +517,33 @@ namespace QtTools::NotificationSystem
 
 	void NotificationPopupLayout::SetParent(QWidget * widget)
 	{
+		if (m_parent)
+			m_parent->removeEventFilter(this);
+		else
+		{
+			for (auto * screen : qApp->screens())
+				screen->disconnect(this);
+		}
+
 		m_parent = widget;
+		m_relocation = true;
+
+		if (m_parent)
+			m_parent->installEventFilter(this);
+		else
+		{
+			QScreen * screen = qApp->primaryScreen();
+			connect(screen, &QScreen::availableGeometryChanged,
+			        this, &NotificationPopupLayout::ParentResized);
+		}
+
 		ScheduleUpdate();
 	}
 
 	void NotificationPopupLayout::SetGeometry(const QRect & geom)
 	{
 		m_geometry = geom;
+		m_relocation = true;
 		ScheduleUpdate();
 	}
 

@@ -228,7 +228,7 @@ namespace transmission
 			// TR_STATUS_SEED = 6  /* Seeding */
 			case 6: status = torrent_status::seeding; break;
 			
-			default: return;
+			default: status = torrent_status::unknown; break;
 		}
 		
 		t.status(status);

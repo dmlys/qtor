@@ -26,7 +26,7 @@ namespace qtor
 
 	QString TorrentListDelegate::TittleText(const torrent & tor, const formatter * fmt) const
 	{
-		return ToQString(tor.name().value_or(tor.ms_emptystr));
+		return ToQString(tor.name());
 	}
 
 	QString TorrentListDelegate::ProgressText(const torrent & tor, const formatter * fmt) const
@@ -124,7 +124,7 @@ namespace qtor
 
 	QString TorrentListDelegate::StatusText(const torrent & tor, const formatter * fmt) const
 	{
-		const auto status = tor.status().value_or(torrent_status::unknown);
+		const auto status = tor.status();
 		const auto error_string = tor.error_string().value_or(torrent::ms_emptystr);
 
 		if (not error_string.isEmpty())
@@ -314,7 +314,7 @@ namespace qtor
 		const QStyleOptionViewItem & option = *item.option;
 		auto * style = item.option->widget->style();
 
-		const auto status = item.tor->status().value_or(torrent_status::unknown);
+		const auto status = item.tor->status();
 		const bool paused = status == torrent_status::stopped or status == torrent_status::unknown;
 		const auto error_string = item.tor->error_string().value_or(torrent::ms_emptystr);
 		const bool error = status == torrent_status::unknown or not error_string.isEmpty();
@@ -366,7 +366,7 @@ namespace qtor
 	{
 		auto & tor = *item.tor;
 
-		const auto status = tor.status().value();
+		const auto status = tor.status();
 		const bool seeding = status == torrent_status::seeding;
 		const bool downloading = status == torrent_status::downloading;
 
@@ -411,7 +411,7 @@ namespace qtor
 #endif
 
 		auto & tor = *item.tor;
-		const auto status = tor.status().value();
+		const auto status = tor.status();
 		const bool seeding = status == torrent_status::seeding;
 		const bool downloading = status == torrent_status::downloading;
 		const bool paused = status == torrent_status::stopped;
