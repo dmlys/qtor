@@ -133,14 +133,13 @@ namespace qtor
 	};
 
 
-	template <class formatter = qtor::formatter>
 	class simple_sparse_container_meta : public virtual sparse_container_model_meta
 	{
 		using base_type = sparse_container_model_meta;
 		using self_type = simple_sparse_container_meta;
 
 	public:
-		using formatter_type = formatter;
+		using formatter_type = qtor::formatter;
 		using format_method  = QString(formatter_type::*)(const any_type &) const;
 
 		struct item
@@ -173,59 +172,4 @@ namespace qtor
 
 		virtual ~simple_sparse_container_meta() = default;
 	};
-
-	template <class formatter>
-	auto simple_sparse_container_meta<formatter>::items_count() const noexcept -> index_type
-	{
-		return static_cast<index_type>(m_items->size());
-	}
-
-	template <class formatter>
-	unsigned simple_sparse_container_meta<formatter>::item_type(index_type key) const noexcept
-	{
-		auto it = m_items->find(key);
-		if (it == m_items->end())
-			return Unknown;
-
-		return it->second.type;
-	}
-
-	template <class formatter>
-	QString simple_sparse_container_meta<formatter>::item_name(index_type key) const
-	{
-		auto it = m_items->find(key);
-		if (it == m_items->end())
-			return QString::null;
-
-		return it->second.name;
-	}
-
-	template <class formatter>
-	QString simple_sparse_container_meta<formatter>::format_item(const sparse_container & cont, index_type key) const
-	{
-		auto it = m_items->find(key);
-		if (it == m_items->end()) 
-			return this->format_nullopt();
-
-		auto method = it->second.method;
-		const auto & val = cont.get_item(key);
-		return (this->*method)(val);
-	}
-
-	template <class formatter>
-	QString simple_sparse_container_meta<formatter>::format_item_short(const sparse_container & cont, index_type key) const
-	{
-		auto it = m_items->find(key);
-		if (it == m_items->end())
-			return this->format_nullopt();
-
-		auto method = it->second.method;
-		const auto & val = cont.get_item(key);
-
-		decltype(method) short_string = &formatter_type::format_short_string;
-		if (method == short_string)
-			return (this->*short_string)(cont.get_item(key));
-
-		return (this->*method)(val);
-	}
 }

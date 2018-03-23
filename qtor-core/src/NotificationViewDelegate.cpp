@@ -86,13 +86,14 @@ namespace QtTools::NotificationSystem
 		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
 		if (model) item.searchStr = model->GetFilter();
 
+		const auto locale = option.widget->locale();
 		const auto & notification = model->GetItem(option.index.row());
 		const auto margins = TextMargins(option);
 		const auto rect = option.rect - margins;
 		const auto topLeft = rect.topLeft();
 
 		item.hintTopLeft = option.rect.topLeft();
-		item.timestamp = notification.Timestamp().toString(Qt::DateFormat::DefaultLocaleShortDate);
+		item.timestamp = locale.toString(notification.Timestamp(), QLocale::ShortFormat);
 		item.title = notification.Title();
 		item.text = notification.Text();
 		item.textFormat = notification.TextFmt();

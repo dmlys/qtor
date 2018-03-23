@@ -69,6 +69,7 @@ namespace qtor
 
 		m_toolBar = new QToolBar(this);
 		m_toolBar->setObjectName("main_toolbar");
+		m_toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
 		m_toolBar->addAction(m_actionOpen);
 		m_toolBar->addAction(m_actionStartAll);
@@ -76,9 +77,6 @@ namespace qtor
 		m_toolBar->addAction(m_actionDelete);
 		m_toolBar->addAction(m_actionPreferences);
 
-		// http://stackoverflow.com/questions/650889/qtoolbar-is-there-a-way-to-make-toolbar-unhidable
-		// make toolbar unhidable
-		//m_toolBar->setContextMenuPolicy(Qt::PreventContextMenu);
 
 		addToolBar(Qt::TopToolBarArea, m_toolBar);
 	}

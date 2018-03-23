@@ -241,7 +241,7 @@ namespace qtor
 	typedef torrent_id_comparator<std::greater<>> torrent_id_greater;
 
 
-	class torrent_meta : public simple_sparse_container_meta<>
+	class torrent_meta : public simple_sparse_container_meta/*<>*/
 	{
 		using self_type = torrent_meta;
 		using base_type = simple_sparse_container_meta;

@@ -43,7 +43,7 @@ namespace QtTools::NotificationSystem
 		m_title->setFont(titleFont);
 
 		auto loc = locale();
-		auto timestamp = loc.toString(m_notification->Timestamp());
+		auto timestamp = loc.toString(m_notification->Timestamp(), QLocale::ShortFormat);
 		auto title = m_notification->Title();
 		auto text = m_notification->Text();
 		auto tfmt = m_notification->TextFmt();

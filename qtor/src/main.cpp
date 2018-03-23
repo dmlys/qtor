@@ -176,7 +176,7 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 
 	NotificationCenter nsys;
 	NotificationPopupLayout layout;
-	//NotificationView view;
+	NotificationView view;
 	
 	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered,
 	                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
@@ -186,11 +186,11 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 
 	layout.Init(nsys);
 	layout.SetParent(&mainWindow);
-	layout.SetCorner(Qt::TopRightCorner);
+	//layout.SetCorner(Qt::TopRightCorner);
 	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
-	//view.Init(nsys);
-	//view.show();
+	view.Init(nsys);
+	view.show();
 
 	nsys.AddInfo("Title1", "Text1");
 	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");

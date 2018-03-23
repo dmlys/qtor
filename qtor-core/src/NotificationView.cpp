@@ -39,7 +39,7 @@ namespace QtTools::NotificationSystem
 	{
 		auto title = n.Title();
 		auto text = n.PlainText();
-		auto timestamp = n.Timestamp().toString(Qt::DateFormat::DefaultLocaleShortDate);
+		auto timestamp = locale().toString(n.Timestamp(), QLocale::ShortFormat);
 
 		return title % "  " % timestamp
 		     % QStringLiteral("\n")
