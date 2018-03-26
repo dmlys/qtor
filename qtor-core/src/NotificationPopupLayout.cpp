@@ -129,7 +129,7 @@ namespace QtTools::NotificationSystem
 
 	void NotificationPopupLayout::DoScheduledUpdate()
 	{
-		Update();
+		Update(m_relocation);
 		m_relayoutScheduled = false;
 		m_relocation = false;
 	}
@@ -357,7 +357,7 @@ namespace QtTools::NotificationSystem
 
 		if (auto * slideAnimation = item.slideAnimation.data())
 		{
-			connect(slideAnimation, &QAbstractAnimation::finished,
+			connect(slideAnimation, &QAbstractAnimation::destroyed,
 			        item.popup.data(), [&item, this] { item.slideAnimation = nullptr; MoveOutPopup(item); });
 			
 			return;
@@ -366,19 +366,30 @@ namespace QtTools::NotificationSystem
 		item.moveOutAnimation = item.popup->MoveOutAndClose();
 	}
 
-	void NotificationPopupLayout::Update()
+	void NotificationPopupLayout::Update(bool relocation)
 	{
-		if (m_relocation)
-			ClearAnimatedWidgets();
-
-		Relayout();
+		Relayout(relocation);
 	}
 
-	void NotificationPopupLayout::Relayout()
+	void NotificationPopupLayout::Relayout(bool relocation)
 	{
 		// see DescribeCorner description
 		auto [getter, setter, direction] = DescribeCorner(m_corner);
 		auto geometry = CalculateLayoutRect();
+
+		if (relocation)
+		{			
+			// slide out widgets should be removed
+			auto first = m_items.begin();
+			auto last = m_items.end();
+			first = std::remove_if(first, last, [](auto & item) { return item.moveOutAnimation; });
+			m_items.erase(first, last);
+
+			// if relocation - delete all animations;
+			for (auto & item : m_items)
+				delete item.slideAnimation;
+		}
+
 
 		// hcur/lcur, hgeom/lgeom - high/log.
 		// When relayouting widgets, some of them can be already closed,
@@ -403,14 +414,26 @@ namespace QtTools::NotificationSystem
 		QRect hgeom, lgeom;
 		QSize popupSz;
 
-		for (auto & item : m_items)
+		auto first = m_items.begin();
+		auto last  = m_items.end();
+
+		for (; first != last; ++first)
 		{
-			if (curWidgetIndex++ >= m_widgetsLimit)
+			bool forced_next = false;
+			if (relocation)
+			{
+				auto it = std::next(first);
+				forced_next = it != last and it->popup and not it->popup->isHidden();
+			}
+
+			if (not forced_next and curWidgetIndex++ >= m_widgetsLimit)
 				break;
 
+			auto & item = *first;
 			auto * popup = item.popup.data();
 			bool is_new = not popup;
 
+			// if relocation in place - item.moveOutAnimation == nullptr always
 			if (item.moveOutAnimation)
 			{
 				// popup is moving out, we should reset our y coordinate to one of this widget
@@ -453,6 +476,11 @@ namespace QtTools::NotificationSystem
 
 				popup->setGeometry(hgeom);
 			}
+			else if (relocation)
+			{
+				popup->setGeometry(lgeom);
+				// hgeom = lgeom;
+			}
 			else
 			{
 				hgeom = popup->geometry();
@@ -467,17 +495,9 @@ namespace QtTools::NotificationSystem
 			hcur.ry() += direction * popupSz.height();
 
 			// if available geometry exhausted
-			if (std::abs(lcur.y() - start.y()) >= geometry.height())
+			if (not forced_next and std::abs(lcur.y() - start.y()) >= geometry.height())
 				break;
 		}
-	}
-
-	void NotificationPopupLayout::ClearAnimatedWidgets()
-	{
-		auto first = m_items.begin();
-		auto last = m_items.end();
-		first = std::remove_if(first, last, [](auto & item) { return item.moveOutAnimation; });
-		m_items.erase(first, last);
 	}
 
 	void NotificationPopupLayout::ParentResized()

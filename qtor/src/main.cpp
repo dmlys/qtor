@@ -112,6 +112,7 @@
 //	}
 //}
 
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -130,6 +131,7 @@ int main(int argc, char * argv[])
 	QApplication qapp {argc, argv};
 
 	std::cout << QtTools::ScreenInfo << endl;
+
 
 #ifdef Q_OS_WIN
 	// On windows the highlighted colors for inactive widgets are the
@@ -189,8 +191,8 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	//layout.SetCorner(Qt::TopRightCorner);
 	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
-	view.Init(nsys);
-	view.show();
+	//view.Init(nsys);
+	//view.show();
 
 	nsys.AddInfo("Title1", "Text1");
 	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");

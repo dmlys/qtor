@@ -123,9 +123,8 @@ namespace QtTools::NotificationSystem
 		Q_SLOT virtual void NotificationPopupClosed();
 		Q_SLOT virtual void ParentResized();
 
-		virtual void Update();
-		virtual void Relayout();		
-		virtual void ClearAnimatedWidgets();
+		virtual void Update(bool relocation);
+		virtual void Relayout(bool relocation);		
 
 	public:
 		/// default popup creation, can be overridden via inheritance, it's called by default CreatePopupFunction.
