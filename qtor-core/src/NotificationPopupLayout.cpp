@@ -20,6 +20,20 @@ namespace QtTools::NotificationSystem
 {	
 	const NotificationPopupLayout::CreatePopupFunction NotificationPopupLayout::ms_defaultCreatePopup = 
 		[](const Notification & n, const NotificationPopupLayout & that) { return that.CreatePopup(n); };
+	
+	NotificationPopupLayout::Item::Item(Item && other) = default;
+
+
+	auto NotificationPopupLayout::Item::operator=(Item && other) -> Item &
+	{
+		if (this != &other)
+		{
+			this->~Item();
+			new (this) Item(std::move(other));
+		}
+
+		return *this;
+	}
 
 	NotificationPopupLayout::Item::~Item()
 	{
@@ -378,14 +392,25 @@ namespace QtTools::NotificationSystem
 		auto geometry = CalculateLayoutRect();
 
 		if (relocation)
-		{			
+		{
 			// slide out widgets should be removed
+			auto pred = [this](auto & item) 
+			{ 
+				if (not item.moveOutAnimation) 
+					return false; 
+				else
+				{
+					item.popup->disconnect(this);
+					return true;
+				}
+			};
+
 			auto first = m_items.begin();
 			auto last = m_items.end();
-			first = std::remove_if(first, last, [](auto & item) { return item.moveOutAnimation; });
+			first = std::remove_if(first, last, pred);
 			m_items.erase(first, last);
 
-			// if relocation - delete all animations;
+			// if relocation - delete slide animations
 			for (auto & item : m_items)
 				delete item.slideAnimation;
 		}

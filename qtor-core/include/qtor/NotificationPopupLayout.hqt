@@ -42,8 +42,8 @@ namespace QtTools::NotificationSystem
 			Item() = default;
 			~Item();
 
-			Item(Item &&) = default;
-			Item & operator =(Item &&) = default;
+			Item(Item &&);
+			Item & operator =(Item &&);
 		};
 
 	public:
