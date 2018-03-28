@@ -35,10 +35,14 @@ namespace QtTools::NotificationSystem
 	{
 	private:
 		QString m_filter;
+		NotificationLevelBitset m_levels = 0b111;
+		NotificationPriorityBitset m_priorities = 0b111;
 
 	public:
 		// same, incremental
 		viewed::refilter_type set_expr(QString search);
+		viewed::refilter_type set_expr(NotificationLevelBitset levels);
+		viewed::refilter_type set_expr(NotificationPriorityBitset priorities);
 
 		bool matches(const Notification & n) const;
 		bool always_matches() const noexcept;
@@ -59,19 +63,23 @@ namespace QtTools::NotificationSystem
 		using view_type = viewed::sfview_qtbase<NotificationStore, viewed::null_sorter, NotificationFilter>;
 		using base_type = AbstractNotificationModel;
 
-	private:
+	protected:
 		using view_type::m_owner;
 		using view_type::m_store; // vector of pointers
 		using view_type::m_sort_pred;
 		using view_type::m_filter_pred;
 
-	private:
+	protected:
 		std::shared_ptr<NotificationStore> m_owner_store;
+
+	protected:
+		virtual void FilterBy(QString expr) override;
+		virtual void FilterBy(NotificationLevelBitset levels) override;
+		virtual void FilterBy(NotificationPriorityBitset priorities) override;
 
 	public:
 		virtual QPointer<NotificationCenter> GetNotificationCenter() const override;
 		virtual const Notification & GetItem(int row) const override;
-		virtual void FilterBy(QString expr) override;
 
 		virtual int FullRowCount() const override;
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override;

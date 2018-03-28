@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <ext/enum_bitset.hpp>
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -37,20 +38,23 @@ namespace QtTools::NotificationSystem
 
 
 
-	enum NotificationPriority
+	enum NotificationPriority : unsigned
 	{
-		Low    = -1,
-		Normal =  0,
-		High   =  1,
+		Low,
+		Normal,
+		High,
 	};
 
-	enum NotificationLevel
+	enum NotificationLevel : unsigned
 	{
 		Error,   // implies High   priority
 		Warn,    // implies Normal priority
 		Info,    // implies Normal priority
 	};
 
+
+	using NotificationPriorityBitset = ext::enum_bitset<NotificationPriority, 3>;
+	using NotificationLevelBitset    = ext::enum_bitset<NotificationLevel,    3>;
 
 	/// This is notification center, notifications are submitted here through AddNotification method.
 	/// Different class views/layouts/other can be used to show/notify user.

@@ -191,8 +191,8 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	//layout.SetCorner(Qt::TopRightCorner);
 	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
-	//view.Init(nsys);
-	//view.show();
+	view.Init(nsys);
+	view.show();
 
 	nsys.AddInfo("Title1", "Text1");
 	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");

@@ -2,11 +2,13 @@
 #include <QtGui/QClipboard>
 
 #include <QtWidgets/QShortcut>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QDesktopWidget>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QToolButton>
+
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
-#include <QtWidgets/QMenu>
+#include <QtWidgets/QDesktopWidget>
+#include <QtWidgets/QApplication>
 
 #include <ext/join_into.hpp>
 #include <QtTools/ToolsBase.hpp>
@@ -17,6 +19,7 @@
 #include <qtor/NotificationViewExt.hqt>
 #include <qtor/NotificationViewDelegate.hqt>
 
+#include <QtWidgets/QApplication>
 
 namespace QtTools::NotificationSystem
 {
@@ -117,7 +120,7 @@ namespace QtTools::NotificationSystem
 	void NotificationView::DisconnectModel()
 	{
 		m_listView->setModel(nullptr);
-		m_sizeHint = m_defMinSizeHint;
+		//m_sizeHint = m_defMinSizeHint;
 	}
 
 	void NotificationView::SetModel(std::shared_ptr<AbstractNotificationModel> model)
@@ -170,8 +173,6 @@ namespace QtTools::NotificationSystem
 	void NotificationView::setupUi()
 	{
 		m_verticalLayout = new QVBoxLayout(this);
-		m_rowFilter = new QLineEdit(this);
-		m_rowFilter->setClearButtonEnabled(true);
 
 		m_listView = new QListView(this);
 		m_listView->setAlternatingRowColors(true);
@@ -185,8 +186,79 @@ namespace QtTools::NotificationSystem
 		m_listDelegate = new NotificationViewDelegate(this);
 		m_listView->setItemDelegate(m_listDelegate);		
 
-		m_verticalLayout->addWidget(m_rowFilter);
+		setupToolbar();
+
+		m_verticalLayout->addWidget(m_toolBar);
 		m_verticalLayout->addWidget(m_listView);
+	}
+
+	static QIcon loadIcon(const QString & themeIcon, QStyle::StandardPixmap fallback)
+	{
+		if (QIcon::hasThemeIcon(themeIcon))
+			return QIcon::fromTheme(themeIcon);
+
+		return qApp->style()->standardIcon(fallback);
+	}
+
+	static QSize ToolBarIconSizeForLineEdit(QLineEdit * lineEdit)
+	{
+#ifdef Q_OS_WIN
+		// on windows pixelMetric(QStyle::PM_DefaultFrameWidth) returns 1,
+		// but for QLineEdit internal code actually uses 2
+		constexpr auto frameWidth = 2;
+#else
+		const auto frameWidth = lineEdit->style()->pixelMetric(QStyle::PM_DefaultFrameWidth);
+#endif
+
+		lineEdit->adjustSize();
+		auto height = lineEdit->size().height();
+		height -= frameWidth;
+
+		return {height, height};
+	}
+
+	void NotificationView::setupToolbar()
+	{
+		m_toolBar = new QToolBar(this);
+		m_rowFilter = new QLineEdit(this);
+		m_rowFilter->setClearButtonEnabled(true);
+
+		m_toolBar->setIconSize(ToolBarIconSizeForLineEdit(m_rowFilter));
+		m_toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+		m_toolBar->layout()->setSpacing(2);
+
+
+		{
+			QIcon infoIcon, warnIcon, errorIcon;
+
+			// see https://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
+			errorIcon = loadIcon("dialog-error", QStyle::SP_MessageBoxCritical);
+			warnIcon  = loadIcon("dialog-warning", QStyle::SP_MessageBoxWarning);
+			infoIcon  = loadIcon("dialog-information", QStyle::SP_MessageBoxInformation);
+
+			m_showErrors = m_toolBar->addAction(errorIcon, tr("&Error"));
+			m_showErrors->setToolTip(tr("Show error notifications(Alt+E)"));
+			m_showErrors->setShortcut(QKeySequence(tr("Alt+E")));
+			m_showErrors->setCheckable(true);
+			m_showErrors->setObjectName("showErrors");
+
+			m_showWarnings = m_toolBar->addAction(warnIcon, tr("&Warning"));
+			m_showWarnings->setToolTip(tr("Show warning notifications(Alt+W)"));
+			m_showWarnings->setShortcut(QKeySequence(tr("Alt+W")));
+			m_showWarnings->setCheckable(true);
+			m_showWarnings->setObjectName("showWarnings");
+
+			m_showInfos = m_toolBar->addAction(infoIcon, tr("&Info"));
+			m_showInfos->setToolTip(tr("Show info notifications(Alt+I)"));
+			m_showInfos->setShortcut(QKeySequence(tr("Alt+I")));
+			m_showInfos->setCheckable(true);
+			m_showInfos->setObjectName("showInfos");
+
+			m_levelSeparator = m_toolBar->addSeparator();
+			m_levelSeparator->setObjectName("levelSeparator");
+		}
+
+		m_toolBar->addWidget(m_rowFilter);
 	}
 
 	void NotificationView::setupActions()

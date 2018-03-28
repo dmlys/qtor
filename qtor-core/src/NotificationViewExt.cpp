@@ -21,8 +21,32 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
+	viewed::refilter_type NotificationFilter::set_expr(NotificationLevelBitset levels)
+	{
+		if (m_levels == levels) 
+			return viewed::refilter_type::same;
+
+		m_levels = std::move(levels);
+		return viewed::refilter_type::full;
+	}
+
+	viewed::refilter_type NotificationFilter::set_expr(NotificationPriorityBitset priorities)
+	{
+		if (m_priorities == priorities)
+			return viewed::refilter_type::same;
+
+		m_priorities = std::move(priorities);
+		return viewed::refilter_type::full;
+	}
+
 	bool NotificationFilter::matches(const Notification & n) const
 	{
+		if (not m_levels.test(n.Level()))
+			return false;
+		
+		if (not m_priorities.test(n.Priority()))
+			return false;
+
 		if (n.Text().contains(m_filter, Qt::CaseInsensitive))
 			return true;
 
@@ -34,7 +58,9 @@ namespace QtTools::NotificationSystem
 
 	bool NotificationFilter::always_matches() const noexcept
 	{
-		return m_filter.isEmpty();
+		return m_filter.isEmpty() 
+			and (m_levels.none() or m_levels.all())
+			and (m_priorities.none() or m_priorities.all());
 	}
 
 	NotificationModel::NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent /* = nullptr */)
@@ -59,9 +85,21 @@ namespace QtTools::NotificationSystem
 		return *m_store.at(row);
 	}
 
-		void NotificationModel::FilterBy(QString expr)
+	void NotificationModel::FilterBy(QString expr)
 	{
 		auto rtype = m_filter_pred.set_expr(expr);
+		refilter_and_notify(rtype);
+	}
+
+	void NotificationModel::FilterBy(NotificationLevelBitset levels)
+	{
+		auto rtype = m_filter_pred.set_expr(levels);
+		refilter_and_notify(rtype);
+	}
+
+	void NotificationModel::FilterBy(NotificationPriorityBitset priorities)
+	{
+		auto rtype = m_filter_pred.set_expr(priorities);
 		refilter_and_notify(rtype);
 	}
 

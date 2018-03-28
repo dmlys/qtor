@@ -3,6 +3,7 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QLineEdit>
+#include <QtWidgets/QToolBar>
 #include <QtWidgets/QListView>
 #include <QtTools/HeaderControlModel.hqt>
 
@@ -29,15 +30,22 @@ namespace QtTools::NotificationSystem
 
 		/// child widgets/graphical objects
 		QVBoxLayout * m_verticalLayout = nullptr;
+		QToolBar    * m_toolBar = nullptr;
 		QLineEdit   * m_rowFilter = nullptr;
 		QListView   * m_listView = nullptr;
+
+		// NotificationPriority actions
+		QAction * m_showErrors = nullptr;
+		QAction * m_showWarnings = nullptr;
+		QAction * m_showInfos = nullptr;
+		QAction * m_levelSeparator = nullptr;
 
 		// By default - NotificationViewDelegate 
 		QAbstractItemDelegate * m_listDelegate = nullptr;
 
 		/// hints for initial widget size
-		const QSize m_defMinSizeHint = QSize(640, 480);
-		QSize m_sizeHint = m_defMinSizeHint;
+		//const QSize m_defMinSizeHint = QSize(640, 480);
+		//QSize m_sizeHint = m_defMinSizeHint;
 
 		/// current filter string
 		QString m_filterString;
@@ -98,6 +106,7 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		void setupUi();
+		void setupToolbar();
 		void setupActions();
 		void retranslateUi();
 		void connectSignals();
@@ -118,6 +127,8 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		virtual void FilterBy(QString expr) = 0;
+		virtual void FilterBy(NotificationLevelBitset levels) = 0;
+		virtual void FilterBy(NotificationPriorityBitset priorities) = 0;
 
 	public:
 		virtual QPointer<NotificationCenter> GetNotificationCenter() const = 0;
