@@ -58,9 +58,9 @@ namespace QtTools::NotificationSystem
 
 	bool NotificationFilter::always_matches() const noexcept
 	{
-		return m_filter.isEmpty() 
-			and (m_levels.none() or m_levels.all())
-			and (m_priorities.none() or m_priorities.all());
+		return m_filter.isEmpty()
+			and m_levels.all()
+			and m_priorities.all();
 	}
 
 	NotificationModel::NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent /* = nullptr */)
@@ -85,21 +85,22 @@ namespace QtTools::NotificationSystem
 		return *m_store.at(row);
 	}
 
-	void NotificationModel::FilterBy(QString expr)
+	void NotificationModel::Refilter()
 	{
-		auto rtype = m_filter_pred.set_expr(expr);
-		refilter_and_notify(rtype);
-	}
+		auto rtypes = {
+			m_filter_pred.set_expr(m_filterStr),
+			m_filter_pred.set_expr(m_filteredLevels),
+			//m_filter_pred.set_expr(m_filteredPriorities)
+		};
 
-	void NotificationModel::FilterBy(NotificationLevelBitset levels)
-	{
-		auto rtype = m_filter_pred.set_expr(levels);
-		refilter_and_notify(rtype);
-	}
 
-	void NotificationModel::FilterBy(NotificationPriorityBitset priorities)
-	{
-		auto rtype = m_filter_pred.set_expr(priorities);
+		auto pred = [](viewed::refilter_type v1, viewed::refilter_type v2)
+		{
+			using type = std::underlying_type_t<viewed::refilter_type>;
+			return static_cast<type>(v1) < static_cast<type>(v2);
+		};
+
+		auto rtype = std::max(rtypes, pred);
 		refilter_and_notify(rtype);
 	}
 
@@ -113,11 +114,25 @@ namespace QtTools::NotificationSystem
 		return qint(m_store.size());
 	}
 
-	void AbstractNotificationModel::SetFilter(QString expr)
+	void AbstractNotificationModel::SetFilter(QString newFilter)
+	{
+		return SetFiltering(std::move(newFilter), m_filteredLevels);
+	}
+
+	void AbstractNotificationModel::SetNotificationLevelFilter(NotificationLevelBitset filtered)
+	{
+		return SetFiltering(m_filterStr, std::move(filtered));
+	}
+
+	void AbstractNotificationModel::SetFiltering(QString expr, NotificationLevelBitset levels)
 	{
 		m_filterStr = std::move(expr);
-		FilterBy(m_filterStr);
+		m_filteredLevels = levels;
+
+		Refilter();
+
 		Q_EMIT FilterChanged(m_filterStr);
+		Q_EMIT NotificationLevelFilterChanged(m_filteredLevels);
 	}
 
 	QVariant AbstractNotificationModel::data(const QModelIndex & index, int role /*= Qt::DisplayRole*/) const

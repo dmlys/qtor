@@ -23,19 +23,80 @@
 
 namespace QtTools::NotificationSystem
 {
-	void NotificationView::OnFilterChanged()
+	void NotificationView::OnFilteringChanged()
 	{
-		SetFilter(m_rowFilter->text());
+		if (m_model)
+		{
+			decltype(m_filterString) fstr;
+			decltype(m_filteredLevels) flvl;
+
+			if (m_filterModes.testFlag(FilterByText))
+				fstr = m_filterString;
+
+			if (m_filterModes.testFlag(FilterByLevel))
+				flvl = m_filteredLevels;
+
+			if (flvl.none()) flvl.flip();
+
+			m_model->SetFiltering(fstr, flvl);
+			m_listView->viewport()->update();
+		}
+	}
+
+	void NotificationView::NotificationLevelToggled()
+	{
+		NotificationLevelBitset val;
+		val.set(Error, m_showErrors->isChecked());
+		val.set(Warn,  m_showWarnings->isChecked());
+		val.set(Info,  m_showInfos->isChecked());
+		
+		SetNotificationLevelFilter(val);
+	}
+
+	void NotificationView::SetupFiltering()
+	{
+		if (m_filterModes.testFlag(FilterByLevel))
+		{
+			m_showErrors->setVisible(true);
+			m_showWarnings->setVisible(true);
+			m_showInfos->setVisible(true);
+			m_levelSeparator->setVisible(m_filterModes.testFlag(FilterByText));
+		}
+		else
+		{
+			m_showErrors->setVisible(false);
+			m_showWarnings->setVisible(false);
+			m_showInfos->setVisible(false);
+			m_levelSeparator->setVisible(false);
+		}
+
+		if (m_filterModes.testFlag(FilterByText))
+			m_textFilter->show();
+		else
+			m_textFilter->hide();
+	}
+
+	void NotificationView::SetFilterMode(FilterModeFlags modes)
+	{
+		m_filterModes = modes;
+
+		SetupFiltering();
+		OnFilteringChanged();
+		Q_EMIT FilterModeChanged(m_filterModes);
 	}
 
 	void NotificationView::SetFilter(QString newFilter)
 	{
 		m_filterString = std::move(newFilter);
-		if (m_model)
-		{
-			m_model->SetFilter(m_filterString);
-			m_listView->viewport()->update();
-		}
+		OnFilteringChanged();
+		Q_EMIT FilterChanged(m_filterString);
+	}
+
+	void NotificationView::SetNotificationLevelFilter(NotificationLevelBitset filtered)
+	{
+		m_filteredLevels = filtered;
+		OnFilteringChanged();
+		Q_EMIT NotificationLevelFilterChanged(m_filteredLevels);
 	}
 
 	QString NotificationView::ClipboardText(const Notification & n) const
@@ -107,7 +168,7 @@ namespace QtTools::NotificationSystem
 	{
 		auto * model = m_model.get();
 		m_listView->setModel(model);
-		m_rowFilter->clear();
+		m_textFilter->clear();
 
 		//connect(model, &QAbstractItemModel::layoutChanged, this, &NotificationView::ModelChanged);
 		//connect(model, &QAbstractItemModel::modelReset, this, &NotificationView::ModelChanged);
@@ -152,6 +213,8 @@ namespace QtTools::NotificationSystem
 		connectSignals();
 		setupActions();
 		retranslateUi();
+
+		SetupFiltering();
 	}
 
 	NotificationView::NotificationView(NotificationCenter & center, QWidget * parent /* = nullptr */)
@@ -165,9 +228,13 @@ namespace QtTools::NotificationSystem
 		//: filter shortcut for a QListView, probably should not be translated
 		auto * filterShortcut = new QShortcut(QKeySequence(tr("Ctrl+F")), this);
 		connect(filterShortcut, &QShortcut::activated,
-				m_rowFilter, static_cast<void (QLineEdit::*)()>(&QLineEdit::setFocus));
+				m_textFilter, static_cast<void (QLineEdit::*)()>(&QLineEdit::setFocus));
 
-		connect(m_rowFilter, &QLineEdit::textChanged, this, &NotificationView::OnFilterChanged);
+		connect(m_textFilter, &QLineEdit::textChanged, this, &NotificationView::OnFilteringChanged);
+
+		connect(m_showErrors,   &QAction::toggled, this, &NotificationView::NotificationLevelToggled);
+		connect(m_showWarnings, &QAction::toggled, this, &NotificationView::NotificationLevelToggled);
+		connect(m_showInfos,    &QAction::toggled, this, &NotificationView::NotificationLevelToggled);
 	}
 
 	void NotificationView::setupUi()
@@ -182,9 +249,12 @@ namespace QtTools::NotificationSystem
 		m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 		m_listView->setWordWrap(true);
 		m_listView->setMouseTracking(true);
-
+		
 		m_listDelegate = new NotificationViewDelegate(this);
 		m_listView->setItemDelegate(m_listDelegate);		
+
+		m_listView->setObjectName("listView");
+		m_listDelegate->setObjectName("listDelegate");
 
 		setupToolbar();
 
@@ -192,49 +262,28 @@ namespace QtTools::NotificationSystem
 		m_verticalLayout->addWidget(m_listView);
 	}
 
-	static QIcon loadIcon(const QString & themeIcon, QStyle::StandardPixmap fallback)
-	{
-		if (QIcon::hasThemeIcon(themeIcon))
-			return QIcon::fromTheme(themeIcon);
-
-		return qApp->style()->standardIcon(fallback);
-	}
-
-	static QSize ToolBarIconSizeForLineEdit(QLineEdit * lineEdit)
-	{
-#ifdef Q_OS_WIN
-		// on windows pixelMetric(QStyle::PM_DefaultFrameWidth) returns 1,
-		// but for QLineEdit internal code actually uses 2
-		constexpr auto frameWidth = 2;
-#else
-		const auto frameWidth = lineEdit->style()->pixelMetric(QStyle::PM_DefaultFrameWidth);
-#endif
-
-		lineEdit->adjustSize();
-		auto height = lineEdit->size().height();
-		height -= frameWidth;
-
-		return {height, height};
-	}
-
 	void NotificationView::setupToolbar()
 	{
 		m_toolBar = new QToolBar(this);
-		m_rowFilter = new QLineEdit(this);
-		m_rowFilter->setClearButtonEnabled(true);
+		m_textFilter = new QLineEdit(this);
+		m_textFilter->setClearButtonEnabled(true);
 
-		m_toolBar->setIconSize(ToolBarIconSizeForLineEdit(m_rowFilter));
+		m_toolBar->setObjectName("toolBar");
+		m_textFilter->setObjectName("textFilter");
+
+		m_toolBar->setIconSize(QtTools::ToolBarIconSizeForLineEdit(m_textFilter));
 		m_toolBar->layout()->setContentsMargins(0, 0, 0, 0);
 		m_toolBar->layout()->setSpacing(2);
 
 
 		{
+			using QtTools::LoadIcon;
 			QIcon infoIcon, warnIcon, errorIcon;
 
 			// see https://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
-			errorIcon = loadIcon("dialog-error", QStyle::SP_MessageBoxCritical);
-			warnIcon  = loadIcon("dialog-warning", QStyle::SP_MessageBoxWarning);
-			infoIcon  = loadIcon("dialog-information", QStyle::SP_MessageBoxInformation);
+			errorIcon = LoadIcon("dialog-error", QStyle::SP_MessageBoxCritical);
+			warnIcon  = LoadIcon("dialog-warning", QStyle::SP_MessageBoxWarning);
+			infoIcon  = LoadIcon("dialog-information", QStyle::SP_MessageBoxInformation);
 
 			m_showErrors = m_toolBar->addAction(errorIcon, tr("&Error"));
 			m_showErrors->setToolTip(tr("Show error notifications(Alt+E)"));
@@ -258,7 +307,7 @@ namespace QtTools::NotificationSystem
 			m_levelSeparator->setObjectName("levelSeparator");
 		}
 
-		m_toolBar->addWidget(m_rowFilter);
+		m_toolBar->addWidget(m_textFilter);
 	}
 
 	void NotificationView::setupActions()
@@ -267,6 +316,7 @@ namespace QtTools::NotificationSystem
 
 		auto * copyAction = new QAction(tr("&Copy"), this);
 		copyAction->setShortcut(QKeySequence::Copy);
+		copyAction->setObjectName("copyAction");
 		connect(copyAction, &QAction::triggered, this, &NotificationView::CopySelectedIntoClipboard);
 
 		addAction(copyAction);
@@ -276,6 +326,6 @@ namespace QtTools::NotificationSystem
 	void NotificationView::retranslateUi()
 	{
 		//: filter shortcut in generic BasicTableWidget, shown as placeholder in EditWidget
-		m_rowFilter->setPlaceholderText(tr("Row filter(Ctrl+F)"));
+		m_textFilter->setPlaceholderText(tr("Text filter(Ctrl+F)"));
 	}
 }

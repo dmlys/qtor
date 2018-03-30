@@ -73,9 +73,7 @@ namespace QtTools::NotificationSystem
 		std::shared_ptr<NotificationStore> m_owner_store;
 
 	protected:
-		virtual void FilterBy(QString expr) override;
-		virtual void FilterBy(NotificationLevelBitset levels) override;
-		virtual void FilterBy(NotificationPriorityBitset priorities) override;
+		virtual void Refilter() override;
 
 	public:
 		virtual QPointer<NotificationCenter> GetNotificationCenter() const override;

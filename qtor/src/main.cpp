@@ -192,6 +192,7 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
 	view.Init(nsys);
+	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
 	view.show();
 
 	nsys.AddInfo("Title1", "Text1");

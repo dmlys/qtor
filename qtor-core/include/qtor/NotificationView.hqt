@@ -5,6 +5,7 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QListView>
+#include <QtTools/Utility.hpp>
 #include <QtTools/HeaderControlModel.hqt>
 
 #include <qtor/NotificationSystem.hqt>
@@ -24,6 +25,15 @@ namespace QtTools::NotificationSystem
 	private:
 		using base_type = QFrame;
 
+	public:
+		enum FilterMode : unsigned
+		{
+			FilterByText  = 0x1,
+			FilterByLevel = 0x2,
+		};
+
+		Q_DECLARE_FLAGS(FilterModeFlags, FilterMode);
+
 	protected:
 		/// display model
 		std::shared_ptr<AbstractNotificationModel> m_model;
@@ -31,7 +41,7 @@ namespace QtTools::NotificationSystem
 		/// child widgets/graphical objects
 		QVBoxLayout * m_verticalLayout = nullptr;
 		QToolBar    * m_toolBar = nullptr;
-		QLineEdit   * m_rowFilter = nullptr;
+		QLineEdit   * m_textFilter = nullptr;
 		QListView   * m_listView = nullptr;
 
 		// NotificationPriority actions
@@ -43,16 +53,18 @@ namespace QtTools::NotificationSystem
 		// By default - NotificationViewDelegate 
 		QAbstractItemDelegate * m_listDelegate = nullptr;
 
-		/// hints for initial widget size
-		//const QSize m_defMinSizeHint = QSize(640, 480);
-		//QSize m_sizeHint = m_defMinSizeHint;
-
+		/// current filter enabled modes
+		FilterModeFlags m_filterModes = FilterByText;
 		/// current filter string
 		QString m_filterString;
+		/// current filter levels
+		NotificationLevelBitset m_filteredLevels;
 
 	protected:
 		void ModelChanged();
-		void OnFilterChanged();
+		void OnFilteringChanged();
+		void NotificationLevelToggled();
+		void SetupFiltering();
 
 	protected:
 		/// Get text suitable for clipboard
@@ -74,14 +86,22 @@ namespace QtTools::NotificationSystem
 		/// main layout
 		QVBoxLayout * GetLayout() const { return m_verticalLayout; }
 		/// filter field
-		QLineEdit * GetFilterWidget() const { return m_rowFilter; }
+		QLineEdit * GetFilterWidget() const { return m_textFilter; }
 		/// list view
 		QListView * GetTableView() const { return m_listView; }
 
 	public:
+		virtual void SetFilterMode(FilterModeFlags modes);
+		virtual auto GetFilterMode() const -> FilterModeFlags { return m_filterModes; }
+		Q_SIGNAL void FilterModeChanged(FilterModeFlags newlags);
+
 		virtual void SetFilter(QString newFilter);
 		virtual auto GetFilter() const -> QString { return m_filterString; }
 		Q_SIGNAL void FilterChanged(QString newFilter);
+
+		virtual void SetNotificationLevelFilter(NotificationLevelBitset filtered);
+		virtual auto GetNotificationLevelFilter() const -> NotificationLevelBitset { return m_filteredLevels; }
+		Q_SIGNAL void NotificationLevelFilterChanged(NotificationLevelBitset newval);
 
 		/// initializes widget
 		/// @Param model specifies model, if null - deinitializes widget
@@ -112,6 +132,7 @@ namespace QtTools::NotificationSystem
 		void connectSignals();
 	};
 
+	Q_DECLARE_OPERATORS_FOR_FLAGS(NotificationView::FilterModeFlags);
 
 	/// Abstract model for NotificationView
 	class AbstractNotificationModel : public QAbstractListModel
@@ -124,11 +145,11 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		QString m_filterStr;
+		NotificationLevelBitset m_filteredLevels = 0b111;
+		//NotificationPriorityBitset m_filteredPriorities = 0b111;
 
 	protected:
-		virtual void FilterBy(QString expr) = 0;
-		virtual void FilterBy(NotificationLevelBitset levels) = 0;
-		virtual void FilterBy(NotificationPriorityBitset priorities) = 0;
+		virtual void Refilter() = 0;
 
 	public:
 		virtual QPointer<NotificationCenter> GetNotificationCenter() const = 0;
@@ -137,9 +158,15 @@ namespace QtTools::NotificationSystem
 		virtual int FullRowCount() const = 0;
 
 	public:
-		void SetFilter(QString expr);
-		auto GetFilter() const noexcept { return m_filterStr; }
-		Q_SIGNAL void FilterChanged(QString expr);
+		virtual void SetFilter(QString newFilter);
+		virtual auto GetFilter() const -> QString { return m_filterStr; }
+		Q_SIGNAL void FilterChanged(QString newFilter);
+
+		virtual void SetNotificationLevelFilter(NotificationLevelBitset filtered);
+		virtual auto GetNotificationLevelFilter() const -> NotificationLevelBitset { return m_filteredLevels; }
+		Q_SIGNAL void NotificationLevelFilterChanged(NotificationLevelBitset newval);
+
+		void SetFiltering(QString expr, NotificationLevelBitset levels);
 
 	public:
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
