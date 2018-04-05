@@ -53,6 +53,26 @@ namespace QtTools::NotificationSystem
 		}
 	}
 
+	QPixmap NotificationViewDelegate::GetPixmap(const Notification & notification, const QStyleOptionViewItem & option) const
+	{
+		QIcon ico = notification.Icon();
+		
+		if (ico.isNull())
+		{
+			switch (notification.Level())
+			{
+				case QtTools::NotificationSystem::Error: ico = m_errorIcon; break;
+				case QtTools::NotificationSystem::Warn:  ico = m_warnIcon;  break;
+				case QtTools::NotificationSystem::Info:  ico = m_infoIcon;  break;
+			}
+		}
+
+		auto * style = option.widget->style();
+		int listViewIcoSz = style->pixelMetric(QStyle::PM_ListViewIconSize);
+		QSize wantedsz = {listViewIcoSz, listViewIcoSz};
+		return ico.pixmap(wantedsz);
+	}
+
 	void NotificationViewDelegate::PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item) const
 	{
 		QPaintDevice * device = const_cast<QWidget *>(item.option->widget);
@@ -97,8 +117,7 @@ namespace QtTools::NotificationSystem
 		item.title = notification.Title();
 		item.text = notification.Text();
 		item.textFormat = notification.TextFmt();
-		//item.pixmap = notification.Pixmap();
-
+		item.pixmap = GetPixmap(notification, option);
 
 		item.textFont = item.titleFont = item.timestampFont = item.baseFont = option.font;
 		item.titleFont.setPointSize(item.titleFont.pointSize() * 11 / 10);
@@ -302,6 +321,17 @@ namespace QtTools::NotificationSystem
 		if (not view) return;
 
 		Q_EMIT view->LinkHovered(std::move(href));
+	}
+
+	NotificationViewDelegate::NotificationViewDelegate(QObject * parent /* = nullptr */)
+		: QAbstractItemDelegate(parent)
+	{
+		using QtTools::LoadIcon;
+
+		// see https://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
+		m_errorIcon = LoadIcon("dialog-error", QStyle::SP_MessageBoxCritical);
+		m_warnIcon  = LoadIcon("dialog-warning", QStyle::SP_MessageBoxWarning);
+		m_infoIcon  = LoadIcon("dialog-information", QStyle::SP_MessageBoxInformation);
 	}
 
 	void NotificationViewDelegate::SearchHighlighter::highlightBlock(const QString & text)

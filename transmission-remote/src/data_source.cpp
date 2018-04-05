@@ -10,7 +10,7 @@ namespace transmission
 {
 	void data_source::emit_signal(event_sig & sig, event_type ev)
 	{
-		if (m_queue)
+		if (not m_queue)
 			m_queue->Add([&sig, ev] { sig(ev); });
 		else
 			sig(ev);
@@ -56,6 +56,10 @@ namespace transmission
 		std::chrono::steady_clock::time_point m_next = std::chrono::steady_clock::now();
 		std::chrono::steady_clock::duration m_delay = std::chrono::seconds(2);
 
+	protected:
+		template <class Data, class Handler>
+		void emit_data(Data data, const Handler & handler);
+		
 	public:
 		void request(ext::socket_stream & stream) override;
 		void response(ext::socket_stream & stream) override;
@@ -65,6 +69,24 @@ namespace transmission
 		virtual auto request_command() -> std::string = 0;
 		virtual void parse_response(std::string body) = 0;
 	};
+
+	template <class Data, class Handler>
+	void data_source::subscription_base::emit_data(Data data, const Handler & handler)
+	{
+		auto owner = static_cast<data_source *>(m_owner);
+		auto * queue = owner->m_queue;
+		if (not queue)
+			handler(data);
+		else
+		{
+			auto action = [that = ext::intrusive_ptr<subscription_base>(this), data = std::move(data), &handler]() mutable
+			{
+				handler(data);
+			};
+			
+			queue->Add(action);
+		}
+	}
 
 	void data_source::subscription_base::request(ext::socket_stream & stream)
 	{
@@ -206,16 +228,7 @@ namespace transmission
 		{
 			auto owner = static_cast<data_source *>(m_owner);
 			auto tlist = parse_torrent_list(body);
-			auto * queue = owner->m_queue;
-			if (not queue)
-				m_handler(tlist);
-			else
-			{
-				queue->Add([that = ext::intrusive_ptr<torrent_subscription>(this), tlist = std::move(tlist)]() mutable
-				{
-					that->m_handler(tlist);
-				});
-			}
+			emit_data(std::move(tlist), m_handler);
 		}
 	};
 

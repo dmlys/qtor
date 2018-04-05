@@ -9,7 +9,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
-//#include <QtGui/QIcon>
+#include <QtGui/QIcon>
 
 #include <qtor/NotificationSystem.hqt>
 
@@ -23,7 +23,7 @@ namespace QtTools::NotificationSystem
 		QDateTime m_timestamp;
 		QString   m_title;
 		QString   m_text;		
-		//QIcon     m_logo;		
+		QIcon     m_icon;
 
 		Qt::TextFormat m_textFmt = Qt::AutoText;
 
@@ -47,8 +47,8 @@ namespace QtTools::NotificationSystem
 		virtual QDateTime Timestamp() const override              { return m_timestamp; }
 		virtual QDateTime Timestamp(QDateTime timestamp) override { return std::exchange(m_timestamp, std::move(timestamp)); }
 
-		//virtual QIcon Logo() const override      { return m_logo; }
-		//virtual QIcon Logo(QIcon logo) override  { return std::exchange(m_logo, std::move(logo)); }
+		virtual QIcon Icon() const override      { return m_icon; }
+		virtual QIcon Icon(QIcon icon) override  { return std::exchange(m_icon, std::move(icon)); }
 
 		virtual NotificationPriority Priority() const override;
 		virtual NotificationPriority Priority(NotificationPriority priority) override;

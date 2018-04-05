@@ -6,6 +6,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
+#include <QtGui/QIcon>
 
 
 namespace QtTools::NotificationSystem
@@ -139,8 +140,8 @@ namespace QtTools::NotificationSystem
 		Q_PROPERTY(NotificationPriority priority READ Priority WRITE Priority)
 		Q_PROPERTY(NotificationLevel    level    READ Level    WRITE Level)
 
-		///// Some icon 
-		//Q_PROPERTY(QIcon logo          READ Logo      WRITE Logo)
+		/// Some icon 
+		Q_PROPERTY(QIcon icon READ Icon WRITE Icon)
 
 	public:
 		virtual QString Title() const = 0;
@@ -159,8 +160,8 @@ namespace QtTools::NotificationSystem
 		virtual QDateTime Timestamp() const = 0;
 		virtual QDateTime Timestamp(QDateTime timestamp) = 0;
 
-		//virtual QIcon Logo() const = 0;
-		//virtual QIcon Logo(QIcon logo) = 0;
+		virtual QIcon Icon() const = 0;
+		virtual QIcon Icon(QIcon icon) = 0;
 
 		virtual NotificationPriority Priority() const = 0;
 		virtual NotificationPriority Priority(NotificationPriority priority) = 0;

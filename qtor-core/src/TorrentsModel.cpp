@@ -37,14 +37,16 @@ namespace qtor
 
 	void TorrentsModel::FilterBy(QString expr)
 	{
-		auto rtype = m_filter_pred.set_expr(FromQString<string_type>(expr));
-		return refilter_and_notify(rtype);
+		filter_by(expr);
+		//auto rtype = m_filter_pred.set_expr(FromQString<string_type>(expr));
+		//return refilter_and_notify(rtype);
 	}
 
 	void TorrentsModel::SortBy(int column, Qt::SortOrder order)
 	{
-		m_sort_pred = sparse_container_comparator(m_columns[column], order == Qt::AscendingOrder);
-		view_type::sort_and_notify(m_store.begin(), m_store.end());
+		return sort_by(m_columns[column], order == Qt::AscendingOrder);
+		//m_sort_pred = sparse_container_comparator(m_columns[column], order == Qt::AscendingOrder);
+		//view_type::sort_and_notify(m_store.begin(), m_store.end());
 	}
 
 	TorrentsModel::TorrentsModel(std::shared_ptr<torrent_store> store, QObject * parent)
