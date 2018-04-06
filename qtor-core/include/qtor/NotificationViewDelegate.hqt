@@ -91,8 +91,8 @@ namespace QtTools::NotificationSystem
 		static QMargins TextMargins(const QStyleOptionViewItem & option);
 		
 		virtual QPixmap GetPixmap(const Notification & notification, const QStyleOptionViewItem & option) const;
-		virtual void PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item) const;
-		virtual QSize LayoutTitle(const QStyleOptionViewItem & option, LaidoutItem & item) const;
+		virtual void LayoutTitle(const QStyleOptionViewItem & option, LaidoutItem & item) const;
+		virtual void LayoutText(const QStyleOptionViewItem & option, LaidoutItem & item) const;
 		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
 		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
 		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;
