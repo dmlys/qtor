@@ -69,6 +69,10 @@ namespace QtTools::NotificationSystem
 			// cached prepared and calculated QTextDocument for text
 			// shared_ptr only for convenience(pimpl + copyable), logically - unique
 			std::shared_ptr<QTextDocument> textdocptr;
+
+			// cached prepared and laidout QTextLayout for title
+			// shared_ptr only for convenience(pimpl + copyable), logically - unique
+			std::shared_ptr<QTextLayout> titleLayoutPtr;
 		};
 
 	protected:
@@ -88,6 +92,7 @@ namespace QtTools::NotificationSystem
 		
 		virtual QPixmap GetPixmap(const Notification & notification, const QStyleOptionViewItem & option) const;
 		virtual void PrepareTextDocument(QTextDocument & textDoc, const LaidoutItem & item) const;
+		virtual QSize LayoutTitle(const QStyleOptionViewItem & option, LaidoutItem & item) const;
 		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
 		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
 		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;

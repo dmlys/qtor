@@ -55,17 +55,13 @@ namespace QtTools::NotificationSystem
 
 	QPixmap NotificationViewDelegate::GetPixmap(const Notification & notification, const QStyleOptionViewItem & option) const
 	{
-		QIcon ico = notification.Icon();
-		
-		if (ico.isNull())
+		QIcon ico;
+		switch (notification.Level())
 		{
-			switch (notification.Level())
-			{
-				case QtTools::NotificationSystem::Error: ico = m_errorIcon; break;
-				case QtTools::NotificationSystem::Warn:  ico = m_warnIcon;  break;
-				case QtTools::NotificationSystem::Info:  ico = m_infoIcon;  break;
-			}
-		}
+			case QtTools::NotificationSystem::Error: ico = m_errorIcon; break;
+			case QtTools::NotificationSystem::Warn:  ico = m_warnIcon;  break;
+			case QtTools::NotificationSystem::Info:  ico = m_infoIcon;  break;
+		}	
 
 		auto * style = option.widget->style();
 		int listViewIcoSz = style->pixelMetric(QStyle::PM_ListViewIconSize);
@@ -82,6 +78,99 @@ namespace QtTools::NotificationSystem
 		textDoc.setDefaultFont(item.textFont);
 		textDoc.documentLayout()->setPaintDevice(device);
 		SetText(textDoc, item.textFormat, item.text);		
+	}
+
+	QSize NotificationViewDelegate::LayoutTitle(const QStyleOptionViewItem & option, LaidoutItem & item) const
+	{
+		using namespace QtTools::Delegates;
+		using namespace QtTools::Delegates::TextLayout;
+
+		QPaintDevice * device = const_cast<QWidget *>(item.option->widget);
+		const QFontMetrics titleFm {item.titleFont, device};
+		const auto formats = FormatSearchText(item.title, item.searchStr, ms_searchFormat);
+		const auto textopt = PrepareTextOption(option);
+
+		// title size is drawn in left top corner, 
+		// no more than 2 lines, with 40 average chars as width
+		const QSize pixsz = item.pixmap.size();
+		const qreal width = 40 * titleFm.averageCharWidth();
+		const qreal height = 2 * titleFm.height();		
+
+		item.titleLayoutPtr = std::make_shared<QTextLayout>(item.title, item.titleFont, device);
+		auto * layout = item.titleLayoutPtr.get();
+		layout->setCacheEnabled(true);
+		layout->setTextOption(textopt);
+		layout->setFormats(formats);
+
+		qreal cury = 0;
+		int elideIndex = 0;
+		layout->beginLayout();
+		for (;;)
+		{
+			auto line = layout->createLine();
+			if (!line.isValid()) break;
+
+			qreal posx = cury < pixsz.height() ? pixsz.width() + ms_Spacing : 0;
+			line.setPosition({posx, cury});
+			line.setLineWidth(width - posx);
+			cury += line.height();
+
+			// last line didn't fit given total height 
+			if (cury > height)
+			{
+				elideIndex = qMax(0, elideIndex - 1);
+				break;
+			}
+
+			// very long word, does not fit given width
+			if (line.naturalTextWidth() > width)
+				break;
+
+			++elideIndex;
+		};
+
+		layout->endLayout();
+		bool needsElide = elideIndex != layout->lineCount();
+
+		if (needsElide)
+		{
+			const auto & title = item.title;
+			auto line = layout->lineAt(elideIndex);
+			int elidePoint = line.textStart();
+			item.title = title.mid(0, elidePoint) + ElideText(titleFm, title.mid(elidePoint), option.textElideMode, line.width());
+
+			auto elidedFormats = ElideFormats(formats, elidePoint);
+			ColorifyElidePoint(title, elidedFormats);
+
+			item.titleLayoutPtr = nullptr;
+			item.titleLayoutPtr = std::make_shared<QTextLayout>(title, item.title, device);
+			layout = item.titleLayoutPtr.get();
+			layout->setTextOption(textopt);
+			layout->setFormats(elidedFormats);
+			layout->setCacheEnabled(true);
+
+			qreal cury = 0;
+			layout->beginLayout();
+			for (;;)
+			{
+				auto line = layout->createLine();
+				if (!line.isValid()) break;
+
+				qreal posx = cury < pixsz.height() ? pixsz.width() + ms_Spacing : 0;
+				line.setPosition({posx, cury});
+				line.setLineWidth(width - posx);
+				cury += line.height();
+
+				// last line didn't fit given total height 
+				if (cury > height) break;
+				// very long word, does not fit given width
+				if (line.naturalTextWidth() > width) break;
+			};
+
+			layout->endLayout();
+		}
+
+		return NaturalBoundingRect(*layout, elideIndex).size().toSize();
 	}
 
 	void NotificationViewDelegate::LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const 
@@ -123,26 +212,18 @@ namespace QtTools::NotificationSystem
 		item.titleFont.setPointSize(item.titleFont.pointSize() * 11 / 10);
 		item.titleFont.setBold(true);
 
-		//item.pixmapRect = QRect({0, 0}, item.pixmap.size()) + ms_InnerMargins;
-		//item.pixmapRect.moveTo(topLeft);
-		//auto pixmapSz = m_pixmap.size();
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		QFontMetrics titleFm {item.titleFont, device};
 		QFontMetrics textFm {item.textFont, device};
 		QFontMetrics timestampFm {item.timestampFont, device};
-		QSize timestampSz(timestampFm.width(item.timestamp), titleFm.height());
+		const QSize timestampSz(timestampFm.width(item.timestamp), titleFm.height());
 
 		// title size is drawn in left top corner, no more than 2 lines, with 40 average chars as width
-		QSize titleSz {40 * titleFm.averageCharWidth(), 2 * titleFm.height()};
 		const auto titleSpacer = 2 * titleFm.averageCharWidth();
+		const QSize titleSz = LayoutTitle(option, m_cachedItem);
 		
-		QTextLayout layout(item.title, item.titleFont, device);
-		layout.setTextOption(PrepareTextOption(option));
-
-		int elideIndex = DoLayout(layout, QRectF({0.0, 0.0}, titleSz));
-		titleSz = NaturalBoundingRect(layout, elideIndex).size().toSize();
-		
+		item.pixmapRect = {topLeft, item.pixmap.size()};
 		item.titleRect = {topLeft, titleSz};
 		item.timestampRect = QRect {
 			{ item.titleRect.right() + titleSpacer, topLeft.y() },
@@ -161,10 +242,10 @@ namespace QtTools::NotificationSystem
 		textDoc.setTextWidth(width);
 
 		QSize textSz {std::lround((textDoc.idealWidth())), std::lround(textDoc.size().height())};
-		int textTop = ms_Spacing + std::max(item.titleRect.bottom(), item.timestampRect.bottom());
+		int textTop = ms_Spacing + std::max({item.pixmapRect.bottom(), item.titleRect.bottom(), item.timestampRect.bottom()});
 		item.textRect = QRect {{topLeft.x(), textTop}, textSz};
 
-		item.totalRect = item.timestampRect | item.titleRect | item.textRect;
+		item.totalRect = item.pixmapRect | item.timestampRect | item.titleRect | item.textRect;
 		item.totalRect += margins;
 		
 		return;
@@ -173,6 +254,8 @@ namespace QtTools::NotificationSystem
 	void NotificationViewDelegate::Draw(QPainter * painter, const LaidoutItem & item) const
 	{
 		using namespace QtTools::Delegates;
+
+		painter->drawPixmap(item.pixmapRect, item.pixmap);
 
 		const QStyleOptionViewItem & option = *item.option;
 		const bool selected = option.state & QStyle::State_Selected;
@@ -190,9 +273,7 @@ namespace QtTools::NotificationSystem
 		
 		auto titleopt = option;
 		titleopt.font = item.titleFont;
-		//DrawFormattedText(painter, item.title, item.titleRect, titleopt);
-		DrawSearchFormatedText(painter, item.title, item.titleRect, titleopt, 
-		                       FormatSearchText(item.title, item.searchStr, ms_searchFormat));
+		TextLayout::DrawLayout(painter, item.titleRect.topLeft(), *item.titleLayoutPtr);
 
 		painter->setFont(item.timestampFont);
 		painter->drawText(timestampRect, item.timestamp);

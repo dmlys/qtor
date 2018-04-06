@@ -170,6 +170,8 @@ Your options Are:
 </ol>
 opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 )";
+
+	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly";
 	
 	std::error_code err {10066, ext::system_utf8_category()};
 	std::string errmsg = ext::FormatError(err);
@@ -183,8 +185,8 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered,
 	                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
 
-	//QObject::connect(&view, &NotificationView::LinkHovered,
-	//                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
+	QObject::connect(&view, &NotificationView::LinkHovered,
+	                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
 
 	layout.Init(nsys);
 	layout.SetParent(&mainWindow);
@@ -195,21 +197,22 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
 	view.show();
 
-	nsys.AddInfo("Title1", "Text1");
-	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddInfo("Title3", ttt, Qt::RichText);
-	nsys.AddError("Title4", QtTools::ToQString(errmsg));
-	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title1", "Text1");
+	//nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+	//nsys.AddInfo("Title3", ttt, Qt::RichText);
+	//nsys.AddError("Title4", QtTools::ToQString(errmsg));
+	//nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
 
-	auto nf = nsys.CreateNotification();
-	nf->Title("Custom");
-	nf->Text("Some Text");
-	nf->setProperty("backgroundColor", QColor("red"));
-	nf->setProperty("expirationTimeout", 0);
+	//auto nf = nsys.CreateNotification();
+	//nf->Title("Custom");
+	//nf->Text("Some Text");
+	//nf->setProperty("backgroundColor", QColor("red"));
+	//nf->setProperty("expirationTimeout", 0);
 
-	nsys.AddNotification(std::move(nf));
+	//nsys.AddNotification(std::move(nf));
 
 	return qapp.exec();
 }
