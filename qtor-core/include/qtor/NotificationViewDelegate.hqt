@@ -67,12 +67,10 @@ namespace QtTools::NotificationSystem
 			QRect totalRect;     // rectangle occupied by union of all rectangles, including all margins
 	
 			// cached prepared and calculated QTextDocument for text
-			// shared_ptr only for convenience(pimpl + copyable), logically - unique
-			std::shared_ptr<QTextDocument> textdocptr;
+			std::unique_ptr<QTextDocument> textdocptr;
 
 			// cached prepared and laidout QTextLayout for title
-			// shared_ptr only for convenience(pimpl + copyable), logically - unique
-			std::shared_ptr<QTextLayout> titleLayoutPtr;
+			std::unique_ptr<QTextLayout> titleLayoutPtr;
 		};
 
 	protected:

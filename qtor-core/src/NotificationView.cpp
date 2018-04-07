@@ -230,7 +230,7 @@ namespace QtTools::NotificationSystem
 		connect(filterShortcut, &QShortcut::activated,
 				m_textFilter, static_cast<void (QLineEdit::*)()>(&QLineEdit::setFocus));
 
-		connect(m_textFilter, &QLineEdit::textChanged, this, &NotificationView::OnFilteringChanged);
+		connect(m_textFilter, &QLineEdit::textChanged, this, &NotificationView::SetFilter);
 
 		connect(m_showErrors,   &QAction::toggled, this, &NotificationView::NotificationLevelToggled);
 		connect(m_showWarnings, &QAction::toggled, this, &NotificationView::NotificationLevelToggled);

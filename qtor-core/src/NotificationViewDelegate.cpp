@@ -95,7 +95,8 @@ namespace QtTools::NotificationSystem
 		const qreal height = 2 * titleFm.height();
 		const qreal width = std::max(40 * titleFm.averageCharWidth(), rect.width() - timestampSz.width() - titleSpacer);
 
-		item.titleLayoutPtr = std::make_shared<QTextLayout>(item.title, item.titleFont, device);
+		item.titleLayoutPtr = nullptr;
+		item.titleLayoutPtr = std::make_unique<QTextLayout>(item.title, item.titleFont, device);
 		auto * layout = item.titleLayoutPtr.get();
 		layout->setCacheEnabled(true);
 		layout->setTextOption(textopt);
@@ -138,11 +139,12 @@ namespace QtTools::NotificationSystem
 			int elidePoint = line.textStart();
 			item.title = title.mid(0, elidePoint) + ElideText(titleFm, title.mid(elidePoint), option.textElideMode, line.width());
 
-			auto elidedFormats = ElideFormats(formats, elidePoint);
+			//auto elidedFormats = ElideFormats(formats, elidePoint);
+			auto elidedFormats = formats;
 			ColorifyElidePoint(title, elidedFormats);
 
 			item.titleLayoutPtr = nullptr;
-			item.titleLayoutPtr = std::make_shared<QTextLayout>(title, item.title, device);
+			item.titleLayoutPtr = std::make_unique<QTextLayout>(title, item.titleFont, device);
 			layout = item.titleLayoutPtr.get();
 			layout->setTextOption(textopt);
 			layout->setFormats(elidedFormats);
@@ -192,7 +194,8 @@ namespace QtTools::NotificationSystem
 		const auto timestampSz = item.timestampRect.size();
 		const auto titleSpacer = 2 * titleFm.averageCharWidth();
 
-		item.textdocptr = std::make_shared<QTextDocument>();
+		item.textdocptr = nullptr;
+		item.textdocptr = std::make_unique<QTextDocument>();
 		auto * highlighter = new SearchHighlighter(item.textdocptr.get());
 		highlighter->SetSearchText(item.searchStr);
 		highlighter->SetFormat(ms_searchFormat);

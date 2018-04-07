@@ -47,7 +47,7 @@ namespace QtTools::NotificationSystem
 		if (not m_priorities.test(n.Priority()))
 			return false;
 
-		if (n.Text().contains(m_filter, Qt::CaseInsensitive))
+		if (n.Title().contains(m_filter, Qt::CaseInsensitive))
 			return true;
 
 		if (n.PlainText().contains(m_filter, Qt::CaseInsensitive))

@@ -143,11 +143,11 @@ int main(int argc, char * argv[])
 	qapp.setPalette(palette);
 #endif
 
-	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	source->set_address("bin/data.db"s);
+	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	//source->set_address("bin/data.db"s);
 
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
 	
 	qtor::TransmissionRemoteApp app {std::move(source)};
 	qtor::MainWindow mainWindow;
@@ -171,7 +171,7 @@ Your options Are:
 opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 )";
 
-	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly";
+	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
 	
 	std::error_code err {10066, ext::system_utf8_category()};
 	std::string errmsg = ext::FormatError(err);
@@ -197,13 +197,13 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
 	view.show();
 
-	nsys.AddInfo("Title1", "Text1");
-	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddInfo("Title3", ttt, Qt::RichText);
-	nsys.AddError("Title4", QtTools::ToQString(errmsg));
-	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title1", "Text1");
+	//nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+	//nsys.AddInfo("Title3", ttt, Qt::RichText);
+	//nsys.AddError("Title4", QtTools::ToQString(errmsg));
+	//nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
 	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
 
 	auto nf = nsys.CreateNotification();
