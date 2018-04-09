@@ -38,7 +38,7 @@ namespace QtTools::NotificationSystem
 			QPoint hintTopLeft;  // see above description
 	
 			// data from notification
-			QPixmap pixmap;      // notification pixmap
+			QPixmap pixmap;      // notification pixmap(error/warn/info)
 			QString timestamp;   // notification datetime
 			QString title;       // notification title
 			QString text;        // notification text
