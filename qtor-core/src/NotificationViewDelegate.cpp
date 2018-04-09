@@ -139,7 +139,6 @@ namespace QtTools::NotificationSystem
 			int elidePoint = line.textStart();
 			item.title = title.mid(0, elidePoint) + ElideText(titleFm, title.mid(elidePoint), option.textElideMode, line.width());
 
-			//auto elidedFormats = ElideFormats(formats, elidePoint);
 			auto elidedFormats = formats;
 			ColorifyElidePoint(title, elidedFormats);
 
@@ -268,15 +267,15 @@ namespace QtTools::NotificationSystem
 	{
 		using namespace QtTools::Delegates;
 
-		painter->drawPixmap(item.pixmapRect, item.pixmap);
-
 		const QStyleOptionViewItem & option = *item.option;
 		const bool selected = option.state & QStyle::State_Selected;
 		const auto margins = TextMargins(option);
 		const auto rect = FocusFrameSubrect(option) - margins;
 
-		auto cg = ColorGroup(option);
-		auto cr = selected ? QPalette::HighlightedText : QPalette::Text;
+		const auto cg = ColorGroup(option);
+		const auto cr = selected ? QPalette::HighlightedText : QPalette::Text;
+
+		painter->drawPixmap(item.pixmapRect, item.pixmap);
 
 		auto & titleRect = item.titleRect;
 		auto timestampRect = item.timestampRect;
