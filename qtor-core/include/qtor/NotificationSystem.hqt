@@ -127,47 +127,65 @@ namespace QtTools::NotificationSystem
 	{
 		Q_OBJECT
 
+		Q_PROPERTY(NotificationPriority priority READ Priority WRITE Priority)
+		Q_PROPERTY(NotificationLevel    level    READ Level    WRITE Level)
+
+		/// link to follow when notification is activated
+		Q_PROPERTY(QString activationLink READ ActivationLink WRITE ActivationLink)
 		/// Notification title
 		Q_PROPERTY(QString title       READ Title     WRITE Title)
-		/// Notification main text
+		/// Notification timestamp
+		Q_PROPERTY(QDateTime timestamp READ Timestamp WRITE Timestamp)
+
+		/// Notification main text(should be not very long, see also full text)
 		Q_PROPERTY(QString text           READ Text      WRITE Text)
 		Q_PROPERTY(QString plainText      READ PlainText           )
 		/// Notification main text: plain or rich, by default - auto
 		Q_PROPERTY(Qt::TextFormat textFmt READ TextFmt   WRITE TextFmt)
-		/// Notification timestamp
-		Q_PROPERTY(QDateTime timestamp READ Timestamp WRITE Timestamp)
 
-		Q_PROPERTY(NotificationPriority priority READ Priority WRITE Priority)
-		Q_PROPERTY(NotificationLevel    level    READ Level    WRITE Level)
+		/// Notification full text
+		Q_PROPERTY(QString fullText           READ FullText      WRITE FullText)
+		Q_PROPERTY(QString fullPlainText      READ PlainFullText)
+		/// Notification full text: plain or rich, by default - auto
+		Q_PROPERTY(Qt::TextFormat fullTextFmt READ FullTextFmt   WRITE FullTextFmt)
 
 		/// Some icon 
 		Q_PROPERTY(QIcon icon READ Icon WRITE Icon)
 
 	public:
-		virtual QString Title() const = 0;
-		virtual QString Title(QString title) = 0;
-
-		virtual QString Text() const = 0;
-		virtual QString Text(QString text) = 0;
-		
-		virtual Qt::TextFormat TextFmt() const = 0;
-		virtual Qt::TextFormat TextFmt(Qt::TextFormat fmt) = 0;
-
-		// same as text, but if test is a rich text, this method will return plain version of it
-		virtual QString PlainText() const = 0;
-
-
-		virtual QDateTime Timestamp() const = 0;
-		virtual QDateTime Timestamp(QDateTime timestamp) = 0;
-
-		virtual QIcon Icon() const = 0;
-		virtual QIcon Icon(QIcon icon) = 0;
-
 		virtual NotificationPriority Priority() const = 0;
 		virtual NotificationPriority Priority(NotificationPriority priority) = 0;
 
 		virtual NotificationLevel Level() const = 0;
 		virtual NotificationLevel Level(NotificationLevel level) = 0;
+
+		virtual QString ActivationLink() const = 0;
+		virtual QString ActivationLink(QString href) = 0;
+
+		virtual QString Title() const = 0;
+		virtual QString Title(QString title) = 0;
+
+		virtual QDateTime Timestamp() const = 0;
+		virtual QDateTime Timestamp(QDateTime timestamp) = 0;
+
+		virtual QString Text() const = 0;
+		virtual QString Text(QString text) = 0;
+		// same as text, but if it's a rich text, this method will return plain version of it
+		virtual QString PlainText() const = 0;
+
+		virtual Qt::TextFormat TextFmt() const = 0;
+		virtual Qt::TextFormat TextFmt(Qt::TextFormat fmt) = 0;
+		
+		virtual QString FullText() const = 0;
+		virtual QString FullText(QString text) = 0;
+		// same as text, but if it's a rich text, this method will return plain version of it
+		virtual QString PlainFullText() const = 0;
+
+		virtual Qt::TextFormat FullTextFmt() const = 0;
+		virtual Qt::TextFormat FullTextFmt(Qt::TextFormat fmt) = 0;
+
+		virtual QIcon Icon() const = 0;
+		virtual QIcon Icon(QIcon icon) = 0;
 
 	public:
 		virtual ~Notification() = default;

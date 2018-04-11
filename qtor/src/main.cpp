@@ -37,6 +37,11 @@
 #include <qtor/NotificationView.hqt>
 #include <qtor/NotificationPopupLayout.hqt>
 
+#include <QtGui/QPainter>
+#include <QtGui/QTextDocument>
+#include <QtGui/QTextBlock>
+#include <QtGui/QAbstractTextDocumentLayout>
+#include <QtGui/QTextCursor>
 
 //class http_method
 //{
@@ -113,6 +118,49 @@
 //}
 
 
+auto some_long_text = R"(
+line1<br>
+line2<br>
+line3<br>
+line4<br>
+line5<br>
+line6<br>
+line7<br>
+line8<br>
+line9<br>
+)";
+
+class TestWidget : public QWidget
+{
+public:
+	void paintEvent(QPaintEvent * event);
+};
+
+void TestWidget::paintEvent(QPaintEvent * event)
+{
+	QWidget::paintEvent(event);
+	QPainter painter(this);
+
+	//QFont font;
+	//font.setFamily("Segoe UI");
+	//font.setPointSize(9);	
+	painter.setFont(qApp->font("QAbstractItemView"));
+
+	QTextDocument textdoc;
+	textdoc.setDocumentMargin(0);
+	textdoc.documentLayout()->setPaintDevice(this);
+
+	textdoc.setHtml(some_long_text);
+	textdoc.setTextWidth(width());
+	textdoc.drawContents(&painter);
+
+	auto pos = textdoc.documentLayout()->hitTest({0, 100}, Qt::FuzzyHit);	
+	auto block = textdoc.findBlock(pos);
+
+	auto * layout = block.layout();
+}
+
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -182,11 +230,14 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	NotificationPopupLayout layout;
 	NotificationView view;
 	
-	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered,
-	                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
+	auto hovered = [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); };
+	auto activated = [](auto href) { cout << FromQString(href) << endl; };
 
-	QObject::connect(&view, &NotificationView::LinkHovered,
-	                 mainWindow.m_statusbar, [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); });
+	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered, mainWindow.m_statusbar, hovered);
+	QObject::connect(&view, &NotificationView::LinkHovered, mainWindow.m_statusbar, hovered);
+
+	QObject::connect(&layout, &NotificationPopupLayout::LinkActivated, activated);
+	QObject::connect(&view, &NotificationView::LinkActivated, activated);
 
 	layout.Init(nsys);
 	layout.SetParent(&mainWindow);
@@ -197,13 +248,13 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
 	view.show();
 
-	//nsys.AddInfo("Title1", "Text1");
-	//nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	//nsys.AddInfo("Title3", ttt, Qt::RichText);
-	//nsys.AddError("Title4", QtTools::ToQString(errmsg));
-	//nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
-	//nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
-	//nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title1", "Text1");
+	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+	nsys.AddInfo("Title3", ttt, Qt::RichText);
+	nsys.AddError("Title4", QtTools::ToQString(errmsg));
+	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
 	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
 
 	auto nf = nsys.CreateNotification();
@@ -211,8 +262,12 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	nf->Text("Some Text");
 	nf->setProperty("backgroundColor", QColor("red"));
 	nf->setProperty("expirationTimeout", 0);
+	nf->ActivationLink("setings:://tralala");
 
 	nsys.AddNotification(std::move(nf));
+
+	//TestWidget wgt;
+	//wgt.show();
 
 	return qapp.exec();
 }

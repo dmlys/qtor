@@ -176,9 +176,9 @@ namespace QtTools::NotificationSystem
 		return rect;
 	}
 
-	QRect NotificationPopupLayout::DefaultLayoutRect(const QRect & parent, Qt::Corner corner)
+	QRect NotificationPopupLayout::DefaultLayoutRect(const QRect & parent, Qt::Corner corner) const
 	{
-		QFont font = qApp->font();
+		QFont font = qApp->font("QAbstractItemView");
 		QFontMetrics fm(font);
 
 		// calculate default rect based on parent rect and corner
@@ -533,24 +533,42 @@ namespace QtTools::NotificationSystem
 
 	bool NotificationPopupLayout::eventFilter(QObject * watched, QEvent * event)
 	{
-		if (event->type() == QEvent::Resize)
+		auto evType = event->type();
+		if (evType == QEvent::Resize)
 		{
 			auto * rev = static_cast<QResizeEvent *>(event);
 			ParentResized();
 			return false;
-		}
+		}	
+		
+		bool mouseButtonEvent =
+			   evType == QEvent::MouseButtonPress
+			or evType == QEvent::MouseButtonDblClick;
 
-		if (event->type() != QEvent::MouseButtonPress)
+		if (not mouseButtonEvent)
 			return false;
 
-		auto * ev = static_cast<QMouseEvent *>(event);
-		if (ev->button() != Qt::RightButton) return false;
-		
 		auto first = m_items.begin();
 		auto last = m_items.end();
 		auto it = std::find_if(first, last, [watched](auto & item) { return item.popup == watched; });
 		if (it == last) return false;
 
+		if (evType == QEvent::MouseButtonDblClick)
+		{
+			auto * notification = it->notification.data();
+			if (not notification) return true;
+			
+			auto href = notification->ActivationLink();
+			if (href.isEmpty()) return true;
+
+			LinkActivated(std::move(href));
+			MoveOutPopup(*it);
+			return true;
+		}
+
+		auto * ev = static_cast<QMouseEvent *>(event);
+		if (ev->button() != Qt::RightButton) return false;
+		
 		auto * widget = it->popup.data();
 
 		if (not widget->contentsRect().contains(ev->pos()))

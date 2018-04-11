@@ -21,7 +21,7 @@ namespace QtTools::NotificationSystem
 
 	}
 
-	static QString toPlain(QString rich)
+	static QString toPlain(const QString & rich)
 	{
 		QTextDocument doc;
 		doc.setHtml(rich);
@@ -29,20 +29,30 @@ namespace QtTools::NotificationSystem
 		return doc.toPlainText();
 	}
 
-	QString SimpleNotification::PlainText() const
+	static QString toPlain(const QString & text, Qt::TextFormat fmt)
 	{
-		switch (m_textFmt)
+		switch (fmt)
 		{
-			case Qt::PlainText: return m_text;				
-			case Qt::RichText:  return toPlain(m_text);
-				
+			case Qt::PlainText: return text;
+			case Qt::RichText:  return toPlain(text);
+
 			case Qt::AutoText:
 			default:
-				if (Qt::mightBeRichText(m_text))
-					return toPlain(m_text);
+				if (Qt::mightBeRichText(text))
+					return toPlain(text);
 				else
-					return m_text;				
+					return text;
 		}
+	}
+
+	QString SimpleNotification::PlainText() const
+	{
+		return toPlain(m_text, m_textFmt);
+	}
+
+	QString SimpleNotification::PlainFullText() const
+	{
+		return toPlain(m_fullText, m_fullTextFmt);
 	}
 
 	auto SimpleNotification::Priority() const -> NotificationPriority

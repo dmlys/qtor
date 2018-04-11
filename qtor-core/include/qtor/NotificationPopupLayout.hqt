@@ -94,10 +94,10 @@ namespace QtTools::NotificationSystem
 		static auto  DescribeCorner(Qt::Corner corner) -> std::tuple<GetPointPtr, MovePointPtr, int>;
 		/// Aligns rect into parent by corner.
 		static QRect AlignRect(QRect rect, const QRect & parent, Qt::Corner corner);
-		/// calculates default layout rectangle(SetGeometry was not called, or called with invalid rect)
-		static QRect DefaultLayoutRect(const QRect & parent, Qt::Corner corner);
 
 	protected:
+		/// calculates default layout rectangle(SetGeometry was not called, or called with invalid rect)
+		virtual QRect DefaultLayoutRect(const QRect & parent, Qt::Corner corner) const;
 		/// returns parent geometry or desktop available geometry
 		virtual QRect ParentRect() const;
 		/// calculates rect where popups should be placed based on m_geometry and parent geometry
@@ -165,10 +165,10 @@ namespace QtTools::NotificationSystem
 	public:
 		virtual void Init(NotificationCenter & center);
 
-	public:
+	public Q_SLOTS:
 		virtual void AddPopup(AbstractNotificationPopupWidget * popup);
 		virtual void AddNotification(QPointer<const Notification> notification);
-		virtual auto NotificationsCount() const -> unsigned;
+		virtual unsigned NotificationsCount() const;
 
 	Q_SIGNALS:
 		void LinkActivated(QString href) const;

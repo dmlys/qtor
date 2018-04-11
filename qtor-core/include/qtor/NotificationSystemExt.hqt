@@ -21,11 +21,14 @@ namespace QtTools::NotificationSystem
 	{
 	protected:
 		QDateTime m_timestamp;
+		QString   m_activationLink;
 		QString   m_title;
-		QString   m_text;		
+		QString   m_text;
+		QString   m_fullText;
 		QIcon     m_icon;
 
 		Qt::TextFormat m_textFmt = Qt::AutoText;
+		Qt::TextFormat m_fullTextFmt = Qt::AutoText;
 
 		unsigned m_priority        : sizeof(unsigned) * CHAR_BIT / 2 - 1; // = Normal
 		unsigned m_level           : sizeof(unsigned) * CHAR_BIT / 2 - 1; // = Info
@@ -33,33 +36,41 @@ namespace QtTools::NotificationSystem
 		unsigned m_level_inited    : 1;                                   // = 0
 
 	public:
-		virtual QString Title() const override        { return m_title;}
-		virtual QString Title(QString title) override { return std::exchange(m_title, std::move(title)); }
-
-		virtual QString Text() const override         { return m_text; }
-		virtual QString Text(QString text) override   { return std::exchange(m_text, std::move(text)); }
-
-		virtual Qt::TextFormat TextFmt() const override             { return m_textFmt; }
-		virtual Qt::TextFormat TextFmt(Qt::TextFormat fmt) override { return std::exchange(m_textFmt, fmt); }
-
-		virtual QString PlainText() const override;
-
-		virtual QDateTime Timestamp() const override              { return m_timestamp; }
-		virtual QDateTime Timestamp(QDateTime timestamp) override { return std::exchange(m_timestamp, std::move(timestamp)); }
-
-		virtual QIcon Icon() const override      { return m_icon; }
-		virtual QIcon Icon(QIcon icon) override  { return std::exchange(m_icon, std::move(icon)); }
-
 		virtual NotificationPriority Priority() const override;
 		virtual NotificationPriority Priority(NotificationPriority priority) override;
 
 		virtual NotificationLevel Level() const override;
 		virtual NotificationLevel Level(NotificationLevel level) override;
 
+		virtual QString ActivationLink() const override       { return m_activationLink; }
+		virtual QString ActivationLink(QString href) override { return std::exchange(m_activationLink, std::move(href)); }
+
+		virtual QString Title() const override        { return m_title;}
+		virtual QString Title(QString title) override { return std::exchange(m_title, std::move(title)); }
+
+		virtual QDateTime Timestamp() const override              { return m_timestamp; }
+		virtual QDateTime Timestamp(QDateTime timestamp) override { return std::exchange(m_timestamp, std::move(timestamp)); }
+
+		virtual QString Text() const override         { return m_text; }
+		virtual QString Text(QString text) override   { return std::exchange(m_text, std::move(text)); }
+		virtual QString PlainText() const override;
+
+		virtual Qt::TextFormat TextFmt() const override             { return m_textFmt; }
+		virtual Qt::TextFormat TextFmt(Qt::TextFormat fmt) override { return std::exchange(m_textFmt, fmt); }
+
+		virtual QString FullText() const override           { return m_fullText; }
+		virtual QString FullText(QString FullText) override { return std::exchange(m_fullText, std::move(FullText)); }
+		virtual QString PlainFullText() const override;
+
+		virtual Qt::TextFormat FullTextFmt() const override             { return m_fullTextFmt; }
+		virtual Qt::TextFormat FullTextFmt(Qt::TextFormat fmt) override { return std::exchange(m_fullTextFmt, fmt); }
+
+		virtual QIcon Icon() const override      { return m_icon; }
+		virtual QIcon Icon(QIcon icon) override  { return std::exchange(m_icon, std::move(icon)); }
+
 	public:
 		SimpleNotification();
 		SimpleNotification(QString title, QString text, Qt::TextFormat fmt, QDateTime timestamp);
-		~SimpleNotification() = default;
 	};
 
 

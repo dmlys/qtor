@@ -38,10 +38,11 @@ namespace QtTools::NotificationSystem
 			QPoint hintTopLeft;  // see above description
 	
 			// data from notification
-			QPixmap pixmap;      // notification pixmap(error/warn/info)
-			QString timestamp;   // notification datetime
-			QString title;       // notification title
-			QString text;        // notification text
+			QPixmap pixmap;         // notification pixmap(error/warn/info)
+			QString timestamp;      // notification datetime
+			QString title;          // notification title
+			QString text;           // notification text
+			QString activationLink; // notification activation link
 	
 			Qt::TextFormat textFormat;      // TextFormat of text
 			NotificationLevel level;        // notification level 

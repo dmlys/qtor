@@ -249,6 +249,7 @@ namespace QtTools::NotificationSystem
 		item.text = notification.Text();
 		item.textFormat = notification.TextFmt();
 		item.pixmap = GetPixmap(notification, option);
+		item.activationLink = notification.ActivationLink();
 
 		item.textFont = item.titleFont = item.timestampFont = item.baseFont = option.font;
 		item.titleFont.setPointSize(item.titleFont.pointSize() * 11 / 10);
@@ -351,6 +352,7 @@ namespace QtTools::NotificationSystem
 		auto evType = event->type();
 		bool mouseButtonEvent =
 			   evType == QEvent::MouseButtonPress
+			or evType == QEvent::MouseButtonDblClick
 			or evType == QEvent::MouseMove;
 
 		if (not mouseButtonEvent) return false;
@@ -359,6 +361,14 @@ namespace QtTools::NotificationSystem
 
 		init(option, index);		
 		LayoutItem(option, m_cachedItem);
+
+		if (evType == QEvent::MouseButtonDblClick)
+		{
+			if (not m_cachedItem.activationLink.isEmpty())
+				LinkActivated(m_cachedItem.activationLink, option);
+
+			return true;
+		}
 
 		assert(m_cachedItem.textdocptr);
 		QTextDocument & textDoc = *m_cachedItem.textdocptr;
