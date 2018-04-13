@@ -76,6 +76,8 @@ namespace QtTools::NotificationSystem
 
 	protected:
 		mutable LaidoutItem m_cachedItem;
+		mutable int m_curMaxTitleWidth = 0;
+		mutable bool m_sizeHintChagnedScheduled = false;
 
 		QIcon m_errorIcon;
 		QIcon m_warnIcon;
@@ -95,6 +97,10 @@ namespace QtTools::NotificationSystem
 		virtual void LayoutItem(const QStyleOptionViewItem & option, LaidoutItem & item) const;
 		virtual void Draw(QPainter * painter, const LaidoutItem & item) const;
 		virtual void DrawBackground(QPainter * painter, const LaidoutItem & item) const;
+
+	protected:
+		Q_INVOKABLE void ScheduleEmitSizeHintChanged();
+		Q_INVOKABLE void DoEmitSizeHintChanged();
 
 	protected:
 		virtual void LinkActivated(QString href, const QStyleOptionViewItem & option) const;

@@ -426,6 +426,21 @@ namespace QtTools::NotificationSystem
 		Q_EMIT view->LinkHovered(std::move(href));
 	}
 
+	void NotificationViewDelegate::ScheduleEmitSizeHintChanged()
+	{
+		if (not m_sizeHintChagnedScheduled)
+		{
+			QMetaObject::invokeMethod(this, "DoEmitSizeHintChanged", Qt::QueuedConnection);
+			m_sizeHintChagnedScheduled = true;
+		}
+	}
+
+	void NotificationViewDelegate::DoEmitSizeHintChanged()
+	{
+		m_sizeHintChagnedScheduled = false;
+		Q_EMIT sizeHintChanged({});
+	}
+
 	NotificationViewDelegate::NotificationViewDelegate(QObject * parent /* = nullptr */)
 		: QAbstractItemDelegate(parent)
 	{

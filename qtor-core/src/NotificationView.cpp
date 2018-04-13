@@ -249,9 +249,12 @@ namespace QtTools::NotificationSystem
 		m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 		m_listView->setWordWrap(true);
 		m_listView->setMouseTracking(true);
+
+		m_listView->setResizeMode(QListView::Adjust);
+		m_listView->setLayoutMode(QListView::SinglePass);
 		
 		m_listDelegate = new NotificationViewDelegate(this);
-		m_listView->setItemDelegate(m_listDelegate);		
+		m_listView->setItemDelegate(m_listDelegate);
 
 		m_listView->setObjectName("listView");
 		m_listDelegate->setObjectName("listDelegate");
