@@ -77,6 +77,7 @@ namespace QtTools::NotificationSystem
 		const auto margins = TextMargins(option);
 		const auto rect = option.rect - margins;
 		const auto topLeft = rect.topLeft();
+		const auto rectWidth = std::max(rect.width(), m_maxRectWidth);
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		const QFontMetrics titleFm {item.titleFont, device};
@@ -93,7 +94,7 @@ namespace QtTools::NotificationSystem
 		// no more than 2 lines, with 40 average chars as width
 		const QSize pixsz = item.pixmap.size();
 		const qreal height = 2 * titleFm.height();
-		const qreal width = std::max(40 * titleFm.averageCharWidth(), rect.width() - timestampSz.width() - titleSpacer);
+		const qreal width = std::max(40 * titleFm.averageCharWidth(), m_maxRectWidth - timestampSz.width() - titleSpacer);
 
 		item.titleLayoutPtr = nullptr;
 		item.titleLayoutPtr = std::make_unique<QTextLayout>(item.title, item.titleFont, device);
@@ -185,6 +186,7 @@ namespace QtTools::NotificationSystem
 		const auto margins = TextMargins(option);
 		const auto rect = option.rect - margins;
 		const auto topLeft = rect.topLeft();
+		const auto rectWidth = std::max(rect.width(), m_maxRectWidth);
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		const QFontMetrics titleFm {item.titleFont, device};
@@ -206,7 +208,7 @@ namespace QtTools::NotificationSystem
 		textDoc.documentLayout()->setPaintDevice(device);
 		SetText(textDoc, item.textFormat, item.text);
 
-		const auto width = std::max(rect.width(), titleSz.width() + timestampSz.width() + titleSpacer);
+		const auto width = std::max(rectWidth, titleSz.width() + timestampSz.width() + titleSpacer);
 		textDoc.setTextWidth(width);
 
 		QSize textSz {std::lround(textDoc.idealWidth()), std::lround(textDoc.size().height())};
@@ -261,6 +263,12 @@ namespace QtTools::NotificationSystem
 		item.totalRect = item.pixmapRect | item.timestampRect | item.titleRect | item.textRect;
 		item.totalRect += margins;
 		
+		if (rect.width() > m_maxRectWidth)
+		{
+			if (std::exchange(m_maxRectWidth, rect.width()))
+				Q_EMIT ext::unconst(this)->sizeHintChanged({});
+		}
+
 		return;
 	}
 
@@ -424,21 +432,6 @@ namespace QtTools::NotificationSystem
 		if (not view) return;
 
 		Q_EMIT view->LinkHovered(std::move(href));
-	}
-
-	void NotificationViewDelegate::ScheduleEmitSizeHintChanged()
-	{
-		if (not m_sizeHintChagnedScheduled)
-		{
-			QMetaObject::invokeMethod(this, "DoEmitSizeHintChanged", Qt::QueuedConnection);
-			m_sizeHintChagnedScheduled = true;
-		}
-	}
-
-	void NotificationViewDelegate::DoEmitSizeHintChanged()
-	{
-		m_sizeHintChagnedScheduled = false;
-		Q_EMIT sizeHintChanged({});
 	}
 
 	NotificationViewDelegate::NotificationViewDelegate(QObject * parent /* = nullptr */)
