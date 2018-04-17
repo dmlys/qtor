@@ -262,13 +262,15 @@ namespace QtTools::NotificationSystem
 
 		item.totalRect = item.pixmapRect | item.timestampRect | item.titleRect | item.textRect;
 		item.totalRect += margins;
-		
-		if (rect.width() > m_maxRectWidth)
-		{
-			if (std::exchange(m_maxRectWidth, rect.width()))
-				Q_EMIT ext::unconst(this)->sizeHintChanged({});
-		}
 
+		
+		auto widgetWidth = option.widget->width();
+		if (m_oldViewWidth != widgetWidth and std::exchange(m_oldViewWidth, widgetWidth))
+			m_maxRectWidth = 0;
+
+		if (rect.width() > m_maxRectWidth and std::exchange(m_maxRectWidth, rect.width()))
+			Q_EMIT ext::unconst(this)->sizeHintChanged({});
+		
 		return;
 	}
 

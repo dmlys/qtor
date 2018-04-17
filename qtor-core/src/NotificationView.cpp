@@ -245,13 +245,13 @@ namespace QtTools::NotificationSystem
 		m_listView->setAlternatingRowColors(true);
 		m_listView->setTabKeyNavigation(false);
 		m_listView->setModelColumn(1);
-		m_listView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+		//m_listView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 		m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 		m_listView->setWordWrap(true);
 		m_listView->setMouseTracking(true);
 
-		m_listView->setResizeMode(QListView::Adjust);
-		m_listView->setLayoutMode(QListView::SinglePass);
+		//m_listView->setResizeMode(QListView::Adjust);
+		//m_listView->setLayoutMode(QListView::SinglePass);
 		
 		m_listDelegate = new NotificationViewDelegate(this);
 		m_listView->setItemDelegate(m_listDelegate);

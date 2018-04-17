@@ -1,4 +1,3 @@
-
 #pragma once
 #include <memory> // for shared_ptr
 #include <any>
@@ -13,6 +12,7 @@
 
 namespace QtTools::NotificationSystem
 {
+	/// Draws Notification as maximum 2-line title + timestamp + main text
 	class NotificationViewDelegate : public QAbstractItemDelegate
 	{
 		Q_OBJECT
@@ -71,7 +71,6 @@ namespace QtTools::NotificationSystem
 	
 			// cached prepared and calculated QTextDocument for text
 			std::unique_ptr<QTextDocument> textdocptr;
-
 			// cached prepared and laidout QTextLayout for title
 			std::unique_ptr<QTextLayout> titleLayoutPtr;
 		};
@@ -79,6 +78,7 @@ namespace QtTools::NotificationSystem
 	protected:
 		mutable LaidoutItem m_cachedItem;
 		mutable int m_maxRectWidth = 0;
+		mutable int m_oldViewWidth = 0;
 
 		QIcon m_errorIcon;
 		QIcon m_warnIcon;
