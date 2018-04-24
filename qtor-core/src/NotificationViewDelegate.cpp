@@ -77,7 +77,7 @@ namespace QtTools::NotificationSystem
 		const auto margins = TextMargins(option);
 		const auto rect = option.rect - margins;
 		const auto topLeft = rect.topLeft();
-		const auto rectWidth = std::max(rect.width(), m_maxRectWidth);
+		const auto rectWidth = std::max(rect.width(), m_curMaxWidth);
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		const QFontMetrics titleFm {item.titleFont, device};
@@ -94,7 +94,7 @@ namespace QtTools::NotificationSystem
 		// no more than 2 lines, with 40 average chars as width
 		const QSize pixsz = item.pixmap.size();
 		const qreal height = 2 * titleFm.height();
-		const qreal width = std::max(40 * titleFm.averageCharWidth(), m_maxRectWidth - timestampSz.width() - titleSpacer);
+		const qreal width = std::max(40 * titleFm.averageCharWidth(), rectWidth - timestampSz.width() - titleSpacer);
 
 		item.titleLayoutPtr = nullptr;
 		item.titleLayoutPtr = std::make_unique<QTextLayout>(item.title, item.titleFont, device);
@@ -186,7 +186,7 @@ namespace QtTools::NotificationSystem
 		const auto margins = TextMargins(option);
 		const auto rect = option.rect - margins;
 		const auto topLeft = rect.topLeft();
-		const auto rectWidth = std::max(rect.width(), m_maxRectWidth);
+		const auto rectWidth = std::max(rect.width(), m_curMaxWidth);
 
 		QPaintDevice * device = const_cast<QWidget *>(option.widget);
 		const QFontMetrics titleFm {item.titleFont, device};
@@ -261,16 +261,17 @@ namespace QtTools::NotificationSystem
 		LayoutText(option, item);
 
 		item.totalRect = item.pixmapRect | item.timestampRect | item.titleRect | item.textRect;
-		item.totalRect += margins;
+		const auto width = item.totalRect.width();
+		const auto widgetWidth = option.widget->width();
 
-		
-		auto widgetWidth = option.widget->width();
 		if (m_oldViewWidth != widgetWidth and std::exchange(m_oldViewWidth, widgetWidth))
-			m_maxRectWidth = 0;
+			m_curMaxWidth = 0;
 
-		if (rect.width() > m_maxRectWidth and std::exchange(m_maxRectWidth, rect.width()))
+		// if width is bigger than current - replace it, and it it wasn't 0 - emit signal
+		if (width > m_curMaxWidth and std::exchange(m_curMaxWidth, width))
 			Q_EMIT ext::unconst(this)->sizeHintChanged({});
 		
+		item.totalRect += margins;
 		return;
 	}
 

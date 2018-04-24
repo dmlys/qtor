@@ -133,34 +133,6 @@ namespace QtTools::NotificationSystem
 		qApp->clipboard()->setMimeData(mime);
 	}
 
-	//QMenu * NotificationView::CreateItemMenu(const QModelIndex & idx)
-	//{
-	//	if (not idx.isValid()) return nullptr;
-
-	//	auto * menu = new QMenu(this);
-	//	connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater); // auto delete on hide
-
-	//	menu->addActions(actions());
-	//	return menu;
-	//}
-
-	//void NotificationView::contextMenuEvent(QContextMenuEvent * ev)
-	//{
-	//	ev->accept();
-	//	auto pos = ev->globalPos();
-
-	//	auto * viewport = m_listView->viewport();
-	//	auto viewPos = viewport->mapFromGlobal(pos);
-
-	//	// process only menu from QListView
-	//	if (not viewport->contentsRect().contains(viewPos))
-	//		return;
-
-	//	auto idx = m_listView->indexAt(viewPos);
-	//	auto * menu = CreateItemMenu(idx);
-	//	if (menu) menu->popup(pos);
-	//}
-
 	/************************************************************************/
 	/*                    Init Methods                                      */
 	/************************************************************************/
@@ -169,19 +141,11 @@ namespace QtTools::NotificationSystem
 		auto * model = m_model.get();
 		m_listView->setModel(model);
 		m_textFilter->clear();
-
-		//connect(model, &QAbstractItemModel::layoutChanged, this, &NotificationView::ModelChanged);
-		//connect(model, &QAbstractItemModel::modelReset, this, &NotificationView::ModelChanged);
-		//connect(model, &AbstractNotificationModel::SortingChanged, this, &NotificationView::OnSortingChanged);
-
-		//if (m_sortColumn >= 0) m_model->sort(m_sortColumn, m_sortOrder);
-		//m_sortMenu = CreateSortMenu();
 	}
 
 	void NotificationView::DisconnectModel()
 	{
 		m_listView->setModel(nullptr);
-		//m_sizeHint = m_defMinSizeHint;
 	}
 
 	void NotificationView::SetModel(std::shared_ptr<AbstractNotificationModel> model)

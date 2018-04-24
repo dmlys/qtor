@@ -118,49 +118,6 @@
 //}
 
 
-auto some_long_text = R"(
-line1<br>
-line2<br>
-line3<br>
-line4<br>
-line5<br>
-line6<br>
-line7<br>
-line8<br>
-line9<br>
-)";
-
-class TestWidget : public QWidget
-{
-public:
-	void paintEvent(QPaintEvent * event);
-};
-
-void TestWidget::paintEvent(QPaintEvent * event)
-{
-	QWidget::paintEvent(event);
-	QPainter painter(this);
-
-	//QFont font;
-	//font.setFamily("Segoe UI");
-	//font.setPointSize(9);	
-	painter.setFont(qApp->font("QAbstractItemView"));
-
-	QTextDocument textdoc;
-	textdoc.setDocumentMargin(0);
-	textdoc.documentLayout()->setPaintDevice(this);
-
-	textdoc.setHtml(some_long_text);
-	textdoc.setTextWidth(width());
-	textdoc.drawContents(&painter);
-
-	auto pos = textdoc.documentLayout()->hitTest({0, 100}, Qt::FuzzyHit);	
-	auto block = textdoc.findBlock(pos);
-
-	auto * layout = block.layout();
-}
-
-
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -204,21 +161,6 @@ int main(int argc, char * argv[])
 	mainWindow.show();
 	
 	QTimer::singleShot(100, [&app] { app.Connect(); });
-
-	auto ttt = R"(
-<style type="text/css">
-   ol, ul {
-     margin: 0 0 0 20
-   }
-</style>
-Your options Are:
-<ol>
-<li>opt 1
-<li>opt 2
-</ol>
-opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
-)";
-
 	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
 	
 	std::error_code err {10066, ext::system_utf8_category()};
@@ -250,7 +192,6 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 
 	nsys.AddInfo("Title1", "Text1");
 	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddInfo("Title3", ttt, Qt::RichText);
 	nsys.AddError("Title4", QtTools::ToQString(errmsg));
 	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
 	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
@@ -265,9 +206,6 @@ opta hoptra lalalal kilozona <a href = "setings:://tralala" >link</a>
 	nf->ActivationLink("setings:://tralala");
 
 	nsys.AddNotification(std::move(nf));
-
-	//TestWidget wgt;
-	//wgt.show();
 
 	return qapp.exec();
 }
