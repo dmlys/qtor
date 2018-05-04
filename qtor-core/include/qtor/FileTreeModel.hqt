@@ -1,0 +1,96 @@
+#pragma once
+#include <variant>
+#include <vector>
+
+#include <qtor/types.hpp>
+#include <QtCore/QString>
+#include <QtCore/QAbstractItemModel>
+
+namespace qtor
+{
+	struct file_element
+	{
+		QString path;
+	};
+
+	class FileTreeModel : public QAbstractItemModel
+	{
+		using base_type = QAbstractItemModel;
+
+	protected:
+		struct page_type;
+		struct node_type;
+		union  value_ptr;
+
+		using node_ptr     = node_type *;
+		using page_ptr     = page_type *;
+		using leaf_ptr     = const file_element *;
+		using value_vector = std::vector<value_ptr>;
+
+		static constexpr std::uintptr_t PAGE = 0;
+		static constexpr std::uintptr_t LEAF = 1;
+
+		// page_ptr or lead_ptr
+		union value_ptr
+		{
+			struct
+			{
+				std::uintptr_t ptr  : sizeof(std::uintptr_t) * CHAR_BIT - 1;
+				std::uintptr_t type : 1; // 1 - leaf_ptr, 0 - page_ptr
+			};
+
+			std::uintptr_t val;
+		};
+
+		struct node_type
+		{
+			QString name;
+		};
+
+		struct page_type
+		{
+			page_ptr *   parent;
+			value_vector childs;
+			node_type    node;
+		};
+
+	protected:
+		value_vector m_elements;
+		static const value_vector ms_empty;
+
+	protected:
+		auto parent_page(page_ptr * ptr) const -> page_ptr *;
+		auto parent_row (page_ptr * ptr) const -> int;
+
+		template <class visitor>
+		static auto visit(value_ptr val, visitor && vis) -> std::invoke_result_t<visitor &&, leaf_ptr>;
+
+		static const value_vector & get_children(leaf_ptr leaf) { return ms_empty; }
+		static const value_vector & get_children(page_ptr page) { return page->childs; }
+		static const value_vector & get_children(value_ptr val) { return visit(val, [](auto ptr) -> const auto & { return get_children(ptr); }); }
+
+	protected:
+		page_ptr * get_ppage(const QModelIndex & index) const;
+		value_ptr  get_element(const QModelIndex & index) const;
+		QModelIndex createIndex(int row, int column, page_ptr * pptr) const { return base_type::createIndex(row, column, pptr); }
+
+	protected:
+		void fill_page(value_vector & pages, QStringRef prefix, std::vector<file_element>::const_iterator first, std::vector<file_element>::const_iterator last);
+
+	public:
+		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
+		virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
+		virtual QModelIndex parent(const QModelIndex & index) const override;
+		virtual QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const override;
+
+		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
+		virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+		virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+
+	public:
+		//void Init(std::vector<file_element> vals);
+
+	public:
+		using base_type::base_type;
+	};
+}

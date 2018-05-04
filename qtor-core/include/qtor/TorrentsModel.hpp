@@ -22,12 +22,12 @@ namespace qtor
 		using self_type = TorrentsModel;
 		using base_type = AbstractSparseContainerModel;
 
-		typedef viewed::sfview_qtbase
+		using view_type = viewed::sfview_qtbase
 		<
 			torrent_store,
 			sparse_container_comparator,
 			sparse_container_filter
-		> view_type;
+		>;
 
 	private:
 		using view_type::m_owner;

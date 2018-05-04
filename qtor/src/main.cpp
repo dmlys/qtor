@@ -151,61 +151,61 @@ int main(int argc, char * argv[])
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("bin/data.db"s);
 
-	auto source = std::make_shared<qtor::transmission::data_source>();
-	source->set_address("http://melkiy:9091/transmission/rpc"s);
-	
-	qtor::TransmissionRemoteApp app {std::move(source)};
-	qtor::MainWindow mainWindow;
-	
-	mainWindow.Init(app);
-	mainWindow.show();
-	
-	QTimer::singleShot(100, [&app] { app.Connect(); });
-	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
-	
-	std::error_code err {10066, ext::system_utf8_category()};
-	std::string errmsg = ext::FormatError(err);
-	
-	using namespace QtTools::NotificationSystem;
+	//auto source = std::make_shared<qtor::transmission::data_source>();
+	//source->set_address("http://melkiy:9091/transmission/rpc"s);
+	//
+	//qtor::TransmissionRemoteApp app {std::move(source)};
+	//qtor::MainWindow mainWindow;
+	//
+	//mainWindow.Init(app);
+	//mainWindow.show();
+	//
+	//QTimer::singleShot(100, [&app] { app.Connect(); });
+	//auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
+	//
+	//std::error_code err {10066, ext::system_utf8_category()};
+	//std::string errmsg = ext::FormatError(err);
+	//
+	//using namespace QtTools::NotificationSystem;
 
-	NotificationCenter nsys;
-	NotificationPopupLayout layout;
-	NotificationView view;
-	
-	auto hovered = [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); };
-	auto activated = [](auto href) { cout << FromQString(href) << endl; };
+	//NotificationCenter nsys;
+	//NotificationPopupLayout layout;
+	//NotificationView view;
+	//
+	//auto hovered = [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); };
+	//auto activated = [](auto href) { cout << FromQString(href) << endl; };
 
-	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered, mainWindow.m_statusbar, hovered);
-	QObject::connect(&view, &NotificationView::LinkHovered, mainWindow.m_statusbar, hovered);
+	//QObject::connect(&layout, &NotificationPopupLayout::LinkHovered, mainWindow.m_statusbar, hovered);
+	//QObject::connect(&view, &NotificationView::LinkHovered, mainWindow.m_statusbar, hovered);
 
-	QObject::connect(&layout, &NotificationPopupLayout::LinkActivated, activated);
-	QObject::connect(&view, &NotificationView::LinkActivated, activated);
+	//QObject::connect(&layout, &NotificationPopupLayout::LinkActivated, activated);
+	//QObject::connect(&view, &NotificationView::LinkActivated, activated);
 
-	layout.Init(nsys);
-	layout.SetParent(&mainWindow);
-	//layout.SetCorner(Qt::TopRightCorner);
-	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
+	//layout.Init(nsys);
+	//layout.SetParent(&mainWindow);
+	////layout.SetCorner(Qt::TopRightCorner);
+	////layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
-	view.Init(nsys);
-	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
-	view.show();
+	//view.Init(nsys);
+	//view.SetFilterMode(view.FilterByText | view.FilterByLevel);
+	//view.show();
 
-	nsys.AddInfo("Title1", "Text1");
-	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddError("Title4", QtTools::ToQString(errmsg));
-	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
-	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title1", "Text1");
+	//nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+	//nsys.AddError("Title4", QtTools::ToQString(errmsg));
+	//nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+	//nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+	//nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
 
-	auto nf = nsys.CreateNotification();
-	nf->Title("Custom");
-	nf->Text("Some Text");
-	nf->setProperty("backgroundColor", QColor("red"));
-	nf->setProperty("expirationTimeout", 0);
-	nf->ActivationLink("setings:://tralala");
+	//auto nf = nsys.CreateNotification();
+	//nf->Title("Custom");
+	//nf->Text("Some Text");
+	//nf->setProperty("backgroundColor", QColor("red"));
+	//nf->setProperty("expirationTimeout", 0);
+	//nf->ActivationLink("setings:://tralala");
 
-	nsys.AddNotification(std::move(nf));
+	//nsys.AddNotification(std::move(nf));
 
 	return qapp.exec();
 }

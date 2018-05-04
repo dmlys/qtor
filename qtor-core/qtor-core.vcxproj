@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AbstractSparseContainerModel.cpp" />
+    <ClCompile Include="src\FileTreeModel.cpp" />
     <ClCompile Include="src\MainWindow.cpp" />
     <ClCompile Include="src\formatter.cpp" />
     <ClCompile Include="src\Application.cpp" />
@@ -72,6 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMOCCompile Include="include\qtor\AbstractSparseContainerModel.hqt" />
+    <QtMOCCompile Include="include\qtor\FileTreeModel.hqt" />
     <QtMOCCompile Include="include\qtor\formatter.hqt" />
     <QtMOCCompile Include="include\qtor\MainWindow.hqt" />
     <QtMOCCompile Include="include\qtor\Application.hqt" />
