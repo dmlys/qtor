@@ -117,6 +117,8 @@
 //	}
 //}
 
+#include <qtor/FileTreeModel.hqt>
+#include <QtWidgets/QTreeView>
 
 int main(int argc, char * argv[])
 {
@@ -136,6 +138,25 @@ int main(int argc, char * argv[])
 	QApplication qapp {argc, argv};
 
 	std::cout << QtTools::ScreenInfo << endl;
+
+	std::vector<file_element> paths;
+	paths.assign({
+		{ QStringLiteral("folder/file1.txt") },
+		{ QStringLiteral("folder/file2.txt") },
+		{ QStringLiteral("folder/sup/file3.txt") },
+		{ QStringLiteral("dir/file.sft") },
+		{ QStringLiteral("dir/file.txt") },
+		{ QStringLiteral("ops.sh") },
+		{ QStringLiteral("westworld.mkv") },
+	});
+
+	qtor::FileTreeModel model;
+	model.Init(paths);
+
+	QTreeView view;
+	view.setModel(&model);
+	view.show();
+
 
 
 #ifdef Q_OS_WIN

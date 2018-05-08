@@ -40,6 +40,27 @@ namespace qtor
 			};
 
 			std::uintptr_t val;
+
+		public:
+			template <class visitor>
+			auto visit(visitor && vis) const -> std::invoke_result_t<visitor, leaf_ptr>;
+
+		public:
+			value_ptr(leaf_ptr ptr);
+			value_ptr(page_ptr ptr);
+
+			value_ptr & operator =(leaf_ptr ptr);
+			value_ptr & operator =(page_ptr ptr);
+
+		public:
+			value_ptr(value_ptr &&);
+			value_ptr & operator =(value_ptr &&);
+
+			value_ptr(const value_ptr &) = delete;
+			value_ptr & operator =(const value_ptr &) = delete;
+
+			value_ptr();
+			~value_ptr();
 		};
 
 		struct node_type
@@ -54,28 +75,33 @@ namespace qtor
 			node_type    node;
 		};
 
+		struct value_ptr_deleter
+		{
+			void operator()(leaf_ptr ptr) const {  }
+			void operator()(page_ptr ptr) const { delete ptr; }
+		};
+
 	protected:
 		value_vector m_elements;
 		static const value_vector ms_empty;
+		static constexpr value_ptr_deleter delete_value {};
 
 	protected:
 		auto parent_page(page_ptr * ptr) const -> page_ptr *;
 		auto parent_row (page_ptr * ptr) const -> int;
 
-		template <class visitor>
-		static auto visit(value_ptr val, visitor && vis) -> std::invoke_result_t<visitor &&, leaf_ptr>;
-
 		static const value_vector & get_children(leaf_ptr leaf) { return ms_empty; }
 		static const value_vector & get_children(page_ptr page) { return page->childs; }
-		static const value_vector & get_children(value_ptr val) { return visit(val, [](auto ptr) -> const auto & { return get_children(ptr); }); }
+		static const value_vector & get_children(const value_ptr & val) { return val.visit([](auto * ptr) -> const auto & { return get_children(ptr); }); }
+
+		static QString get_name(leaf_ptr ptr);
+		static QString get_name(page_ptr ptr);
+		static QString get_name(const value_ptr & val) { return val.visit([](auto * ptr) { return get_name(ptr); }); }
 
 	protected:
 		page_ptr * get_ppage(const QModelIndex & index) const;
-		value_ptr  get_element(const QModelIndex & index) const;
+		const value_ptr & get_element_ptr(const QModelIndex & index) const;
 		QModelIndex createIndex(int row, int column, page_ptr * pptr) const { return base_type::createIndex(row, column, pptr); }
-
-	protected:
-		void fill_page(value_vector & pages, QStringRef prefix, std::vector<file_element>::const_iterator first, std::vector<file_element>::const_iterator last);
 
 	public:
 		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -87,10 +113,33 @@ namespace qtor
 		virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 		virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
+	protected:
+		void fill_page(value_vector & pages, QStringRef prefix,
+			std::vector<file_element>::const_iterator first, 
+			std::vector<file_element>::const_iterator last);
+
+		void set_parent(page_ptr * parent, value_vector & pages);
+
 	public:
-		//void Init(std::vector<file_element> vals);
+		void Init(std::vector<file_element> & vals);
 
 	public:
 		using base_type::base_type;
 	};
+
+	template <class visitor>
+	inline auto FileTreeModel::value_ptr::visit(visitor && vis) const
+		-> std::invoke_result_t<visitor, leaf_ptr>
+	{
+		return this->type
+			? std::forward<visitor>(vis)(reinterpret_cast<leaf_ptr>(ptr))
+			: std::forward<visitor>(vis)(reinterpret_cast<page_ptr>(ptr));
+	}
+
+	template <class visitor>
+	inline auto visit(const FileTreeModel::value_ptr & val, visitor && vis)
+		-> std::invoke_result_t<visitor, FileTreeModel::leaf_ptr>
+	{
+		return val.visit(std::forward<visitor>(vis));
+	}
 }
