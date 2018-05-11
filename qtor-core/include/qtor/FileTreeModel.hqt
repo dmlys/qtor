@@ -3,16 +3,17 @@
 #include <vector>
 
 #include <qtor/types.hpp>
+#include <qtor/torrent.hpp>
 #include <QtCore/QString>
 #include <QtCore/QAbstractItemModel>
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/random_access_index.hpp>
+
+
 namespace qtor
 {
-	struct file_element
-	{
-		QString path;
-	};
-
 	class FileTreeModel : public QAbstractItemModel
 	{
 		using base_type = QAbstractItemModel;
@@ -24,7 +25,7 @@ namespace qtor
 
 		using node_ptr     = node_type *;
 		using page_ptr     = page_type *;
-		using leaf_ptr     = const file_element *;
+		using leaf_ptr     = const torrent_file *;
 		using value_vector = std::vector<value_ptr>;
 
 		static constexpr std::uintptr_t PAGE = 0;
@@ -81,22 +82,45 @@ namespace qtor
 			void operator()(page_ptr ptr) const { delete ptr; }
 		};
 
+		struct get_name_type
+		{
+			using result_type = filepath_type;
+			filepath_type operator()(leaf_ptr lead) const;
+			filepath_type operator()(page_ptr lead) const;
+			filepath_type operator()(const value_ptr & val) const;
+		};
+
+		struct get_childr_type
+		{
+			using result_type = const value_vector &;
+			result_type operator()(leaf_ptr leaf) const { return ms_empty; }
+			result_type operator()(page_ptr page) const { return page->childs; }
+			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
+		};
+
+
+	public:
+		using container = boost::multi_index_container<
+			value_ptr, 
+			boost::multi_index::indexed_by<
+				boost::multi_index::hashed_unique<get_name_type>,
+				boost::multi_index::random_access<>
+			>
+		>;
+
+	protected:
+		static constexpr value_ptr_deleter delete_value {};
+		static constexpr get_name_type     get_name {};
+		static constexpr get_childr_type   get_children {};
+
 	protected:
 		value_vector m_elements;
 		static const value_vector ms_empty;
-		static constexpr value_ptr_deleter delete_value {};
+		static container ms_cont;	
 
 	protected:
 		auto parent_page(page_ptr * ptr) const -> page_ptr *;
 		auto parent_row (page_ptr * ptr) const -> int;
-
-		static const value_vector & get_children(leaf_ptr leaf) { return ms_empty; }
-		static const value_vector & get_children(page_ptr page) { return page->childs; }
-		static const value_vector & get_children(const value_ptr & val) { return val.visit([](auto * ptr) -> const auto & { return get_children(ptr); }); }
-
-		static QString get_name(leaf_ptr ptr);
-		static QString get_name(page_ptr ptr);
-		static QString get_name(const value_ptr & val) { return val.visit([](auto * ptr) { return get_name(ptr); }); }
 
 	protected:
 		page_ptr * get_ppage(const QModelIndex & index) const;
@@ -115,13 +139,13 @@ namespace qtor
 
 	protected:
 		void fill_page(value_vector & pages, QStringRef prefix,
-			std::vector<file_element>::const_iterator first, 
-			std::vector<file_element>::const_iterator last);
+			std::vector<torrent_file>::const_iterator first, 
+			std::vector<torrent_file>::const_iterator last);
 
 		void set_parent(page_ptr * parent, value_vector & pages);
 
 	public:
-		void Init(std::vector<file_element> & vals);
+		void Init(std::vector<torrent_file> & vals);
 
 	public:
 		using base_type::base_type;

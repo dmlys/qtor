@@ -4,7 +4,7 @@
 #include <vector>
 #include <chrono>
 
-//#include <any>
+#include <any>
 #include <optional>
 #include <variant>
 
@@ -28,15 +28,16 @@ namespace qtor
 		typedef uint64_type    speed_type;
 		typedef uint64_type    size_type;
 
-		typedef std::chrono::system_clock::time_point  datetime_type;
-		typedef std::chrono::system_clock::duration    duration_type;
+		using datetime_type = std::chrono::system_clock::time_point;
+		using duration_type = std::chrono::system_clock::duration;
+		using filepath_type = QString;
 
 		// using any, optional, variant classes from std
 		template <class type>
 		using optional = std::optional<type>;
 
 		using nullopt_t = std::nullopt_t;
-		const nullopt_t nullopt = std::nullopt;
+		constexpr nullopt_t nullopt = std::nullopt;
 		using std::make_optional;
 		using std::get;
 

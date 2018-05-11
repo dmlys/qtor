@@ -43,15 +43,15 @@ namespace qtor
 	//	double progress;
 	//};
 
-	//struct torrent_file
-	//{
-	//	QString filename;
-	//	uint64_t size;
-	//	uint64_t have;
-	//	int index;
-	//	int priority;
-	//	bool wanted;
-	//};
+	struct torrent_file
+	{
+		filepath_type filename;
+		size_type     total_size;
+		size_type     have_size;
+		int_type      index;
+		int_type      priority;
+		bool          wanted;
+	};
 
 
 #define QTOR_REQ 1

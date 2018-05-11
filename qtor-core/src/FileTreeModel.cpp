@@ -5,6 +5,7 @@
 namespace qtor
 {
 	const FileTreeModel::value_vector FileTreeModel::ms_empty;
+	FileTreeModel::container FileTreeModel::ms_cont;
 
 	inline FileTreeModel::value_ptr::value_ptr()
 	{
@@ -93,15 +94,20 @@ namespace qtor
 		return children[index.row()];
 	}
 
-	QString FileTreeModel::get_name(leaf_ptr ptr)
+	filepath_type FileTreeModel::get_name_type::operator()(leaf_ptr ptr) const
 	{
-		int pos = ptr->path.lastIndexOf('/') + 1;
-		return ptr->path.mid(pos);
+		int pos = ptr->filename.lastIndexOf('/') + 1;
+		return ptr->filename.mid(pos);
 	}
 
-	QString FileTreeModel::get_name(page_ptr ptr)
+	filepath_type FileTreeModel::get_name_type::operator()(page_ptr ptr) const
 	{
 		return ptr->node.name;
+	}
+
+	filepath_type FileTreeModel::get_name_type::operator()(const value_ptr & val) const
+	{
+		return val.visit(*this);
 	}
 
 	int FileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
@@ -178,13 +184,13 @@ namespace qtor
 		return {};
 	}
 
-	void FileTreeModel::fill_page(value_vector & pages, QStringRef prefix, std::vector<file_element>::const_iterator first, std::vector<file_element>::const_iterator last)
+	void FileTreeModel::fill_page(value_vector & pages, QStringRef prefix, std::vector<torrent_file>::const_iterator first, std::vector<torrent_file>::const_iterator last)
 	{
 		for (;;)
 		{
 			if (first == last) break;
 
-			auto & path = first->path;
+			auto & path = first->filename;
 			int pos = path.indexOf('/', prefix.length());
 			int n   = pos - prefix.length();
 
@@ -202,7 +208,7 @@ namespace qtor
 				auto it = first;
 				for (++it; it != last; ++it)
 				{
-					auto ref = it->path.midRef(prefix.length(), n);
+					auto ref = it->filename.midRef(prefix.length(), n);
 					if (ref != name) break;
 				}					
 
@@ -230,13 +236,13 @@ namespace qtor
 		}
 	}
 
-	void FileTreeModel::Init(std::vector<file_element> & vals)
+	void FileTreeModel::Init(std::vector<torrent_file> & vals)
 	{
 		beginResetModel();
 
 		auto first = vals.begin();
 		auto last = vals.end();
-		std::sort(first, last, [](auto & v1, auto & v2) { return v1.path > v2.path; });
+		std::sort(first, last, [](auto & v1, auto & v2) { return v1.filename > v2.filename; });
 		fill_page(m_elements, {}, first, last);
 		set_parent(nullptr, m_elements);
 

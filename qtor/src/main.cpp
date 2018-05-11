@@ -125,6 +125,9 @@ int main(int argc, char * argv[])
 	using namespace std;
 	using namespace qtor;
 
+	cout << sizeof(FileTreeModel::container) << endl;
+	cout << sizeof(vector<int>) << endl;
+
 	ext::winsock2_stream_init();
 	ext::init_future_library(std::thread::hardware_concurrency());
 
@@ -139,7 +142,7 @@ int main(int argc, char * argv[])
 
 	std::cout << QtTools::ScreenInfo << endl;
 
-	std::vector<file_element> paths;
+	std::vector<torrent_file> paths;
 	paths.assign({
 		{ QStringLiteral("folder/file1.txt") },
 		{ QStringLiteral("folder/file2.txt") },
