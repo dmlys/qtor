@@ -4,9 +4,13 @@
 
 #include <qtor/types.hpp>
 #include <qtor/torrent.hpp>
+#include <qtor/torrent_file_store.hpp>
+#include <viewed/sfview_qtbase.hpp>
+
 #include <QtCore/QString>
 #include <QtCore/QAbstractItemModel>
 
+#include <boost/integer/static_log2.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
@@ -18,26 +22,44 @@ namespace qtor
 	{
 		using base_type = QAbstractItemModel;
 
+	public:
+		using container_type = torrent_file_store;
+
+	protected:
+		// store <-> view exchange
+		using torrent_file_ptr = container_type::view_pointer_type;
+		static_assert(std::is_pointer_v<torrent_file_ptr>);
+
+		using signal_range_type = typename container_type::signal_range_type;
+		using scoped_connection = typename container_type::scoped_connection;
+
+		static     torrent_file_ptr get_view_pointer(const torrent_file & val) { return container_type::get_view_pointer(val); }
+		static const torrent_file & get_view_reference(torrent_file_ptr ptr)   { return container_type::get_view_reference(ptr); }
+
 	protected:
 		struct page_type;
 		struct node_type;
 		union  value_ptr;
 
-		using node_ptr     = node_type *;
-		using page_ptr     = page_type *;
-		using leaf_ptr     = const torrent_file *;
-		using value_vector = std::vector<value_ptr>;
+		using node_ptr = node_type *;
+		using page_ptr = page_type *;
+		using leaf_ptr = const torrent_file *;
+
+		using int_vector = std::vector<int>;
 
 		static constexpr std::uintptr_t PAGE = 0;
 		static constexpr std::uintptr_t LEAF = 1;
+		
+		static_assert(boost::static_log2<sizeof(std::max_align_t)>::value >= 2);
 
-		// page_ptr or lead_ptr
+		// page_ptr or leaf_ptr
 		union value_ptr
 		{
 			struct
 			{
-				std::uintptr_t ptr  : sizeof(std::uintptr_t) * CHAR_BIT - 1;
-				std::uintptr_t type : 1; // 1 - leaf_ptr, 0 - page_ptr
+				std::uintptr_t ptr    : sizeof(std::uintptr_t) * CHAR_BIT - 2;
+				std::uintptr_t type   : 1; // 1 - leaf_ptr, 0 - page_ptr
+				std::uintptr_t owning : 1; // 1 - owning,   0 - non owning
 			};
 
 			std::uintptr_t val;
@@ -46,61 +68,40 @@ namespace qtor
 			template <class visitor>
 			auto visit(visitor && vis) const -> std::invoke_result_t<visitor, leaf_ptr>;
 
-		public:
-			value_ptr(leaf_ptr ptr);
-			value_ptr(page_ptr ptr);
-
-			value_ptr & operator =(leaf_ptr ptr);
-			value_ptr & operator =(page_ptr ptr);
+		protected:
+			void destroy() noexcept;
 
 		public:
-			value_ptr(value_ptr &&);
-			value_ptr & operator =(value_ptr &&);
+			value_ptr(leaf_ptr ptr) noexcept;
+			value_ptr(page_ptr ptr) noexcept;
+
+			value_ptr & operator =(leaf_ptr ptr) noexcept;
+			value_ptr & operator =(page_ptr ptr) noexcept;
+
+			template <class Type> value_ptr(std::unique_ptr<Type> ptr) noexcept;
+			template <class Type> value_ptr & operator =(std::unique_ptr<Type> ptr) noexcept;
+
+		public:
+			value_ptr(value_ptr &&) noexcept;
+			value_ptr & operator =(value_ptr &&) noexcept;
 
 			value_ptr(const value_ptr &) = delete;
 			value_ptr & operator =(const value_ptr &) = delete;
 
-			value_ptr();
-			~value_ptr();
+			value_ptr() noexcept;
+			~value_ptr() noexcept;
 		};
 
-		struct node_type
-		{
-			QString name;
-		};
-
-		struct page_type
-		{
-			page_ptr *   parent;
-			value_vector childs;
-			node_type    node;
-		};
-
-		struct value_ptr_deleter
-		{
-			void operator()(leaf_ptr ptr) const {  }
-			void operator()(page_ptr ptr) const { delete ptr; }
-		};
 
 		struct get_name_type
 		{
 			using result_type = filepath_type;
-			filepath_type operator()(leaf_ptr lead) const;
-			filepath_type operator()(page_ptr lead) const;
-			filepath_type operator()(const value_ptr & val) const;
+			result_type operator()(leaf_ptr lead) const;
+			result_type operator()(page_ptr lead) const;
+			result_type operator()(const value_ptr & val) const;
 		};
 
-		struct get_childr_type
-		{
-			using result_type = const value_vector &;
-			result_type operator()(leaf_ptr leaf) const { return ms_empty; }
-			result_type operator()(page_ptr page) const { return page->childs; }
-			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
-		};
-
-
-	public:
-		using container = boost::multi_index_container<
+		using value_container = boost::multi_index_container<
 			value_ptr, 
 			boost::multi_index::indexed_by<
 				boost::multi_index::hashed_unique<get_name_type>,
@@ -108,24 +109,102 @@ namespace qtor
 			>
 		>;
 
-	protected:
-		static constexpr value_ptr_deleter delete_value {};
-		static constexpr get_name_type     get_name {};
-		static constexpr get_childr_type   get_children {};
+		static constexpr int by_code = 0;
+		static constexpr int by_seq  = 1;
+
+		using code_view_type = value_container::nth_index<by_code>::type;
+		using seq_view_type  = value_container::nth_index<by_seq>::type;
+
+
+		struct node_type
+		{
+			filepath_type  name;
+			size_type      total_size;
+			size_type      have_size;
+			Qt::CheckState wanted;
+		};
+
+		struct page_type
+		{
+			page_type *     parent;
+			value_container childs;
+			node_type       node;
+		};
+
+		struct get_children_type
+		{
+			using result_type = const value_container &;
+			result_type operator()(leaf_ptr leaf) const { return ms_empty_container; }
+			result_type operator()(page_ptr page) const { return page->childs; }
+			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
+		};
 
 	protected:
-		value_vector m_elements;
-		static const value_vector ms_empty;
-		static container ms_cont;	
+		static constexpr get_name_type      get_name {};
+		static constexpr get_children_type  get_children {};
 
 	protected:
-		auto parent_page(page_ptr * ptr) const -> page_ptr *;
-		auto parent_row (page_ptr * ptr) const -> int;
+		static const value_container ms_empty_container;
 
 	protected:
-		page_ptr * get_ppage(const QModelIndex & index) const;
+		container_type * m_owner = nullptr; // pointer to owning container
+		page_type m_root; //= { /*.parent =*/ nullptr};		
+
+		viewed::null_filter m_filter;
+		viewed::null_sorter m_sorter;
+
+		/// raii connections
+		scoped_connection m_clear_con;
+		scoped_connection m_update_con;
+		scoped_connection m_erase_con;
+
+	protected:
+		page_ptr get_page(const QModelIndex & index) const;
 		const value_ptr & get_element_ptr(const QModelIndex & index) const;
-		QModelIndex createIndex(int row, int column, page_ptr * pptr) const { return base_type::createIndex(row, column, pptr); }
+		QModelIndex createIndex(int row, int column, page_ptr ptr) const { return base_type::createIndex(row, column, ptr); }
+
+	public:
+		/// returns pointer to owning container
+		container_type * get_owner() const noexcept { return m_owner; }
+
+		/// reinitializes view
+		/// default implementation just copies from owner
+		//virtual void reinit_view();
+
+		/// normally should not be called outside of view class.
+		/// Provided, when view class used directly without inheritance, to complete initialization.
+		/// Calls connects signals and calls reinit_view.
+		/// 
+		/// Derived views probably will automatically call it constructor
+		/// or directly connect_signals/reinit_view
+		//virtual void init();
+
+	protected:
+		/// connects container signals to appropriate handlers
+		//virtual void connect_signals();
+
+		/// container event handlers, those are called on container signals,
+		/// you could reimplement them to provide proper handling of your view
+		
+		/// called when new data is updated in owning container
+		/// view have to synchronize itself.
+		/// @Param sorted_newrecs range of pointers to updated records, sorted by pointer value
+		/// 
+		/// default implementation removes erased, appends inserted records, and does nothing with sorted_updated
+		//virtual void update_data(
+		//	const signal_range_type & sorted_erased,
+		//	const signal_range_type & sorted_updated,
+		//	const signal_range_type & inserted);
+
+		/// called when some records are erased from container
+		/// view have to synchronize itself.
+		/// @Param sorted_newrecs range of pointers to updated records, sorted by pointer value
+		/// 
+		/// default implementation, erases those records from main store
+		//virtual void erase_records(const signal_range_type & sorted_erased);
+
+		/// called when container is cleared, clears m_store.
+		//virtual void clear_view();
 
 	public:
 		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -138,24 +217,22 @@ namespace qtor
 		virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
 	protected:
-		void fill_page(value_vector & pages, QStringRef prefix,
+		void fill_page(page_type & page, QStringRef prefix,
 			std::vector<torrent_file>::const_iterator first, 
 			std::vector<torrent_file>::const_iterator last);
-
-		void set_parent(page_ptr * parent, value_vector & pages);
 
 	public:
 		void Init(std::vector<torrent_file> & vals);
 
 	public:
-		using base_type::base_type;
+		FileTreeModel(QObject * parent = nullptr);
 	};
 
 	template <class visitor>
 	inline auto FileTreeModel::value_ptr::visit(visitor && vis) const
 		-> std::invoke_result_t<visitor, leaf_ptr>
 	{
-		return this->type
+		return this->type == LEAF
 			? std::forward<visitor>(vis)(reinterpret_cast<leaf_ptr>(ptr))
 			: std::forward<visitor>(vis)(reinterpret_cast<page_ptr>(ptr));
 	}

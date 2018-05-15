@@ -4,25 +4,35 @@
 
 namespace qtor
 {
-	const FileTreeModel::value_vector FileTreeModel::ms_empty;
-	FileTreeModel::container FileTreeModel::ms_cont;
+	const FileTreeModel::value_container FileTreeModel::ms_empty_container;
 
-	inline FileTreeModel::value_ptr::value_ptr()
+	inline void FileTreeModel::value_ptr::destroy() noexcept
+	{
+		if (owning)
+		{
+			if (type == PAGE)
+				delete reinterpret_cast<page_ptr>(ptr);
+			else
+				delete reinterpret_cast<leaf_ptr>(ptr);
+		}
+	}
+
+	inline FileTreeModel::value_ptr::value_ptr() noexcept
 	{
 		this->val = 0;
 	}
 
-	inline FileTreeModel::value_ptr::~value_ptr()
+	inline FileTreeModel::value_ptr::~value_ptr() noexcept
 	{
-		visit(delete_value);
+		destroy();
 	}
 
-	inline FileTreeModel::value_ptr::value_ptr(value_ptr && op)
+	inline FileTreeModel::value_ptr::value_ptr(value_ptr && op) noexcept
 	{
 		val = std::exchange(op.val, 0);
 	}
 
-	inline auto FileTreeModel::value_ptr::operator =(value_ptr && op) -> value_ptr &
+	inline auto FileTreeModel::value_ptr::operator =(value_ptr && op) noexcept -> value_ptr &
 	{
 		if (this != &op)
 		{
@@ -33,65 +43,72 @@ namespace qtor
 		return *this;
 	}
 
-	inline FileTreeModel::value_ptr::value_ptr(page_ptr ptr)
+	inline FileTreeModel::value_ptr::value_ptr(leaf_ptr ptr) noexcept
 	{
-		this->type = PAGE;
-		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
-	}
-
-	inline FileTreeModel::value_ptr::value_ptr(leaf_ptr ptr)
-	{
+		this->owning = 0;
 		this->type = LEAF;
 		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
 	}
 
-	inline auto FileTreeModel::value_ptr::operator =(page_ptr ptr) -> value_ptr &
+	inline FileTreeModel::value_ptr::value_ptr(page_ptr ptr) noexcept
 	{
-		visit(delete_value);
-
+		this->owning = 0;
 		this->type = PAGE;
 		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
-
-		return *this;
 	}
 
-	inline auto FileTreeModel::value_ptr::operator =(leaf_ptr ptr) -> value_ptr &
+	inline auto FileTreeModel::value_ptr::operator =(leaf_ptr ptr) noexcept -> value_ptr &
 	{
-		visit(delete_value);
+		destroy();
 
+		this->owning = 0;
 		this->type = LEAF;
 		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
 
 		return *this;
 	}
 
-	auto FileTreeModel::parent_page(page_ptr * ptr) const -> page_ptr *
+	inline auto FileTreeModel::value_ptr::operator =(page_ptr ptr) noexcept -> value_ptr &
 	{
-		return (*ptr)->parent;
+		destroy();
+
+		this->owning = 0;
+		this->type = PAGE;
+		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
+
+		return *this;
 	}
 
-	auto FileTreeModel::parent_row(page_ptr * ptr) const -> int
+	template <class Type>
+	inline FileTreeModel::value_ptr::value_ptr(std::unique_ptr<Type> ptr) noexcept
+		: value_ptr(ptr.release())
 	{
-		page_ptr * ppage = parent_page(ptr);
-		auto & gp_children = ppage ? (*ppage)->childs : m_elements;
-
-		value_ptr * valptr = reinterpret_cast<value_ptr *>(ptr);
-		return valptr - gp_children.data();
+		this->owning = 1;
 	}
 
-	inline auto FileTreeModel::get_ppage(const QModelIndex & index) const -> page_ptr *
+	template <class Type>
+	inline auto FileTreeModel::value_ptr::operator =(std::unique_ptr<Type> ptr) noexcept -> value_ptr &
 	{
-		return static_cast<page_ptr *>(index.internalPointer());
+		destroy();
+
+		this->owning = 1;
+		return operator =(ptr.release());
+	}
+
+	inline auto FileTreeModel::get_page(const QModelIndex & index) const -> page_ptr
+	{
+		return static_cast<page_ptr>(index.internalPointer());
 	}
 
 	auto FileTreeModel::get_element_ptr(const QModelIndex & index) const -> const value_ptr &
 	{
-		assert(index.isValid());		
-		auto * ppage = get_ppage(index);
-		const value_vector & children = ppage ? (*ppage)->childs : m_elements;
+		assert(index.isValid());
+		auto * page = get_page(index);
+		assert(page);
 
-		assert(index.row() < children.size());
-		return children[index.row()];
+		auto & seq_view = page->childs.get<by_seq>();
+		assert(index.row() < seq_view.size());
+		return seq_view[index.row()];
 	}
 
 	filepath_type FileTreeModel::get_name_type::operator()(leaf_ptr ptr) const
@@ -118,7 +135,7 @@ namespace qtor
 	int FileTreeModel::rowCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
 		if (not parent.isValid())
-			return qint(m_elements.size());
+			return qint(m_root.childs.size());
 
 		const auto & val = get_element_ptr(parent);
 		const auto & children = get_children(val);
@@ -129,35 +146,41 @@ namespace qtor
 	{
 		if (not index.isValid()) return {};
 		
-		page_ptr * ppage = get_ppage(index);
-		if (not ppage) return {};
+		page_ptr page = get_page(index);
+		assert(page);
 
-		int row = parent_row(ppage);
-		return createIndex(row, 0, parent_page(ppage));
+		page_ptr parent_page = page->parent;
+		if (not parent_page) return {}; // already top level index
+
+		auto & children = parent_page->childs;
+		auto & seq_view = children.get<by_seq>();
+
+		auto code_it = children.find(page->node.name);
+		auto seq_it = children.project<by_seq>(code_it);
+
+		int row = qint(seq_it - seq_view.begin());
+		return createIndex(row, 0, parent_page);
 	}
 
 	QModelIndex FileTreeModel::index(int row, int column, const QModelIndex & parent /* = QModelIndex() */) const
 	{
-		const value_vector * children;
-		page_ptr * ppage;
-
 		if (not parent.isValid())
 		{
-			children = &m_elements;
-			ppage = nullptr;
+			return createIndex(row, column, ext::unconst(&m_root));
 		}
 		else
 		{
-			auto * page = get_ppage(parent);
-			children = page ? &(*page)->childs : &m_elements;
-			value_ptr * item = ext::unconst(children->data() + parent.row());
-			ppage = reinterpret_cast<page_ptr *>(item);
+			auto & element = get_element_ptr(parent);
+			auto & children = get_children(element);
+
+			if (children.size() < row)
+				return {};
+
+			// only page can have children
+			assert(element.type == PAGE);
+			auto * page = reinterpret_cast<page_ptr>(element.ptr);
+			return createIndex(row, column, page);
 		}
-
-		if (children->size() < row)
-			return {};
-
-		return createIndex(row, column, ppage);
 	}
 
 	QVariant FileTreeModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const
@@ -184,7 +207,32 @@ namespace qtor
 		return {};
 	}
 
-	void FileTreeModel::fill_page(value_vector & pages, QStringRef prefix, std::vector<torrent_file>::const_iterator first, std::vector<torrent_file>::const_iterator last)
+	//void FileTreeModel::erase_records(const signal_range_type & sorted_erased)
+	//{
+	//	if (sorted_erased.empty()) return;
+
+	//	int_vector affected_indexes(sorted_erased.size());
+	//	auto erased_first = affected_indexes.begin();
+	//	auto erased_last = erased_first;
+
+	//	//auto & seq_view = m_
+
+	//	for (auto it = std::find_if(first, last, test); it != last; it = std::find_if(++it, last, test))
+	//		*erased_last++ = static_cast<int>(it - first);
+
+	//	auto * model = get_model();
+	//	Q_EMIT model->layoutAboutToBeChanged(model_type::empty_model_list, model->NoLayoutChangeHint);
+
+	//	auto index_map = viewed::build_relloc_map(erased_first, erased_last, m_store.size());
+	//	change_indexes(index_map.begin(), index_map.end(), 0);
+
+	//	last = viewed::remove_indexes(first, last, erased_first, erased_last);
+	//	m_store.resize(last - first);
+
+	//	Q_EMIT model->layoutChanged(model_type::empty_model_list, model->NoLayoutChangeHint);
+	//}
+
+	void FileTreeModel::fill_page(page_type & page, QStringRef prefix, std::vector<torrent_file>::const_iterator first, std::vector<torrent_file>::const_iterator last)
 	{
 		for (;;)
 		{
@@ -196,12 +244,15 @@ namespace qtor
 
 			if (pos == -1) // LEAF
 			{
-				pages.push_back(&*first);
+				auto * leaf = &*first;
+				page.childs.insert(leaf);
 				++first;
 			}
 			else // PAGE
 			{
 				auto page_ptr = std::make_unique<page_type>();
+				page_ptr->parent = &page;
+
 				QString name = path.mid(prefix.length(), n);
 				page_ptr->node.name = name;
 
@@ -212,27 +263,10 @@ namespace qtor
 					if (ref != name) break;
 				}					
 
-				fill_page(page_ptr->childs, path.leftRef(pos + 1), first, it);
-				pages.push_back(page_ptr.release());
+				fill_page(*page_ptr, path.leftRef(pos + 1), first, it);
+				page.childs.insert(std::move(page_ptr));
 				first = it;
 			}
-		}
-	}
-
-	void FileTreeModel::set_parent(page_ptr * parent, value_vector & pages)
-	{
-		auto first = pages.data();
-		auto last = first + pages.size();
-
-		for (; first != last; ++first)
-		{
-			if (first->type == LEAF)
-				continue;
-
-			page_ptr ptr = reinterpret_cast<page_ptr>(first->ptr);
-			ptr->parent = parent;
-
-			set_parent(reinterpret_cast<page_ptr *>(first), ptr->childs);
 		}
 	}
 
@@ -240,12 +274,20 @@ namespace qtor
 	{
 		beginResetModel();
 
+		m_root.parent = nullptr;
+		m_root.childs.clear();
+
 		auto first = vals.begin();
 		auto last = vals.end();
 		std::sort(first, last, [](auto & v1, auto & v2) { return v1.filename > v2.filename; });
-		fill_page(m_elements, {}, first, last);
-		set_parent(nullptr, m_elements);
+		fill_page(m_root, {}, first, last);
 
 		endResetModel();
+	}
+
+	FileTreeModel::FileTreeModel(QObject * parent /* = nullptr */)
+		: base_type(parent)
+	{
+		m_root.parent = nullptr;
 	}
 }

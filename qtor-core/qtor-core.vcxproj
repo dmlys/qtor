@@ -45,6 +45,7 @@
     <ClInclude Include="include\qtor\sparse_container.hpp" />
     <ClInclude Include="include\qtor\sparse_container_iterator.hpp" />
     <ClInclude Include="include\qtor\TorrentsModel.hpp" />
+    <ClInclude Include="include\qtor\torrent_file_store.hpp" />
     <ClInclude Include="include\qtor\torrent_store.hpp" />
     <ClInclude Include="include\qtor\torrent.hpp" />
     <ClInclude Include="include\qtor\types.hpp" />
