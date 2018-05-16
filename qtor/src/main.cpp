@@ -148,6 +148,8 @@ int main(int argc, char * argv[])
 		{ QStringLiteral("dir/file.txt") },
 		{ QStringLiteral("ops.sh") },
 		{ QStringLiteral("westworld.mkv") },
+		{ QStringLiteral("folder/sup/file3.txt")},
+		{ QStringLiteral("folder/sup/inner/file.txt")},
 	});
 
 	qtor::FileTreeModel model;

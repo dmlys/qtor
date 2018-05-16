@@ -36,7 +36,7 @@ namespace qtor
 	{
 		if (this != &op)
 		{
-			this->~value_ptr();
+			std::destroy_at(this);
 			new(this) value_ptr(std::move(op));
 		}
 
@@ -234,15 +234,38 @@ namespace qtor
 
 	void FileTreeModel::fill_page(page_type & page, QStringRef prefix, std::vector<torrent_file>::const_iterator first, std::vector<torrent_file>::const_iterator last)
 	{
+		auto analyze = [](const QStringRef & prefix, const torrent_file & item)
+		{
+			const auto & path = item.filename;
+			auto first = path.begin() + prefix.size();
+			auto last = path.end();
+			auto it = std::find(first, last, '/');
+
+			if (it == last)
+			{
+				QString name = QString::null;
+				return std::make_tuple(LEAF, std::move(name), prefix);
+			}
+			else
+			{
+				QString name = path.mid(prefix.size(), it - first);
+				it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
+				return std::make_tuple(PAGE, std::move(name), path.leftRef(it - path.begin()));
+			}
+		};
+
+		auto is_subelement = [](const QStringRef & prefix, const QString & name, const torrent_file & item)
+		{
+			auto ref = item.filename.midRef(prefix.size(), name.size());
+			return ref == name;
+		};
+
 		for (;;)
 		{
 			if (first == last) break;
 
-			auto & path = first->filename;
-			int pos = path.indexOf('/', prefix.length());
-			int n   = pos - prefix.length();
-
-			if (pos == -1) // LEAF
+			auto [type, name, newprefix] = analyze(prefix, *first);			
+			if (type == LEAF)
 			{
 				auto * leaf = &*first;
 				page.childs.insert(leaf);
@@ -252,22 +275,88 @@ namespace qtor
 			{
 				auto page_ptr = std::make_unique<page_type>();
 				page_ptr->parent = &page;
-
-				QString name = path.mid(prefix.length(), n);
 				page_ptr->node.name = name;
 
-				auto it = first;
-				for (++it; it != last; ++it)
-				{
-					auto ref = it->filename.midRef(prefix.length(), n);
-					if (ref != name) break;
-				}					
-
-				fill_page(*page_ptr, path.leftRef(pos + 1), first, it);
+				auto issub = std::bind(is_subelement, std::cref(prefix), std::cref(name), std::placeholders::_1);
+				auto it = std::find_if_not(first, last, std::move(issub));
+				fill_page(*page_ptr, std::move(newprefix), first, it);
 				page.childs.insert(std::move(page_ptr));
 				first = it;
 			}
 		}
+
+	//	processing_context ctx;
+	//	int_vector affected_indexes;
+	//	auto & seq_view  = page.childs.get<by_seq>();
+	//	auto & code_view = page.childs.get<by_code>();
+
+	//	for (;;)
+	//	{
+	//		std::uintptr_t type;
+	//		QStringRef newprefix;
+	//		QString erased_name, inserted_name, updated_name;
+
+	//		while (ctx.erased_first != ctx.erased_last)
+	//		{
+	//			const auto & item = **ctx.erased_first;
+	//			std::tie(type, erased_name, newprefix) = analyze(prefix, item);
+	//			if (type == PAGE) break;
+
+	//			auto it = page.childs.find(item.filename);
+	//			if (it != page.childs.end())
+	//			{
+	//				auto seqit = page.childs.project<by_seq>(it);
+	//				auto pos = seqit - seq_view.begin();
+	//				page.childs.erase(it);
+	//			}
+	//			
+	//		}
+
+	//		while (ctx.inserted_first != ctx.inserted_last)
+	//		{
+	//			const auto * item = *ctx.inserted_first;
+	//			std::tie(type, erased_name, newprefix) = analyze(prefix, *item);
+	//			if (type == PAGE) break;
+
+	//			bool inserted;
+	//			std::tie(std::ignore, inserted) = page.childs.insert(item);
+	//			assert(inserted); (void)inserted;
+	//		}
+
+	//		while (ctx.updated_first != ctx.updated_last)
+	//		{
+	//			const auto * item = *ctx.inserted_first;
+	//			std::tie(type, erased_name, newprefix) = analyze(prefix, *item);
+	//			if (type == PAGE) break;
+
+	//			auto it = page.childs.find(item->filename);
+	//			if (it != page.childs.end())
+	//				code_view.insert(item);
+	//			else
+	//			{
+	//				auto seqit = page.childs.project<by_seq>(it);
+	//				auto pos = seqit - seq_view.begin();
+	//			}
+	//		}
+
+	//		// at this point only pages are at front of ranges
+	//		QString name = std::min({erased_name, updated_name, inserted_name});
+	//		if (name.isEmpty()) break;
+
+	//		auto issub = std::bind(is_subelement, std::cref(prefix), std::cref(name), std::placeholders::_1);
+	//		auto iss2 = viewed::make_indirect_fun(std::move(issub));
+	//		auto cur1 = std::find_if_not(ctx.inserted_first, ctx.inserted_last, iss2);
+	//		auto cur2 = std::find_if_not(ctx.updated_first,  ctx.updated_last,  iss2);
+	//		auto cur3 = std::find_if_not(ctx.erased_first,   ctx.erased_last,   iss2);
+
+	//		auto it = page.childs.find(name);
+	//		auto * newpage = reinterpret_cast<page_ptr>(it->ptr);
+	//		newpage->parent = &page;
+	//		newpage->node.name = name;
+
+	//		//fill_page(*page_ptr, std::move(newprefix), ...);
+	//		//page.childs.insert(std::move(page_ptr));
+	//	}
 	}
 
 	void FileTreeModel::Init(std::vector<torrent_file> & vals)

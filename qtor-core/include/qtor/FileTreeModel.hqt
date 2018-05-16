@@ -139,6 +139,14 @@ namespace qtor
 			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
 		};
 
+		struct processing_context
+		{
+			signal_range_type::const_iterator 
+				inserted_first, inserted_last,
+				updated_first,  updated_last,
+				erased_first,   erased_last;
+		};
+
 	protected:
 		static constexpr get_name_type      get_name {};
 		static constexpr get_children_type  get_children {};
@@ -157,11 +165,6 @@ namespace qtor
 		scoped_connection m_clear_con;
 		scoped_connection m_update_con;
 		scoped_connection m_erase_con;
-
-	protected:
-		page_ptr get_page(const QModelIndex & index) const;
-		const value_ptr & get_element_ptr(const QModelIndex & index) const;
-		QModelIndex createIndex(int row, int column, page_ptr ptr) const { return base_type::createIndex(row, column, ptr); }
 
 	public:
 		/// returns pointer to owning container
@@ -205,6 +208,11 @@ namespace qtor
 
 		/// called when container is cleared, clears m_store.
 		//virtual void clear_view();
+
+	protected:
+		page_ptr get_page(const QModelIndex & index) const;
+		const value_ptr & get_element_ptr(const QModelIndex & index) const;
+		QModelIndex createIndex(int row, int column, page_ptr ptr) const { return base_type::createIndex(row, column, ptr); }
 
 	public:
 		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
