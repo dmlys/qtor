@@ -147,6 +147,14 @@ namespace qtor
 				erased_first,   erased_last;
 		};
 
+		struct dirs_first_sorter
+		{
+			bool operator()(const value_ptr & p1, const value_ptr & p2) const noexcept
+			{
+				return p1.type < p2.type;
+			}
+		};
+
 	protected:
 		static constexpr get_name_type      get_name {};
 		static constexpr get_children_type  get_children {};
@@ -155,24 +163,38 @@ namespace qtor
 		static const value_container ms_empty_container;
 
 	protected:
-		container_type * m_owner = nullptr; // pointer to owning container
+		std::shared_ptr<container_type> m_owner = nullptr; // pointer to owning container
 		page_type m_root; //= { /*.parent =*/ nullptr};		
 
-		viewed::null_filter m_filter;
-		viewed::null_sorter m_sorter;
+		dirs_first_sorter m_sorter;
+		//viewed::null_filter m_filter;
+		//viewed::null_sorter m_sorter;
 
 		/// raii connections
 		scoped_connection m_clear_con;
 		scoped_connection m_update_con;
 		scoped_connection m_erase_con;
 
+	protected:
+		static auto analyze(const QStringRef & prefix, const torrent_file & item)
+			-> std::tuple<std::uintptr_t, QString, QStringRef>;
+
+		static bool is_subelement(const QStringRef & prefix, const QString & name, const torrent_file & item);
+
+		template <class ForwardIterator>
+		void fill_page(page_type & page, QStringRef prefix, ForwardIterator first, ForwardIterator last);
+
+	protected:
+		/// connects container signals to appropriate handlers
+		virtual void connect_signals();
+
 	public:
 		/// returns pointer to owning container
-		container_type * get_owner() const noexcept { return m_owner; }
+		const auto & get_owner() const noexcept { return m_owner; }
 
 		/// reinitializes view
 		/// default implementation just copies from owner
-		//virtual void reinit_view();
+		virtual void reinit_view();
 
 		/// normally should not be called outside of view class.
 		/// Provided, when view class used directly without inheritance, to complete initialization.
@@ -180,12 +202,9 @@ namespace qtor
 		/// 
 		/// Derived views probably will automatically call it constructor
 		/// or directly connect_signals/reinit_view
-		//virtual void init();
+		virtual void init();
 
 	protected:
-		/// connects container signals to appropriate handlers
-		//virtual void connect_signals();
-
 		/// container event handlers, those are called on container signals,
 		/// you could reimplement them to provide proper handling of your view
 		
@@ -194,20 +213,20 @@ namespace qtor
 		/// @Param sorted_newrecs range of pointers to updated records, sorted by pointer value
 		/// 
 		/// default implementation removes erased, appends inserted records, and does nothing with sorted_updated
-		//virtual void update_data(
-		//	const signal_range_type & sorted_erased,
-		//	const signal_range_type & sorted_updated,
-		//	const signal_range_type & inserted);
+		virtual void update_data(
+			const signal_range_type & sorted_erased,
+			const signal_range_type & sorted_updated,
+			const signal_range_type & inserted);
 
 		/// called when some records are erased from container
 		/// view have to synchronize itself.
 		/// @Param sorted_newrecs range of pointers to updated records, sorted by pointer value
 		/// 
 		/// default implementation, erases those records from main store
-		//virtual void erase_records(const signal_range_type & sorted_erased);
+		virtual void erase_records(const signal_range_type & sorted_erased);
 
 		/// called when container is cleared, clears m_store.
-		//virtual void clear_view();
+		virtual void clear_view();
 
 	protected:
 		page_ptr get_page(const QModelIndex & index) const;
@@ -229,11 +248,11 @@ namespace qtor
 			std::vector<torrent_file>::const_iterator first, 
 			std::vector<torrent_file>::const_iterator last);
 
-	public:
-		void Init(std::vector<torrent_file> & vals);
+	//public:
+	//	void Init(std::vector<torrent_file> & vals);
 
 	public:
-		FileTreeModel(QObject * parent = nullptr);
+		FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);
 	};
 
 	template <class visitor>

@@ -152,8 +152,10 @@ int main(int argc, char * argv[])
 		{ QStringLiteral("folder/sup/inner/file.txt")},
 	});
 
-	qtor::FileTreeModel model;
-	model.Init(paths);
+	auto store = std::make_shared<torrent_file_store>();
+	store->assign_records(std::move(paths));
+
+	qtor::FileTreeModel model {store};
 
 	QTreeView view;
 	view.setModel(&model);
