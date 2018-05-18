@@ -210,7 +210,7 @@ namespace qtor
 	{
 		bool operator()(const torrent_file & f1, const torrent_file & f2) const noexcept
 		{
-			relation_comparator::operator()(f1.filename, f2.filename);
+			return relation_comparator::operator()(f1.filename, f2.filename);
 		}
 	};
 

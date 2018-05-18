@@ -108,7 +108,7 @@ namespace qtor
 		auto * page = get_page(index);
 		assert(page);
 
-		auto & seq_view = page->childs.get<by_seq>();
+		auto & seq_view = page->children.get<by_seq>();
 		assert(index.row() < seq_view.size());
 		return seq_view[index.row()];
 	}
@@ -137,7 +137,7 @@ namespace qtor
 	int FileTreeModel::rowCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
 		if (not parent.isValid())
-			return qint(m_root.childs.size());
+			return qint(m_root.children.size());
 
 		const auto & val = get_element_ptr(parent);
 		const auto & children = get_children(val);
@@ -154,7 +154,7 @@ namespace qtor
 		page_ptr parent_page = page->parent;
 		if (not parent_page) return {}; // already top level index
 
-		auto & children = parent_page->childs;
+		auto & children = parent_page->children;
 		auto & seq_view = children.get<by_seq>();
 
 		auto code_it = children.find(page->node.name);
@@ -298,7 +298,7 @@ namespace qtor
 			if (type == LEAF)
 			{
 				auto * leaf = item_ptr;
-				page.childs.insert(leaf);
+				page.children.insert(leaf);
 				++first;
 			}
 			else // PAGE
@@ -310,104 +310,201 @@ namespace qtor
 				auto issub = std::bind(is_subelement, std::cref(prefix), std::cref(name), std::placeholders::_1);
 				auto it = std::find_if_not(first, last, viewed::make_indirect_fun(std::move(issub)));
 				fill_page(*page_ptr, std::move(newprefix), first, it);
-				page.childs.insert(std::move(page_ptr));
+				page.children.insert(std::move(page_ptr));
 				first = it;
 			}
 		}
 
-		{	// now sort items in a page
-			auto & seq_view = page.childs.get<by_seq>();
-
-			std::vector<std::reference_wrapper<const value_ptr>> refs;
-			refs.assign(seq_view.begin(), seq_view.end());
-
-			auto refs_first = refs.begin();
-			auto refs_last = refs.end();
-			std::sort(refs_first, refs_last, m_sorter);
-
-			seq_view.rearrange(refs_first);
-		}		
+		sort_children(page);
 	}
 
-	void FileTreeModel::update_data(const signal_range_type & sorted_erased, const signal_range_type & sorted_updated, const signal_range_type & inserted)
+	auto FileTreeModel::copy_context(const processing_context & ctx, QStringRef newprefix) -> processing_context
 	{
-		return;
+		auto newctx = ctx;
+		newctx.prefix = std::move(newprefix);
+		newctx.changed_first = newctx.changed_last;
+		newctx.removed_last = newctx.removed_first;
 
-		QStringRef prefix;
-		auto & page = m_root;
+		return newctx;
+	}
 
-		processing_context ctx;
-		int_vector affected_indexes;
-		auto & container = page.childs;
+	auto FileTreeModel::process_erased(page_type & page, processing_context & ctx)
+		-> std::tuple<QString, QStringRef>
+	{
+		auto & container = page.children;
+		auto & seq_view = container.get<by_seq>();
+		auto & code_view = container.get<by_code>();
+
+		for (; ctx.erased_first != ctx.erased_last; ++ctx.erased_first)
+		{
+			const auto & item = **ctx.erased_first;
+			auto [type, name, prefix] = analyze(ctx.prefix, item);
+			if (type == PAGE) return {std::move(name), std::move(prefix)};
+
+			auto it = container.find(item.filename);
+			if (it != container.end())
+			{
+				auto seqit = container.project<by_seq>(it);
+				auto pos = seqit - seq_view.begin();
+				container.erase(it);
+				*ctx.removed_last++ = pos;
+			}
+		}
+
+		return {QString::null, QStringRef()};
+	}
+
+	auto FileTreeModel::process_inserted(page_type & page, processing_context & ctx)
+		-> std::tuple<QString, QStringRef>
+	{
+		auto & container = page.children;
+		//auto & seq_view = container.get<by_seq>();
+		//auto & code_view = container.get<by_code>();
+
+		for (; ctx.inserted_first != ctx.inserted_last; ++ctx.inserted_first)
+		{
+			const auto * item = *ctx.inserted_first;
+			auto [type, name, prefix] = analyze(ctx.prefix, *item);
+			if (type == PAGE) return {std::move(name), std::move(prefix)};
+
+			bool inserted;
+			std::tie(std::ignore, inserted) = container.insert(item);
+			assert(inserted); (void)inserted;
+		}
+
+		return {QString::null, QStringRef()};
+	}
+
+	auto FileTreeModel::process_updated(page_type & page, processing_context & ctx)
+		-> std::tuple<QString, QStringRef>
+	{
+		auto & container = page.children;
+		auto & seq_view = container.get<by_seq>();
+		auto & code_view = container.get<by_code>();
+
+		for (; ctx.updated_first != ctx.updated_last; ++ctx.updated_first)
+		{
+			const auto * item = *ctx.updated_first;
+			auto [type, name, prefix] = analyze(ctx.prefix, *item);
+			if (type == PAGE) return {std::move(name), std::move(prefix)};
+
+			auto it = container.find(item->filename);
+			if (it != container.end())
+				code_view.insert(item);
+			else
+			{
+				auto seqit = container.project<by_seq>(it);
+				auto pos = seqit - seq_view.begin();
+				*--ctx.changed_first = pos;
+			}
+		}
+
+		return {QString::null, QStringRef()};
+	}
+
+	void FileTreeModel::update_page(page_type & page, processing_context & ctx)
+	{
+		const auto & prefix = ctx.prefix;
+		auto & container = page.children;
 		auto & seq_view  = container.get<by_seq>();
 		auto & code_view = container.get<by_code>();
 
 		for (;;)
 		{
-			std::uintptr_t type;
-			QStringRef newprefix;
+			QStringRef erased_newprefix, inserted_newprefix, updated_newprefix;
 			QString erased_name, inserted_name, updated_name;
 
-			while (ctx.erased_first != ctx.erased_last)
-			{
-				const auto & item = **ctx.erased_first;
-				std::tie(type, erased_name, newprefix) = analyze(prefix, item);
-				if (type == PAGE) break;
-
-				auto it = container.find(item.filename);
-				if (it != container.end())
-				{
-					auto seqit = container.project<by_seq>(it);
-					auto pos = seqit - seq_view.begin();
-					container.erase(it);
-				}
-					
-			}
-
-			while (ctx.inserted_first != ctx.inserted_last)
-			{
-				const auto * item = *ctx.inserted_first;
-				std::tie(type, erased_name, newprefix) = analyze(prefix, *item);
-				if (type == PAGE) break;
-
-				bool inserted;
-				std::tie(std::ignore, inserted) = container.insert(item);
-				assert(inserted); (void)inserted;
-			}
-
-			while (ctx.updated_first != ctx.updated_last)
-			{
-				const auto * item = *ctx.inserted_first;
-				std::tie(type, erased_name, newprefix) = analyze(prefix, *item);
-				if (type == PAGE) break;
-
-				auto it = container.find(item->filename);
-				if (it != container.end())
-					code_view.insert(item);
-				else
-				{
-					auto seqit = container.project<by_seq>(it);
-					auto pos = seqit - seq_view.begin();
-				}
-			}
+			std::tie(erased_name, erased_newprefix) = process_erased(page, ctx);
+			std::tie(updated_name, updated_newprefix) = process_updated(page, ctx);
+			std::tie(inserted_name, inserted_newprefix) = process_inserted(page, ctx);
 
 			// at this point only pages are at front of ranges
-			QString name = std::min({erased_name, updated_name, inserted_name});
+			auto newprefix = std::max({erased_newprefix, updated_newprefix, inserted_newprefix});
+			auto name = std::max({erased_name, updated_name, inserted_name});
 			if (name.isEmpty()) break;
 
+			auto newctx = copy_context(ctx, std::move(newprefix));
+
 			auto issub = viewed::make_indirect_fun(std::bind(is_subelement, std::cref(prefix), std::cref(name), std::placeholders::_1));
-			auto cur1 = std::find_if_not(ctx.inserted_first, ctx.inserted_last, issub);
-			auto cur2 = std::find_if_not(ctx.updated_first,  ctx.updated_last,  issub);
-			auto cur3 = std::find_if_not(ctx.erased_first,   ctx.erased_last,   issub);
+			ctx.inserted_first = std::find_if_not(ctx.inserted_first, ctx.inserted_last, issub);
+			ctx.updated_first  = std::find_if_not(ctx.updated_first,  ctx.updated_last,  issub);
+			ctx.erased_first   = std::find_if_not(ctx.erased_first,   ctx.erased_last,   issub);
 
+			newctx.inserted_last = ctx.inserted_first;
+			newctx.updated_last  = ctx.updated_first;
+			newctx.erased_last   = ctx.erased_first;
+
+			bool inserts = newctx.inserted_first != newctx.inserted_last;
+			bool updates = newctx.updated_first != newctx.updated_last;
+			bool erases  = newctx.erased_first != newctx.erased_last;
+
+			page_ptr child_page = nullptr;
 			auto it = container.find(name);
-			auto * newpage = reinterpret_cast<page_ptr>(it->ptr);
-			newpage->parent = &page;
-			newpage->node.name = name;
+			if (it != container.end())
+				child_page = reinterpret_cast<page_ptr>(it->ptr);
+			else if (updates or inserts)
+			{
+				auto child = std::make_unique<page_type>();
+				child_page = child.get();
 
-			//fill_page(*page_ptr, std::move(newprefix), ...);
-			//container.insert(std::move(page_ptr));
+				child_page->node.name = name;
+				child_page->parent = &page;
+				page.children.insert(std::move(child));
+			}			
+
+			// process child
+			if (child_page) update_page(*child_page, newctx);
 		}
+
+		sort_children(page);
+	}
+
+	void FileTreeModel::update_data(const signal_range_type & sorted_erased, const signal_range_type & sorted_updated, const signal_range_type & inserted)
+	{
+		int_vector affected_indexes;
+		affected_indexes.resize(sorted_erased.size() + sorted_updated.size());
+		
+		processing_context ctx;
+
+		ctx.erased_first = sorted_erased.begin();
+		ctx.erased_last  = sorted_erased.end();
+		ctx.inserted_first = inserted.begin();
+		ctx.inserted_last = inserted.end();
+		ctx.updated_first = sorted_updated.begin();
+		ctx.updated_last = sorted_updated.end();
+
+		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
+		ctx.changed_first = ctx.changed_last = affected_indexes.end();
+
+		auto pred = viewed::make_indirect_fun(torrent_file_id_greater());
+		std::sort(ctx.erased_first, ctx.erased_last, pred);
+		std::sort(ctx.inserted_first, ctx.inserted_last, pred);
+		std::sort(ctx.updated_first, ctx.updated_last, pred);
+
+		beginResetModel();
+		//layoutAboutToBeChanged({}, NoLayoutChangeHint);
+		
+		//auto indexes = persistentIndexList();
+		//ctx.indexes = &indexes;
+
+		update_page(m_root, ctx);
+
+		endResetModel();
+		//layoutChanged({}, NoLayoutChangeHint);
+	}
+
+	void FileTreeModel::sort_children(page_type & page)
+	{
+		auto & seq_view = page.children.get<by_seq>();
+
+		std::vector<std::reference_wrapper<const value_ptr>> refs;
+		refs.assign(seq_view.begin(), seq_view.end());
+
+		auto refs_first = refs.begin();
+		auto refs_last = refs.end();
+		std::sort(refs_first, refs_last, m_sorter);
+
+		seq_view.rearrange(refs_first);
 	}
 
 	void FileTreeModel::erase_records(const signal_range_type & sorted_erased)
@@ -418,9 +515,7 @@ namespace qtor
 	void FileTreeModel::clear_view()
 	{
 		beginResetModel();
-
-		m_root.childs.clear();		
-		
+		m_root.children.clear();
 		endResetModel();
 	}
 

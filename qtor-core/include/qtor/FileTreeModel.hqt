@@ -127,7 +127,7 @@ namespace qtor
 		struct page_type
 		{
 			page_type *     parent;
-			value_container childs;
+			value_container children;
 			node_type       node;
 		};
 
@@ -135,7 +135,7 @@ namespace qtor
 		{
 			using result_type = const value_container &;
 			result_type operator()(leaf_ptr leaf) const { return ms_empty_container; }
-			result_type operator()(page_ptr page) const { return page->childs; }
+			result_type operator()(page_ptr page) const { return page->children; }
 			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
 		};
 
@@ -145,6 +145,13 @@ namespace qtor
 				inserted_first, inserted_last,
 				updated_first,  updated_last,
 				erased_first,   erased_last;
+
+			int_vector::iterator
+				changed_first, changed_last,
+				removed_first, removed_last;
+
+			QStringRef prefix;
+			QModelIndexList * indexes;
 		};
 
 		struct dirs_first_sorter
@@ -180,29 +187,17 @@ namespace qtor
 			-> std::tuple<std::uintptr_t, QString, QStringRef>;
 
 		static bool is_subelement(const QStringRef & prefix, const QString & name, const torrent_file & item);
+		static auto copy_context(const processing_context & ctx, QStringRef newprefix) -> processing_context;
 
 		template <class ForwardIterator>
-		void fill_page(page_type & page, QStringRef prefix, ForwardIterator first, ForwardIterator last);
+		void fill_page(page_type & page, QStringRef prefix, ForwardIterator first, ForwardIterator last);		
 
-	protected:
-		/// connects container signals to appropriate handlers
-		virtual void connect_signals();
+		virtual auto process_erased(page_type & page, processing_context & ctx) -> std::tuple<QString, QStringRef>;
+		virtual auto process_updated(page_type & page, processing_context & ctx) -> std::tuple<QString, QStringRef>;
+		virtual auto process_inserted(page_type & page, processing_context & ctx) -> std::tuple<QString, QStringRef>;
+		virtual void update_page(page_type & page, processing_context & ctx);
 
-	public:
-		/// returns pointer to owning container
-		const auto & get_owner() const noexcept { return m_owner; }
-
-		/// reinitializes view
-		/// default implementation just copies from owner
-		virtual void reinit_view();
-
-		/// normally should not be called outside of view class.
-		/// Provided, when view class used directly without inheritance, to complete initialization.
-		/// Calls connects signals and calls reinit_view.
-		/// 
-		/// Derived views probably will automatically call it constructor
-		/// or directly connect_signals/reinit_view
-		virtual void init();
+		virtual void sort_children(page_type & page);
 
 	protected:
 		/// container event handlers, those are called on container signals,
@@ -227,6 +222,25 @@ namespace qtor
 
 		/// called when container is cleared, clears m_store.
 		virtual void clear_view();
+		
+		/// connects container signals to appropriate handlers
+		virtual void connect_signals();
+
+	public:
+		/// returns pointer to owning container
+		const auto & get_owner() const noexcept { return m_owner; }
+
+		/// reinitializes view
+		/// default implementation just copies from owner
+		virtual void reinit_view();
+
+		/// normally should not be called outside of view class.
+		/// Provided, when view class used directly without inheritance, to complete initialization.
+		/// Calls connects signals and calls reinit_view.
+		/// 
+		/// Derived views probably will automatically call it constructor
+		/// or directly connect_signals/reinit_view
+		virtual void init();
 
 	protected:
 		page_ptr get_page(const QModelIndex & index) const;

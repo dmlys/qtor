@@ -143,7 +143,6 @@ int main(int argc, char * argv[])
 	paths.assign({
 		{ QStringLiteral("folder/file1.txt") },
 		{ QStringLiteral("folder/file2.txt") },
-		{ QStringLiteral("folder/sup/file3.txt") },
 		{ QStringLiteral("dir/file.sft") },
 		{ QStringLiteral("dir/file.txt") },
 		{ QStringLiteral("ops.sh") },
@@ -153,10 +152,11 @@ int main(int argc, char * argv[])
 	});
 
 	auto store = std::make_shared<torrent_file_store>();
-	store->assign_records(std::move(paths));
-
 	qtor::FileTreeModel model {store};
 
+	store->assign_records(paths);
+	store->assign_records(paths);
+	
 	QTreeView view;
 	view.setModel(&model);
 	view.show();
