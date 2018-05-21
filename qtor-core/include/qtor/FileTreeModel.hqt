@@ -38,13 +38,9 @@ namespace qtor
 
 	protected:
 		struct page_type;
-		struct node_type;
 		union  value_ptr;
 
-		using node_ptr = node_type *;
-		using page_ptr = page_type *;
-		using leaf_ptr = const torrent_file *;
-
+		using leaf_type = torrent_file;
 		using int_vector = std::vector<int>;
 
 		static constexpr std::uintptr_t PAGE = 0;
@@ -66,17 +62,17 @@ namespace qtor
 
 		public:
 			template <class visitor>
-			auto visit(visitor && vis) const -> std::invoke_result_t<visitor, leaf_ptr>;
+			auto visit(visitor && vis) const -> std::invoke_result_t<visitor, const leaf_type *>;
 
 		protected:
 			void destroy() noexcept;
 
 		public:
-			value_ptr(leaf_ptr ptr) noexcept;
-			value_ptr(page_ptr ptr) noexcept;
+			value_ptr(const leaf_type * ptr) noexcept;
+			value_ptr(const page_type * ptr) noexcept;
 
-			value_ptr & operator =(leaf_ptr ptr) noexcept;
-			value_ptr & operator =(page_ptr ptr) noexcept;
+			value_ptr & operator =(const leaf_type * ptr) noexcept;
+			value_ptr & operator =(const page_type * ptr) noexcept;
 
 			template <class Type> value_ptr(std::unique_ptr<Type> ptr) noexcept;
 			template <class Type> value_ptr & operator =(std::unique_ptr<Type> ptr) noexcept;
@@ -96,8 +92,8 @@ namespace qtor
 		struct get_name_type
 		{
 			using result_type = filepath_type;
-			result_type operator()(leaf_ptr lead) const;
-			result_type operator()(page_ptr lead) const;
+			result_type operator()(const leaf_type * lead) const;
+			result_type operator()(const page_type * lead) const;
 			result_type operator()(const value_ptr & val) const;
 		};
 
@@ -115,27 +111,31 @@ namespace qtor
 		using code_view_type = value_container::nth_index<by_code>::type;
 		using seq_view_type  = value_container::nth_index<by_seq>::type;
 
-
-		struct node_type
+		struct page_type
 		{
+			page_type *     parent  = nullptr;
+			std::size_t     upassed = 0;
+			value_container children;
+
 			filepath_type  name;
 			size_type      total_size;
 			size_type      have_size;
 			Qt::CheckState wanted;
 		};
 
-		struct page_type
-		{
-			page_type *     parent;
-			value_container children;
-			node_type       node;
-		};
-
 		struct get_children_type
 		{
 			using result_type = const value_container &;
-			result_type operator()(leaf_ptr leaf) const { return ms_empty_container; }
-			result_type operator()(page_ptr page) const { return page->children; }
+			result_type operator()(const leaf_type * leaf) const { return ms_empty_container; }
+			result_type operator()(const page_type * page) const { return page->children; }
+			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
+		};
+
+		struct get_children_count_type
+		{
+			using result_type = std::size_t;
+			result_type operator()(const leaf_type * leaf) const { return 0; }
+			result_type operator()(const page_type * page) const { return page->upassed; }
 			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
 		};
 
@@ -163,8 +163,9 @@ namespace qtor
 		};
 
 	protected:
-		static constexpr get_name_type      get_name {};
-		static constexpr get_children_type  get_children {};
+		static constexpr get_name_type           get_name {};
+		static constexpr get_children_type       get_children {};
+		static constexpr get_children_count_type get_children_count {};
 
 	protected:
 		static const value_container ms_empty_container;
@@ -243,9 +244,9 @@ namespace qtor
 		virtual void init();
 
 	protected:
-		page_ptr get_page(const QModelIndex & index) const;
+		page_type * get_page(const QModelIndex & index) const;
 		const value_ptr & get_element_ptr(const QModelIndex & index) const;
-		QModelIndex createIndex(int row, int column, page_ptr ptr) const { return base_type::createIndex(row, column, ptr); }
+		QModelIndex createIndex(int row, int column, page_type * ptr) const { return base_type::createIndex(row, column, ptr); }
 
 	public:
 		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -271,16 +272,16 @@ namespace qtor
 
 	template <class visitor>
 	inline auto FileTreeModel::value_ptr::visit(visitor && vis) const
-		-> std::invoke_result_t<visitor, leaf_ptr>
+		-> std::invoke_result_t<visitor, const leaf_type *>
 	{
 		return this->type == LEAF
-			? std::forward<visitor>(vis)(reinterpret_cast<leaf_ptr>(ptr))
-			: std::forward<visitor>(vis)(reinterpret_cast<page_ptr>(ptr));
+			? std::forward<visitor>(vis)(reinterpret_cast<const leaf_type *>(ptr))
+			: std::forward<visitor>(vis)(reinterpret_cast<const page_type *>(ptr));
 	}
 
 	template <class visitor>
 	inline auto visit(const FileTreeModel::value_ptr & val, visitor && vis)
-		-> std::invoke_result_t<visitor, FileTreeModel::leaf_ptr>
+		-> std::invoke_result_t<visitor, const FileTreeModel::leaf_type *>
 	{
 		return val.visit(std::forward<visitor>(vis));
 	}

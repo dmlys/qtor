@@ -13,9 +13,9 @@ namespace qtor
 		if (owning)
 		{
 			if (type == PAGE)
-				delete reinterpret_cast<page_ptr>(ptr);
+				delete reinterpret_cast<page_type *>(ptr);
 			else
-				delete reinterpret_cast<leaf_ptr>(ptr);
+				delete reinterpret_cast<leaf_type *>(ptr);
 		}
 	}
 
@@ -45,21 +45,21 @@ namespace qtor
 		return *this;
 	}
 
-	inline FileTreeModel::value_ptr::value_ptr(leaf_ptr ptr) noexcept
+	inline FileTreeModel::value_ptr::value_ptr(const leaf_type * ptr) noexcept
 	{
 		this->owning = 0;
 		this->type = LEAF;
 		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
 	}
 
-	inline FileTreeModel::value_ptr::value_ptr(page_ptr ptr) noexcept
+	inline FileTreeModel::value_ptr::value_ptr(const page_type * ptr) noexcept
 	{
 		this->owning = 0;
 		this->type = PAGE;
 		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
 	}
 
-	inline auto FileTreeModel::value_ptr::operator =(leaf_ptr ptr) noexcept -> value_ptr &
+	inline auto FileTreeModel::value_ptr::operator =(const leaf_type * ptr) noexcept -> value_ptr &
 	{
 		destroy();
 
@@ -70,7 +70,7 @@ namespace qtor
 		return *this;
 	}
 
-	inline auto FileTreeModel::value_ptr::operator =(page_ptr ptr) noexcept -> value_ptr &
+	inline auto FileTreeModel::value_ptr::operator =(const page_type * ptr) noexcept -> value_ptr &
 	{
 		destroy();
 
@@ -85,6 +85,7 @@ namespace qtor
 	inline FileTreeModel::value_ptr::value_ptr(std::unique_ptr<Type> ptr) noexcept
 		: value_ptr(ptr.release())
 	{
+		static_assert(not std::is_const_v<Type>);
 		this->owning = 1;
 	}
 
@@ -93,13 +94,14 @@ namespace qtor
 	{
 		destroy();
 
+		static_assert(not std::is_const_v<Type>);
 		this->owning = 1;
 		return operator =(ptr.release());
 	}
 
-	inline auto FileTreeModel::get_page(const QModelIndex & index) const -> page_ptr
+	inline auto FileTreeModel::get_page(const QModelIndex & index) const -> page_type *
 	{
-		return static_cast<page_ptr>(index.internalPointer());
+		return static_cast<page_type *>(index.internalPointer());
 	}
 
 	auto FileTreeModel::get_element_ptr(const QModelIndex & index) const -> const value_ptr &
@@ -113,15 +115,15 @@ namespace qtor
 		return seq_view[index.row()];
 	}
 
-	filepath_type FileTreeModel::get_name_type::operator()(leaf_ptr ptr) const
+	filepath_type FileTreeModel::get_name_type::operator()(const leaf_type * ptr) const
 	{
 		int pos = ptr->filename.lastIndexOf('/') + 1;
 		return ptr->filename.mid(pos);
 	}
 
-	filepath_type FileTreeModel::get_name_type::operator()(page_ptr ptr) const
+	filepath_type FileTreeModel::get_name_type::operator()(const page_type * ptr) const
 	{
-		return ptr->node.name;
+		return ptr->name;
 	}
 
 	filepath_type FileTreeModel::get_name_type::operator()(const value_ptr & val) const
@@ -137,27 +139,26 @@ namespace qtor
 	int FileTreeModel::rowCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
 		if (not parent.isValid())
-			return qint(m_root.children.size());
+			return qint(get_children_count(&m_root));
 
-		const auto & val = get_element_ptr(parent);
-		const auto & children = get_children(val);
-		return qint(children.size());
+		const auto & val = get_element_ptr(parent);		
+		return qint(get_children_count(val));
 	}
 
 	QModelIndex FileTreeModel::parent(const QModelIndex & index) const
 	{
 		if (not index.isValid()) return {};
 		
-		page_ptr page = get_page(index);
+		page_type * page = get_page(index);
 		assert(page);
 
-		page_ptr parent_page = page->parent;
+		page_type * parent_page = page->parent;
 		if (not parent_page) return {}; // already top level index
 
 		auto & children = parent_page->children;
 		auto & seq_view = children.get<by_seq>();
 
-		auto code_it = children.find(page->node.name);
+		auto code_it = children.find(page->name);
 		auto seq_it = children.project<by_seq>(code_it);
 
 		int row = qint(seq_it - seq_view.begin());
@@ -174,13 +175,14 @@ namespace qtor
 		{
 			auto & element = get_element_ptr(parent);
 			auto & children = get_children(element);
+			auto count = get_children_count(element);
 
-			if (children.size() < row)
+			if (count < row)
 				return {};
 
 			// only page can have children
 			assert(element.type == PAGE);
-			auto * page = reinterpret_cast<page_ptr>(element.ptr);
+			auto * page = reinterpret_cast<page_type *>(element.ptr);
 			return createIndex(row, column, page);
 		}
 	}
@@ -261,6 +263,12 @@ namespace qtor
 		return ref == name;
 	}
 
+	void FileTreeModel::init()
+	{
+		connect_signals();
+		reinit_view();
+	}
+
 	void FileTreeModel::connect_signals()
 	{
 		m_clear_con  = m_owner->on_clear([this] { clear_view(); });
@@ -281,12 +289,6 @@ namespace qtor
 		std::sort(first, last, [](auto & v1, auto & v2) { return v1->filename < v2->filename; });
 		fill_page(m_root, {}, first, last);
 	}
-
-	void FileTreeModel::init()
-	{
-		connect_signals();
-		reinit_view();
-	}
 	
 	template <class ForwardIterator>
 	void FileTreeModel::fill_page(page_type & page, QStringRef prefix, ForwardIterator first, ForwardIterator last)
@@ -305,7 +307,7 @@ namespace qtor
 			{
 				auto page_ptr = std::make_unique<page_type>();
 				page_ptr->parent = &page;
-				page_ptr->node.name = name;
+				page_ptr->name = name;
 
 				auto issub = std::bind(is_subelement, std::cref(prefix), std::cref(name), std::placeholders::_1);
 				auto it = std::find_if_not(first, last, viewed::make_indirect_fun(std::move(issub)));
@@ -315,6 +317,7 @@ namespace qtor
 			}
 		}
 
+		page.upassed = page.children.size();
 		sort_children(page);
 	}
 
@@ -337,17 +340,17 @@ namespace qtor
 
 		for (; ctx.erased_first != ctx.erased_last; ++ctx.erased_first)
 		{
-			const auto & item = **ctx.erased_first;
-			auto [type, name, prefix] = analyze(ctx.prefix, item);
+			const auto * item = *ctx.erased_first;
+			auto [type, name, prefix] = analyze(ctx.prefix, *item);
 			if (type == PAGE) return {std::move(name), std::move(prefix)};
 
-			auto it = container.find(item.filename);
+			auto it = container.find(get_name(item));
 			if (it != container.end())
 			{
 				auto seqit = container.project<by_seq>(it);
 				auto pos = seqit - seq_view.begin();
-				container.erase(it);
 				*ctx.removed_last++ = pos;
+				container.erase(it);
 			}
 		}
 
@@ -388,9 +391,11 @@ namespace qtor
 			auto [type, name, prefix] = analyze(ctx.prefix, *item);
 			if (type == PAGE) return {std::move(name), std::move(prefix)};
 
-			auto it = container.find(item->filename);
-			if (it != container.end())
+			auto it = container.find(get_name(item));
+			if (it == container.end())
+			{
 				code_view.insert(item);
+			}
 			else
 			{
 				auto seqit = container.project<by_seq>(it);
@@ -437,32 +442,50 @@ namespace qtor
 			bool inserts = newctx.inserted_first != newctx.inserted_last;
 			bool updates = newctx.updated_first != newctx.updated_last;
 			bool erases  = newctx.erased_first != newctx.erased_last;
+			assert(inserts or updates or erases);
 
-			page_ptr child_page = nullptr;
+			page_type * child_page = nullptr;
 			auto it = container.find(name);
 			if (it != container.end())
-				child_page = reinterpret_cast<page_ptr>(it->ptr);
+				child_page = reinterpret_cast<page_type *>(it->ptr);
 			else if (updates or inserts)
 			{
 				auto child = std::make_unique<page_type>();
 				child_page = child.get();
 
-				child_page->node.name = name;
+				child_page->name = name;
 				child_page->parent = &page;
 				page.children.insert(std::move(child));
 			}			
 
 			// process child
-			if (child_page) update_page(*child_page, newctx);
+			if (child_page)
+			{
+				update_page(*child_page, newctx);
+
+				auto seqit = container.project<by_seq>(it);
+				auto pos = seqit - seq_view.begin();
+
+				if (/*it != container.end() and*/ child_page->children.size() == 0)
+				{
+					*ctx.removed_last++ = pos;
+					container.erase(it);
+				}
+				else
+				{
+					*--ctx.changed_first = pos;
+				}
+			}
 		}
 
+		page.upassed = page.children.size();
 		sort_children(page);
 	}
 
 	void FileTreeModel::update_data(const signal_range_type & sorted_erased, const signal_range_type & sorted_updated, const signal_range_type & inserted)
 	{
 		int_vector affected_indexes;
-		affected_indexes.resize(sorted_erased.size() + sorted_updated.size());
+		affected_indexes.resize(sorted_erased.size() + std::max(sorted_updated.size(), inserted.size()));
 		
 		processing_context ctx;
 
@@ -476,10 +499,10 @@ namespace qtor
 		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
 		ctx.changed_first = ctx.changed_last = affected_indexes.end();
 
-		auto pred = viewed::make_indirect_fun(torrent_file_id_greater());
-		std::sort(ctx.erased_first, ctx.erased_last, pred);
-		std::sort(ctx.inserted_first, ctx.inserted_last, pred);
-		std::sort(ctx.updated_first, ctx.updated_last, pred);
+		auto sort_pred = viewed::make_indirect_fun(torrent_file_id_greater());
+		std::sort(ctx.erased_first, ctx.erased_last, sort_pred);
+		std::sort(ctx.inserted_first, ctx.inserted_last, sort_pred);
+		std::sort(ctx.updated_first, ctx.updated_last, sort_pred);
 
 		beginResetModel();
 		//layoutAboutToBeChanged({}, NoLayoutChangeHint);
@@ -522,7 +545,6 @@ namespace qtor
 	FileTreeModel::FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)
 		: base_type(parent), m_owner(std::move(store))
 	{
-		m_root.parent = nullptr;
 		init();
 	}
 }

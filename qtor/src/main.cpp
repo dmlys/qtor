@@ -139,7 +139,7 @@ int main(int argc, char * argv[])
 
 	std::cout << QtTools::ScreenInfo << endl;
 
-	std::vector<torrent_file> paths;
+	std::vector<torrent_file> paths, paths2;
 	paths.assign({
 		{ QStringLiteral("folder/file1.txt") },
 		{ QStringLiteral("folder/file2.txt") },
@@ -151,13 +151,18 @@ int main(int argc, char * argv[])
 		{ QStringLiteral("folder/sup/inner/file.txt")},
 	});
 
+	paths2 = paths;
+	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+
 	auto store = std::make_shared<torrent_file_store>();
 	qtor::FileTreeModel model {store};
 
-	store->assign_records(paths);
+	store->assign_records(paths);	
+	store->assign_records(paths2);
 	store->assign_records(paths);
 	
 	QTreeView view;
+	view.setSelectionMode(QTreeView::ExtendedSelection);
 	view.setModel(&model);
 	view.show();
 
