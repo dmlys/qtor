@@ -255,6 +255,7 @@ namespace qtor
 	{
 		beginResetModel();
 
+		m_root.upassed = 0;
 		m_root.children.clear();
 
 		std::vector<signal_range_type::value_type> elements;
