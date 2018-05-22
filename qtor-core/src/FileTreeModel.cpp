@@ -211,31 +211,6 @@ namespace qtor
 		return {};
 	}
 
-	//void FileTreeModel::erase_records(const signal_range_type & sorted_erased)
-	//{
-	//	if (sorted_erased.empty()) return;
-
-	//	int_vector affected_indexes(sorted_erased.size());
-	//	auto erased_first = affected_indexes.begin();
-	//	auto erased_last = erased_first;
-
-	//	//auto & seq_view = m_
-
-	//	for (auto it = std::find_if(first, last, test); it != last; it = std::find_if(++it, last, test))
-	//		*erased_last++ = static_cast<int>(it - first);
-
-	//	auto * model = get_model();
-	//	Q_EMIT model->layoutAboutToBeChanged(model_type::empty_model_list, model->NoLayoutChangeHint);
-
-	//	auto index_map = viewed::build_relloc_map(erased_first, erased_last, m_store.size());
-	//	change_indexes(index_map.begin(), index_map.end(), 0);
-
-	//	last = viewed::remove_indexes(first, last, erased_first, erased_last);
-	//	m_store.resize(last - first);
-
-	//	Q_EMIT model->layoutChanged(model_type::empty_model_list, model->NoLayoutChangeHint);
-	//}
-
 	auto FileTreeModel::analyze(const QStringRef & prefix, const torrent_file & item)
 		-> std::tuple<std::uintptr_t, QString, QStringRef>
 	{
@@ -278,6 +253,10 @@ namespace qtor
 
 	void FileTreeModel::reinit_view()
 	{
+		beginResetModel();
+
+		m_root.children.clear();
+
 		std::vector<signal_range_type::value_type> elements;
 		elements.assign(
 			ext::make_outdirect_iterator(m_owner->begin()),
@@ -288,6 +267,8 @@ namespace qtor
 		auto last  = elements.end();
 		std::sort(first, last, [](auto & v1, auto & v2) { return v1->filename < v2->filename; });
 		fill_page(m_root, {}, first, last);
+
+		endResetModel();
 	}
 	
 	template <class ForwardIterator>
@@ -345,13 +326,12 @@ namespace qtor
 			if (type == PAGE) return {std::move(name), std::move(prefix)};
 
 			auto it = container.find(get_name(item));
-			if (it != container.end())
-			{
-				auto seqit = container.project<by_seq>(it);
-				auto pos = seqit - seq_view.begin();
-				*ctx.removed_last++ = pos;
-				container.erase(it);
-			}
+			assert(it != container.end());
+			
+			auto seqit = container.project<by_seq>(it);
+			auto pos = seqit - seq_view.begin();
+			*ctx.removed_last++ = pos;
+			container.erase(it);
 		}
 
 		return {QString::null, QStringRef()};
@@ -392,16 +372,11 @@ namespace qtor
 			if (type == PAGE) return {std::move(name), std::move(prefix)};
 
 			auto it = container.find(get_name(item));
-			if (it == container.end())
-			{
-				code_view.insert(item);
-			}
-			else
-			{
-				auto seqit = container.project<by_seq>(it);
-				auto pos = seqit - seq_view.begin();
-				*--ctx.changed_first = pos;
-			}
+			assert(it != container.end());
+
+			auto seqit = container.project<by_seq>(it);
+			auto pos = seqit - seq_view.begin();
+			*--ctx.changed_first = pos;
 		}
 
 		return {QString::null, QStringRef()};
@@ -447,15 +422,16 @@ namespace qtor
 			page_type * child_page = nullptr;
 			auto it = container.find(name);
 			if (it != container.end())
-				child_page = reinterpret_cast<page_type *>(it->ptr);
-			else if (updates or inserts)
+				child_page = reinterpret_cast<page_type *>(it->ptr);				
+			else 
 			{
+				assert(updates or inserts);
 				auto child = std::make_unique<page_type>();
 				child_page = child.get();
 
 				child_page->name = name;
 				child_page->parent = &page;
-				page.children.insert(std::move(child));
+				std::tie(it, std::ignore) = page.children.insert(std::move(child));
 			}			
 
 			// process child

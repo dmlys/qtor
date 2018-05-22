@@ -5,6 +5,10 @@
 #include <qtor/types.hpp>
 #include <qtor/torrent.hpp>
 #include <qtor/torrent_file_store.hpp>
+
+#include <viewed/algorithm.hpp>
+#include <viewed/refilter_type.hpp>
+#include <viewed/indirect_functor.hpp>
 #include <viewed/sfview_qtbase.hpp>
 
 #include <QtCore/QString>
@@ -42,6 +46,9 @@ namespace qtor
 
 		using leaf_type = torrent_file;
 		using int_vector = std::vector<int>;
+
+		using value_ptr_vector = std::vector<const value_ptr *>;
+		using value_ptr_iterator = value_ptr_vector::iterator;
 
 		static constexpr std::uintptr_t PAGE = 0;
 		static constexpr std::uintptr_t LEAF = 1;
@@ -94,7 +101,7 @@ namespace qtor
 			using result_type = filepath_type;
 			result_type operator()(const leaf_type * lead) const;
 			result_type operator()(const page_type * lead) const;
-			result_type operator()(const value_ptr & val) const;
+			result_type operator()(const value_ptr & val)  const;
 		};
 
 		using value_container = boost::multi_index_container<
@@ -128,7 +135,7 @@ namespace qtor
 			using result_type = const value_container &;
 			result_type operator()(const leaf_type * leaf) const { return ms_empty_container; }
 			result_type operator()(const page_type * page) const { return page->children; }
-			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
+			result_type operator()(const value_ptr & val)  const { return val.visit(*this); }
 		};
 
 		struct get_children_count_type
@@ -136,7 +143,7 @@ namespace qtor
 			using result_type = std::size_t;
 			result_type operator()(const leaf_type * leaf) const { return 0; }
 			result_type operator()(const page_type * page) const { return page->upassed; }
-			result_type operator()(const value_ptr & val) const { return val.visit(*this); }
+			result_type operator()(const value_ptr & val)  const { return val.visit(*this); }
 		};
 
 		struct processing_context
@@ -175,7 +182,7 @@ namespace qtor
 		page_type m_root; //= { /*.parent =*/ nullptr};		
 
 		dirs_first_sorter m_sorter;
-		//viewed::null_filter m_filter;
+		viewed::null_filter m_filter;
 		//viewed::null_sorter m_sorter;
 
 		/// raii connections
@@ -227,6 +234,55 @@ namespace qtor
 		/// connects container signals to appropriate handlers
 		virtual void connect_signals();
 
+	protected:
+		/// adjusts view with erased/updated/inserted data, preserving filter/sort order. stable,
+		/// new and updated should already be appended to m_store in order: current data..., updated..., inserted...].
+		/// emits appropriate qt signals, uses merge_newdata(iter..., iter..., ...) to calculate index permutations.
+		//virtual void update_store(
+		//	store_iterator first, store_iterator first_updated,
+		//	store_iterator first_inserted, store_iterator last,
+		//	signal_const_iterator first_erased, signal_const_iterator last_erased);
+
+		/// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
+		/// first, middle, last - is are one range, as in std::inplace_merge
+		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
+		//virtual void merge_newdata(
+		//	store_iterator first, store_iterator middle, store_iterator last,
+		//	bool resort_old = true);
+
+		/// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
+		/// first, middle, last - is are one range, as in std::inplace_merge
+		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
+		/// 
+		/// range [ifirst, imiddle, ilast) must be permuted the same way as range [first, middle, last)
+		//virtual void merge_newdata(
+		//	store_iterator first, store_iterator middle, store_iterator last,
+		//	int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast,
+		//	bool resort_old = true);
+
+		/// sorts m_store's [first; last) with m_sort_pred, stable sort
+		//virtual void sort(value_ptr_iterator first, value_ptr_iterator last);
+		/// sorts m_store's [first; last) with m_sort_pred, stable sort
+		/// range [ifirst; ilast) must be permuted the same way as range [first; last)
+		//virtual void sort(value_ptr_iterator first, value_ptr_iterator last,
+		//                  int_vector::iterator ifirst, int_vector::iterator ilast);
+
+		/// sorts m_store's [first; last) with m_sort_pred, stable sort
+		/// emits qt layoutAboutToBeChanged(..., VerticalSortHint), layoutUpdated(..., VerticalSortHint)
+		//virtual void sort_and_notify();
+
+		/// refilters m_store with m_filter_pred according to rtype:
+		/// * same        - does nothing and immediately returns(does not emit any qt signals)
+		/// * incremental - calls refilter_full_and_notify
+		/// * full        - calls refilter_incremental_and_notify
+		//virtual void refilter_and_notify(viewed::refilter_type rtype);
+		/// removes elements not passing m_filter_pred from m_store
+		/// emits qt layoutAboutToBeChanged(..., NoLayoutChangeHint), layoutUpdated(..., NoLayoutChangeHint)
+		//virtual void refilter_incremental_and_notify();
+		/// fills m_store from owner with values passing m_filter_pred and sorts them according to m_sort_pred
+		/// emits qt layoutAboutToBeChanged(..., NoLayoutChangeHint), layoutUpdated(..., NoLayoutChangeHint)
+		//virtual void refilter_full_and_notify();
+
 	public:
 		/// returns pointer to owning container
 		const auto & get_owner() const noexcept { return m_owner; }
@@ -262,9 +318,6 @@ namespace qtor
 		void fill_page(page_type & page, QStringRef prefix,
 			std::vector<torrent_file>::const_iterator first, 
 			std::vector<torrent_file>::const_iterator last);
-
-	//public:
-	//	void Init(std::vector<torrent_file> & vals);
 
 	public:
 		FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);
