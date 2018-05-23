@@ -47,6 +47,7 @@ namespace qtor
 		using leaf_type = torrent_file;
 		using int_vector = std::vector<int>;
 
+		using leaf_ptr_vector = std::vector<const leaf_type *>;
 		using value_ptr_vector = std::vector<const value_ptr *>;
 		using value_ptr_iterator = value_ptr_vector::iterator;
 
@@ -148,7 +149,7 @@ namespace qtor
 
 		struct processing_context
 		{
-			signal_range_type::const_iterator 
+			leaf_ptr_vector::iterator
 				inserted_first, inserted_last,
 				updated_first,  updated_last,
 				erased_first,   erased_last;
@@ -206,6 +207,7 @@ namespace qtor
 		virtual void update_page(page_type & page, processing_context & ctx);
 
 		virtual void sort_children(page_type & page);
+		virtual void super_AMOLED(page_type & page, processing_context & ctx);
 
 	protected:
 		/// container event handlers, those are called on container signals,
@@ -247,23 +249,23 @@ namespace qtor
 		/// first, middle, last - is are one range, as in std::inplace_merge
 		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
 		//virtual void merge_newdata(
-		//	store_iterator first, store_iterator middle, store_iterator last,
+		//	value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
 		//	bool resort_old = true);
-
-		/// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
-		/// first, middle, last - is are one range, as in std::inplace_merge
-		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
-		/// 
-		/// range [ifirst, imiddle, ilast) must be permuted the same way as range [first, middle, last)
+		//
+		///// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
+		///// first, middle, last - is are one range, as in std::inplace_merge
+		///// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
+		///// 
+		///// range [ifirst, imiddle, ilast) must be permuted the same way as range [first, middle, last)
 		//virtual void merge_newdata(
-		//	store_iterator first, store_iterator middle, store_iterator last,
+		//	value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
 		//	int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast,
 		//	bool resort_old = true);
-
-		/// sorts m_store's [first; last) with m_sort_pred, stable sort
+		//
+		///// sorts m_store's [first; last) with m_sort_pred, stable sort
 		//virtual void sort(value_ptr_iterator first, value_ptr_iterator last);
-		/// sorts m_store's [first; last) with m_sort_pred, stable sort
-		/// range [ifirst; ilast) must be permuted the same way as range [first; last)
+		///// sorts m_store's [first; last) with m_sort_pred, stable sort
+		///// range [ifirst; ilast) must be permuted the same way as range [first; last)
 		//virtual void sort(value_ptr_iterator first, value_ptr_iterator last,
 		//                  int_vector::iterator ifirst, int_vector::iterator ilast);
 

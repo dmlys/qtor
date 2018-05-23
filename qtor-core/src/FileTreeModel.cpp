@@ -332,6 +332,8 @@ namespace qtor
 			auto seqit = container.project<by_seq>(it);
 			auto pos = seqit - seq_view.begin();
 			*ctx.removed_last++ = pos;
+
+			// erasion will be done later, in AMOLED
 			container.erase(it);
 		}
 
@@ -446,6 +448,8 @@ namespace qtor
 				if (/*it != container.end() and*/ child_page->children.size() == 0)
 				{
 					*ctx.removed_last++ = pos;
+
+					// erasion will be done later in AMOLED
 					container.erase(it);
 				}
 				else
@@ -462,16 +466,21 @@ namespace qtor
 	void FileTreeModel::update_data(const signal_range_type & sorted_erased, const signal_range_type & sorted_updated, const signal_range_type & inserted)
 	{
 		int_vector affected_indexes;
+		leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
+		
 		affected_indexes.resize(sorted_erased.size() + std::max(sorted_updated.size(), inserted.size()));
+		updated_vec.assign(sorted_updated.begin(), sorted_updated.end());
+		erased_vec.assign(sorted_erased.begin(), sorted_erased.end());
+		inserted_vec.assign(inserted.begin(), inserted.end());
 		
 		processing_context ctx;
 
-		ctx.erased_first = sorted_erased.begin();
-		ctx.erased_last  = sorted_erased.end();
-		ctx.inserted_first = inserted.begin();
-		ctx.inserted_last = inserted.end();
-		ctx.updated_first = sorted_updated.begin();
-		ctx.updated_last = sorted_updated.end();
+		ctx.erased_first = erased_vec.begin();
+		ctx.erased_last  = erased_vec.end();
+		ctx.inserted_first = inserted_vec.begin();
+		ctx.inserted_last = inserted_vec.end();
+		ctx.updated_first = updated_vec.begin();
+		ctx.updated_last = updated_vec.end();
 
 		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
 		ctx.changed_first = ctx.changed_last = affected_indexes.end();
@@ -505,6 +514,11 @@ namespace qtor
 		std::sort(refs_first, refs_last, m_sorter);
 
 		seq_view.rearrange(refs_first);
+	}
+
+	void FileTreeModel::super_AMOLED(page_type & page, processing_context & ctx)
+	{
+
 	}
 
 	void FileTreeModel::erase_records(const signal_range_type & sorted_erased)
