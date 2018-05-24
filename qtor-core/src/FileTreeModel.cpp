@@ -428,10 +428,13 @@ namespace qtor
 			page_type * child_page = nullptr;
 			auto it = container.find(name);
 			if (it != container.end())
+			{
+				assert(ctx.updated_diff or ctx.erased_diff);
 				child_page = reinterpret_cast<page_type *>(it->ptr);				
+			}
 			else 
 			{
-				assert(ctx.updated_diff or ctx.inserted_diff);
+				assert(ctx.inserted_diff);
 				auto child = std::make_unique<page_type>();
 				child_page = child.get();
 
@@ -448,14 +451,14 @@ namespace qtor
 				auto seqit = container.project<by_seq>(it);
 				auto pos = seqit - seq_view.begin();
 
-				if (/*it != container.end() and*/ child_page->children.size() == 0)
+				if (child_page->children.size() == 0)
 				{
 					*ctx.removed_last++ = pos;
 
 					// erasion will be done later in AMOLED
 					// container.erase(it);
 				}
-				else
+				else if (ctx.updated_diff) // not inserted
 				{
 					*--ctx.changed_first = pos;
 				}
@@ -467,7 +470,7 @@ namespace qtor
 		ctx.erased_count = ctx.removed_last - ctx.removed_first;
 
 		super_AMOLED(page, ctx);
-		sort_children(page);
+		//sort_children(page);
 	}
 
 	void FileTreeModel::super_AMOLED(page_type & page, processing_context & ctx)
@@ -526,19 +529,21 @@ namespace qtor
 		// remove erased ones, and filtered out ones
 		auto rfirst = std::remove(valptr_vector.begin(), valptr_vector.end(), nullptr);
 		auto rlast = valptr_vector.end();
+		auto rcur = rfirst;
 
 		for (auto it = schanged_pp; it != schanged_last; ++it)
 		{
 			int index = *it;
-			*rfirst++ = seq_ptr_view[index];
+			*rcur++ = seq_ptr_view[index];
 		}
 
 		for (auto it = ctx.removed_first; it != ctx.removed_last; ++it)
 		{
 			int index = *it;
-			*rfirst++ = seq_ptr_view[index];
+			*rcur++ = seq_ptr_view[index];
 		}
 
+		std::stable_sort(vfirst, rfirst, viewed::make_indirect_fun(m_sorter));
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, [](auto * ptr) { return std::ref(*ptr); }));
 		seq_view.resize(seq_view.size() - ctx.erased_count);
 		page.upassed += ctx.inserted_count - ctx.erased_count;

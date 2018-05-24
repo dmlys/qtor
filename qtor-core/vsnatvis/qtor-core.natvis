@@ -2,18 +2,18 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
   <Type Name="qtor::FileTreeModel::value_ptr">
-    <DisplayString Condition="type == 1">{reinterpret_cast&lt;const qtor::FileTreeModel::page_type *&gt;(ptr)}</DisplayString>
-    <DisplayString Condition="type == 0">{reinterpret_cast&lt;const qtor::FileTreeModel::leaf_type *&gt;(ptr)}</DisplayString>
+    <DisplayString Condition="type == 0">{reinterpret_cast&lt;const qtor::FileTreeModel::page_type *&gt;(ptr)}</DisplayString>
+    <DisplayString Condition="type == 1">{reinterpret_cast&lt;const qtor::FileTreeModel::leaf_type *&gt;(ptr)}</DisplayString>
 
     <Expand>     
-      <ExpandedItem Condition="type == 1">reinterpret_cast&lt;const qtor::FileTreeModel::page_type *&gt;(ptr)</ExpandedItem>
-      <ExpandedItem Condition="type == 0">reinterpret_cast&lt;const qtor::FileTreeModel::leaf_type *&gt;(ptr)</ExpandedItem>
+      <ExpandedItem Condition="type == 0">reinterpret_cast&lt;const qtor::FileTreeModel::page_type *&gt;(ptr)</ExpandedItem>
+      <ExpandedItem Condition="type == 1">reinterpret_cast&lt;const qtor::FileTreeModel::leaf_type *&gt;(ptr)</ExpandedItem>
       
       <Item Name="[valptr internals]">"[valptr internals]"</Item>
-      <Item Name="type" Condition="type == 1">PAGE</Item>
-      <Item Name="type" Condition="type == 0">LEAF</Item>
-      <Item Name="owning" Condition="owning == 1">true</Item>
-      <Item Name="owning" Condition="owning == 0">false</Item>
+      <Item Name="type" Condition="type == 0">PAGE</Item>
+      <Item Name="type" Condition="type == 1">LEAF</Item>
+      <Item Name="owning" Condition="owning == 0">true</Item>
+      <Item Name="owning" Condition="owning == 1">false</Item>
       
       <Item Name="val">val</Item>
     </Expand>

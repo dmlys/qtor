@@ -51,8 +51,8 @@ namespace qtor
 		using value_ptr_vector = std::vector<const value_ptr *>;
 		using value_ptr_iterator = value_ptr_vector::iterator;
 
-		static constexpr std::uintptr_t PAGE = 1;
-		static constexpr std::uintptr_t LEAF = 0;
+		static constexpr std::uintptr_t PAGE = 0;
+		static constexpr std::uintptr_t LEAF = 1;
 		
 		static_assert(boost::static_log2<sizeof(std::max_align_t)>::value >= 2);
 
