@@ -140,19 +140,35 @@ int main(int argc, char * argv[])
 	std::cout << QtTools::ScreenInfo << endl;
 
 	std::vector<torrent_file> paths, paths2;
+	//paths.assign({
+	//	{ QStringLiteral("folder/file1.txt") },
+	//	{ QStringLiteral("folder/file2.txt") },
+	//	{ QStringLiteral("dir/file.sft") },
+	//	{ QStringLiteral("dir/file.txt") },
+	//	{ QStringLiteral("ops.sh") },
+	//	{ QStringLiteral("westworld.mkv") },
+	//	{ QStringLiteral("folder/sup/file3.txt")},
+	//	{ QStringLiteral("folder/sup/inner/file.txt")},
+	//});
+
+	//paths2 = paths;
+	//paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+	// 
 	paths.assign({
-		{ QStringLiteral("folder/file1.txt") },
-		{ QStringLiteral("folder/file2.txt") },
-		{ QStringLiteral("dir/file.sft") },
-		{ QStringLiteral("dir/file.txt") },
+		{ QStringLiteral("file1.txt") },
+		{ QStringLiteral("file2.txt") },
+		{ QStringLiteral("file.sft") },
+		{ QStringLiteral("file.txt") },
 		{ QStringLiteral("ops.sh") },
 		{ QStringLiteral("westworld.mkv") },
-		{ QStringLiteral("folder/sup/file3.txt")},
-		{ QStringLiteral("folder/sup/inner/file.txt")},
 	});
 
-	paths2 = paths;
-	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+	paths2.assign({
+			{QStringLiteral("file1.txt")},
+			{QStringLiteral("file.sft")},
+			{QStringLiteral("ziggaman.sh")},
+			{QStringLiteral("westworld.mkv")},
+	});
 
 	auto store = std::make_shared<torrent_file_store>();
 	qtor::FileTreeModel model {store};

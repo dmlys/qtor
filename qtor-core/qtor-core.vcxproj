@@ -94,6 +94,9 @@
       <SubType>Designer</SubType>
     </QtRCCCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="vsnatvis\qtor-core.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
