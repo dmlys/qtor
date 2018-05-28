@@ -221,8 +221,28 @@ namespace qtor
 
 	void FileTreeModel::emit_changed(int_vector::const_iterator first, int_vector::const_iterator last)
 	{
+		if (first == last) return;
+
 		auto * model = get_model();
-		return viewed::emit_changed(model, first, last);
+		int ncols = model->columnCount(model_type::invalid_index);
+
+		for (; first != last; ++first)
+		{
+			// lower index on top, higher on bottom
+			int top, bottom;
+			top = bottom = *first;
+
+			// try to find the sequences with step of 1, for example: ..., 4, 5, 6, ...
+			for (++first; first != last and *first - bottom == 1; ++first, ++bottom)
+				continue;
+
+			--first;
+
+			auto top_left = model->index(top, 0, model_type::invalid_index);
+			auto bottom_right = model->index(bottom, ncols - 1, model_type::invalid_index);
+			model->dataChanged(top_left, bottom_right, model_type::all_roles);
+		}
+
 	}
 
 	void FileTreeModel::change_indexes(QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
