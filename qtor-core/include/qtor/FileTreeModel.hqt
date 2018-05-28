@@ -10,6 +10,7 @@
 #include <viewed/refilter_type.hpp>
 #include <viewed/indirect_functor.hpp>
 #include <viewed/sfview_qtbase.hpp>
+#include <viewed/qt_model.hpp>
 
 #include <QtCore/QString>
 #include <QtCore/QAbstractItemModel>
@@ -36,6 +37,7 @@ namespace qtor
 
 		using signal_range_type = typename container_type::signal_range_type;
 		using scoped_connection = typename container_type::scoped_connection;
+		using model_type = viewed::AbstractItemModel;
 
 		static     torrent_file_ptr get_view_pointer(const torrent_file & val) { return container_type::get_view_pointer(val); }
 		static const torrent_file & get_view_reference(torrent_file_ptr ptr)   { return container_type::get_view_reference(ptr); }
@@ -164,9 +166,9 @@ namespace qtor
 			QStringRef prefix;
 			QStringRef inserted_prefix, updated_prefix, erased_prefix;
 
-			QModelIndexList * indexes;
 			value_ptr_vector * vptr_array;
-			int_vector * index_array;
+			int_vector * index_array, *inverse_array;
+			QModelIndexList::const_iterator model_index_first, model_index_last;
 		};
 
 		struct dirs_first_sorter
@@ -174,6 +176,14 @@ namespace qtor
 			bool operator()(const value_ptr & p1, const value_ptr & p2) const noexcept
 			{
 				return p1.type < p2.type;
+			}
+		};
+
+		struct test_filter
+		{
+			bool operator()(const value_ptr & p1) const noexcept
+			{
+				return true;
 			}
 		};
 
@@ -190,13 +200,17 @@ namespace qtor
 		page_type m_root; //= { /*.parent =*/ nullptr};		
 
 		dirs_first_sorter m_sorter;
-		viewed::null_filter m_filter;
-		//viewed::null_sorter m_sorter;
+		test_filter m_filter;
 
 		/// raii connections
 		scoped_connection m_clear_con;
 		scoped_connection m_update_con;
 		scoped_connection m_erase_con;
+
+	protected:
+		template <class Type> static inline void mark_pointer(Type & ptr)   noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) |= 1; }
+		template <class Type> static inline void unmark_pointer(Type & ptr) noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) &= 0; }
+		template <class Type> static inline bool is_marked(Type ptr)        noexcept { static_assert(std::is_pointer_v<Type>); return reinterpret_cast<std::uintptr_t>(ptr) & 1; }
 
 	protected:
 		static auto analyze(const QStringRef & prefix, const torrent_file & item)
@@ -215,6 +229,24 @@ namespace qtor
 
 		virtual void sort_children(page_type & page);
 		virtual void super_AMOLED(page_type & page, processing_context & ctx);
+
+	protected:
+		/// acquires pointer to qt model, normally you would inherit both QAbstractItemModel and this class.
+		/// default implementation uses dynamic_cast
+		virtual model_type * get_model();
+		/// emits qt signal model->dataChanged about changed rows. Changred rows are defined by [first; last)
+		/// default implantation just calls get_model->dataChanged(index(row, 0), inex(row, model->columnCount)
+		virtual void emit_changed(int_vector::const_iterator first, int_vector::const_iterator last);
+		/// changes persistent indexes via get_model->changePersistentIndex.
+		/// [first; last) - range where range[oldIdx - offset] => newIdx.
+		/// if newIdx < 0 - index should be removed(changed on invalid, qt supports it)
+		virtual void change_indexes(QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
+		                            int_vector::const_iterator first, int_vector::const_iterator last, int offset);
+		/// inverses index array in following way:
+		/// inverse[arr[i] - offset] = i for first..last.
+		/// This is for when you have array of arr[new_index] => old_index,
+		/// but need arr[old_index] => new_idx for qt changePersistentIndex
+		void inverse_index_array(int_vector & inverse, int_vector::iterator first, int_vector::iterator last, int offset);
 
 	protected:
 		/// container event handlers, those are called on container signals,
@@ -255,26 +287,26 @@ namespace qtor
 		/// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
 		/// first, middle, last - is are one range, as in std::inplace_merge
 		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
-		//virtual void merge_newdata(
-		//	value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
-		//	bool resort_old = true);
-		//
-		///// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
-		///// first, middle, last - is are one range, as in std::inplace_merge
-		///// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
-		///// 
-		///// range [ifirst, imiddle, ilast) must be permuted the same way as range [first, middle, last)
-		//virtual void merge_newdata(
-		//	value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
-		//	int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast,
-		//	bool resort_old = true);
-		//
+		virtual void merge_newdata(
+			value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
+			bool resort_old = true);
+		
+		/// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
+		/// first, middle, last - is are one range, as in std::inplace_merge
+		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
+		/// 
+		/// range [ifirst, imiddle, ilast) must be permuted the same way as range [first, middle, last)
+		virtual void merge_newdata(
+			value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
+			int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast,
+			bool resort_old = true);
+		
 		///// sorts m_store's [first; last) with m_sort_pred, stable sort
-		//virtual void sort(value_ptr_iterator first, value_ptr_iterator last);
+		virtual void stable_sort(value_ptr_iterator first, value_ptr_iterator last);
 		///// sorts m_store's [first; last) with m_sort_pred, stable sort
 		///// range [ifirst; ilast) must be permuted the same way as range [first; last)
-		//virtual void sort(value_ptr_iterator first, value_ptr_iterator last,
-		//                  int_vector::iterator ifirst, int_vector::iterator ilast);
+		virtual void stable_sort(value_ptr_iterator first, value_ptr_iterator last,
+		                         int_vector::iterator ifirst, int_vector::iterator ilast);
 
 		/// sorts m_store's [first; last) with m_sort_pred, stable sort
 		/// emits qt layoutAboutToBeChanged(..., VerticalSortHint), layoutUpdated(..., VerticalSortHint)

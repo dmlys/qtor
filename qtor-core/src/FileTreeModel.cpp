@@ -2,6 +2,7 @@
 #include <ext/iterator/outdirect_iterator.hpp>
 #include <ext/iterator/indirect_iterator.hpp>
 #include <ext/range/adaptors/outdirected.hpp>
+#include <boost/range/counting_range.hpp>
 
 #include <QtTools/ToolsBase.hpp>
 #include <qtor/FileTreeModel.hqt>
@@ -213,6 +214,40 @@ namespace qtor
 		return {};
 	}
 
+	auto FileTreeModel::get_model() -> model_type *
+	{
+		return static_cast<model_type *>(static_cast<QAbstractItemModel *>(this));
+	}
+
+	void FileTreeModel::emit_changed(int_vector::const_iterator first, int_vector::const_iterator last)
+	{
+		auto * model = get_model();
+		return viewed::emit_changed(model, first, last);
+	}
+
+	void FileTreeModel::change_indexes(QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
+									   int_vector::const_iterator first, int_vector::const_iterator last, int offset)
+	{
+		auto * model = get_model();
+		auto size = last - first; (void)size;
+
+	}
+
+	void FileTreeModel::inverse_index_array(int_vector & inverse, int_vector::iterator first, int_vector::iterator last, int offset)
+	{
+		inverse.resize(last - first);
+		int i = offset;
+
+		for (auto it = first; it != last; ++it, ++i)
+		{
+			int val = *it;
+			inverse[std::abs(val) - offset] = val >= 0 ? i : -1;
+		}
+
+		//std::copy(buffer.begin(), buffer.end(), first);
+	}
+
+
 	auto FileTreeModel::analyze(const QStringRef & prefix, const torrent_file & item)
 		-> std::tuple<std::uintptr_t, QString, QStringRef>
 	{
@@ -303,6 +338,56 @@ namespace qtor
 
 		page.upassed = page.children.size();
 		sort_children(page);
+	}
+
+	void FileTreeModel::merge_newdata(value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last, bool resort_old /* = true */)
+	{
+		if (not viewed::active(m_sorter)) return;
+
+		auto comp = viewed::make_indirect_fun(m_sorter);
+
+		if (resort_old) varalgo::stable_sort(first, middle, comp);
+		varalgo::sort(middle, last, comp);
+		varalgo::inplace_merge(first, middle, last, comp);
+	}
+
+	void FileTreeModel::merge_newdata(value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
+	                                  int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast, bool resort_old /* = true */)
+	{
+		if (not viewed::active(m_sorter)) return;
+
+		assert(last - first == ilast - ifirst);
+		assert(middle - first == imiddle - ifirst);
+
+		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(m_sorter));
+
+		auto zfirst  = ext::make_zip_iterator(first, ifirst);
+		auto zmiddle = ext::make_zip_iterator(middle, imiddle);
+		auto zlast   = ext::make_zip_iterator(last, ilast);
+
+		if (resort_old) varalgo::stable_sort(zfirst, zmiddle, comp);
+		varalgo::sort(zmiddle, zlast, comp);
+		varalgo::inplace_merge(zfirst, zmiddle, zlast, comp);
+	}
+
+	void FileTreeModel::stable_sort(value_ptr_iterator first, value_ptr_iterator last)
+	{
+		if (not viewed::active(m_sorter)) return;
+
+		auto comp = viewed::make_indirect_fun(m_sorter);
+		varalgo::stable_sort(first, last, comp);
+	}
+
+	void FileTreeModel::stable_sort(value_ptr_iterator first, value_ptr_iterator last,
+	                                int_vector::iterator ifirst, int_vector::iterator ilast)
+	{
+		if (not viewed::active(m_sorter)) return;
+
+		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(m_sorter));
+
+		auto zfirst = ext::make_zip_iterator(first, ifirst);
+		auto zlast = ext::make_zip_iterator(last, ilast);
+		varalgo::stable_sort(zfirst, zlast, comp);
 	}
 
 	auto FileTreeModel::copy_context(const processing_context & ctx, QStringRef newprefix) -> processing_context
@@ -426,21 +511,19 @@ namespace qtor
 			assert(ctx.inserted_diff or ctx.updated_diff or ctx.erased_diff);
 
 			page_type * child_page = nullptr;
+			bool inserted = false;
 			auto it = container.find(name);
 			if (it != container.end())
-			{
-				assert(ctx.updated_diff or ctx.erased_diff);
 				child_page = reinterpret_cast<page_type *>(it->ptr);				
-			}
 			else 
 			{
-				assert(ctx.inserted_diff);
+				assert(ctx.updated_diff or ctx.inserted_diff);
 				auto child = std::make_unique<page_type>();
 				child_page = child.get();
 
 				child_page->name = name;
 				child_page->parent = &page;
-				std::tie(it, std::ignore) = page.children.insert(std::move(child));
+				std::tie(it, inserted) = page.children.insert(std::move(child));
 			}			
 
 			// process child
@@ -452,16 +535,10 @@ namespace qtor
 				auto pos = seqit - seq_view.begin();
 
 				if (child_page->children.size() == 0)
-				{
-					*ctx.removed_last++ = pos;
-
 					// erasion will be done later in AMOLED
-					// container.erase(it);
-				}
-				else if (ctx.updated_diff) // not inserted
-				{
+					*ctx.removed_last++ = pos;
+				else if (not inserted)
 					*--ctx.changed_first = pos;
-				}
 			}
 		}
 
@@ -470,7 +547,6 @@ namespace qtor
 		ctx.erased_count = ctx.removed_last - ctx.removed_first;
 
 		super_AMOLED(page, ctx);
-		//sort_children(page);
 	}
 
 	void FileTreeModel::super_AMOLED(page_type & page, processing_context & ctx)
@@ -482,9 +558,9 @@ namespace qtor
 
 		value_ptr_vector & valptr_vector = *ctx.vptr_array;
 		int_vector & index_array = *ctx.index_array;		
+		int_vector & inverse_array = *ctx.inverse_array;
 
 		valptr_vector.assign(seq_ptr_view.begin(), seq_ptr_view.end());
-		
 		auto vfirst = valptr_vector.begin();
 		auto vlast = vfirst + page.upassed;
 		auto sfirst = vlast;
@@ -492,66 +568,108 @@ namespace qtor
 		auto nfirst = slast;
 		auto nlast = valptr_vector.end();
 
+		index_array.resize(container.size());
+		auto ifirst = index_array.begin();
+		auto imiddle = ifirst + page.upassed;
+		auto ilast  = index_array.end();
+		std::iota(ifirst, ilast, offset);
+
+		auto fpred = viewed::make_indirect_fun(std::cref(m_filter));		
+		auto index_pass_pred = [vfirst, fpred](int index) { return fpred(vfirst[index]); };
+
 
 		auto vchanged_first = ctx.changed_first;
 		auto vchanged_last = std::partition(ctx.changed_first, ctx.changed_last,
 			[upassed = page.upassed](int index) { return index < upassed; });
 
+		auto vchanged_pp = viewed::active(m_filter) 
+			? std::partition(vchanged_first, vchanged_last, index_pass_pred)
+			: vchanged_last;
+
 		auto schanged_first = vchanged_last;
 		auto schanged_last = ctx.changed_last;
 
-		auto fpred = viewed::make_indirect_fun(std::cref(m_filter));
-		auto not_fpred = [fpred](auto * ptr) { return not fpred(ptr); };
-		auto index_pass_pred = [vfirst, fpred](int index) { return fpred(vfirst[index]); };
-		auto schanged_pp = std::partition(vchanged_first, vchanged_last, index_pass_pred);
-
 		// mark removed ones by nullifying them
-		auto remove_count = ctx.removed_last - ctx.removed_first;
 		for (auto it = ctx.removed_first; it != ctx.removed_last; ++it)
 		{
 			int index = *it;
 			vfirst[index] = nullptr;
+			ifirst[index] = -1;
 		}
 
 		// mark removed ones from [vfirst, vlast) by nullifying them
-		for (auto it = schanged_pp; it != schanged_last; ++it)
+		for (auto it = vchanged_pp; it != vchanged_last; ++it)
 		{
 			int index = *it;
 			vfirst[index] = nullptr;
+			ifirst[index] = -1;
 		}
-		
-		// [spp, npp) - gathered elements from [sfirst, nlast) satisfying fpred
-		auto spp = std::partition(sfirst, slast, not_fpred);
-		auto npp = std::partition(nfirst, nlast, fpred);
-		// rotate them at the beginning of shadow area
-		auto snl = std::rotate(sfirst, spp, npp);
 
 		// remove erased ones, and filtered out ones
-		auto rfirst = std::remove(valptr_vector.begin(), valptr_vector.end(), nullptr);
-		auto rlast = valptr_vector.end();
-		auto rcur = rfirst;
+		vlast  = std::remove(vfirst, vlast, nullptr);
+		sfirst = std::remove(std::make_reverse_iterator(slast), std::make_reverse_iterator(sfirst), nullptr).base();
 
-		for (auto it = schanged_pp; it != schanged_last; ++it)
+		if (not viewed::active(m_filter))
+			nlast = std::move(sfirst, nlast, vlast);
+		else
+		{
+			for (auto it = schanged_first; it != schanged_last; ++it)
+				mark_pointer(vfirst[*it]);
+
+			// [spp, npp) - gathered elements from [sfirst, nlast) satisfying fpred
+			auto spp = std::partition(sfirst, slast, [](auto ptr) { return not is_marked(ptr); });
+			auto npp = std::partition(nfirst, nlast, fpred);
+
+			for (auto it = spp; it != slast; ++it)
+				unmark_pointer(*it);
+
+			// rotate them at the beginning of shadow area
+			// and in fact merge those with visible area			
+			std::rotate(sfirst, spp, nlast);
+			nlast = std::move(sfirst, nlast, vlast);
+		}
+
+		auto rfirst = nlast;
+		auto rlast = rfirst;
+
+		{
+			auto point = imiddle;
+			imiddle = std::remove(ifirst, imiddle, -1);
+			ilast = std::remove(point, ilast, -1);			
+			ilast = std::move(point, ilast, imiddle);
+		}
+		
+
+		for (auto it = vchanged_pp; it != vchanged_last; ++it)
 		{
 			int index = *it;
-			*rcur++ = seq_ptr_view[index];
+			*rlast++ = seq_ptr_view[index];
+			*ilast++ = -index;
 		}
 
 		for (auto it = ctx.removed_first; it != ctx.removed_last; ++it)
 		{
 			int index = *it;
-			*rcur++ = seq_ptr_view[index];
+			*rlast++ = seq_ptr_view[index];
+			*ilast++ = -index;
 		}
 
-		std::stable_sort(vfirst, rfirst, viewed::make_indirect_fun(m_sorter));
+		bool resort_old = vchanged_first != vchanged_pp;
+		//merge_newdata(vfirst, vlast, nlast, resort_old);
+		merge_newdata(vfirst, vlast, nlast, ifirst, imiddle, ifirst + (nlast - vfirst), resort_old);
+
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, [](auto * ptr) { return std::ref(*ptr); }));
 		seq_view.resize(seq_view.size() - ctx.erased_count);
-		page.upassed += ctx.inserted_count - ctx.erased_count;
+		page.upassed = nlast - vfirst;
+		
+		inverse_index_array(inverse_array, ifirst, ilast, offset);
+		change_indexes(ctx.model_index_first, ctx.model_index_last,
+		               inverse_array.begin(), inverse_array.end(), offset);
 	}
 
 	void FileTreeModel::update_data(const signal_range_type & sorted_erased, const signal_range_type & sorted_updated, const signal_range_type & inserted)
 	{
-		int_vector affected_indexes, index_array;
+		int_vector affected_indexes, index_array, inverse_buffer_array;
 		value_ptr_vector valptr_array;
 		leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
 		
@@ -562,6 +680,7 @@ namespace qtor
 		
 		processing_context ctx;
 		ctx.index_array = &index_array;
+		ctx.inverse_array = &inverse_buffer_array;
 		ctx.vptr_array = &valptr_array;
 
 		ctx.erased_first = erased_vec.begin();
@@ -578,17 +697,16 @@ namespace qtor
 		std::sort(ctx.erased_first, ctx.erased_last, sort_pred);
 		std::sort(ctx.inserted_first, ctx.inserted_last, sort_pred);
 		std::sort(ctx.updated_first, ctx.updated_last, sort_pred);
-
-		beginResetModel();
-		//layoutAboutToBeChanged({}, NoLayoutChangeHint);
 		
-		//auto indexes = persistentIndexList();
-		//ctx.indexes = &indexes;
+		layoutAboutToBeChanged(viewed::AbstractItemModel::empty_model_list, NoLayoutChangeHint);
+		
+		auto indexes = persistentIndexList();
+		ctx.model_index_first = indexes.begin();
+		ctx.model_index_last  = indexes.end();
 
 		update_page(m_root, ctx);
 
-		endResetModel();
-		//layoutChanged({}, NoLayoutChangeHint);
+		layoutChanged(viewed::AbstractItemModel::empty_model_list, NoLayoutChangeHint);
 	}
 
 	void FileTreeModel::sort_children(page_type & page)
