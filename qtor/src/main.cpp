@@ -173,7 +173,10 @@ int main(int argc, char * argv[])
 	auto store = std::make_shared<torrent_file_store>();
 	qtor::FileTreeModel model {store};
 
-	store->assign_records(paths);	
+	store->assign_records(paths);
+
+	QPersistentModelIndex idx = model.index(0, 0);
+
 	store->assign_records(paths2);
 	store->assign_records(paths);
 	

@@ -240,7 +240,7 @@ namespace qtor
 		/// changes persistent indexes via get_model->changePersistentIndex.
 		/// [first; last) - range where range[oldIdx - offset] => newIdx.
 		/// if newIdx < 0 - index should be removed(changed on invalid, qt supports it)
-		virtual void change_indexes(QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
+		virtual void change_indexes(page_type & page, QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
 		                            int_vector::const_iterator first, int_vector::const_iterator last, int offset);
 		/// inverses index array in following way:
 		/// inverse[arr[i] - offset] = i for first..last.

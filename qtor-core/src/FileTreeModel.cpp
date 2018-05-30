@@ -245,12 +245,29 @@ namespace qtor
 
 	}
 
-	void FileTreeModel::change_indexes(QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
+	void FileTreeModel::change_indexes(page_type & page, QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
 									   int_vector::const_iterator first, int_vector::const_iterator last, int offset)
 	{
 		auto * model = get_model();
 		auto size = last - first; (void)size;
 
+		for (; model_index_first != model_index_last; ++model_index_first)
+		{
+			const QModelIndex & idx = *model_index_first;
+			if (not idx.isValid()) continue;
+
+			auto * pageptr = get_page(idx);
+			if (pageptr != &page) continue;
+
+			auto row = idx.row();
+			auto col = idx.column();
+
+			if (row < offset) continue;
+
+			assert(row < size); (void)size;
+			auto newIdx = createIndex(first[row - offset], col, pageptr);
+			model->changePersistentIndex(idx, newIdx);
+		}
 	}
 
 	void FileTreeModel::inverse_index_array(int_vector & inverse, int_vector::iterator first, int_vector::iterator last, int offset)
@@ -683,7 +700,7 @@ namespace qtor
 		page.upassed = nlast - vfirst;
 		
 		inverse_index_array(inverse_array, ifirst, ilast, offset);
-		change_indexes(ctx.model_index_first, ctx.model_index_last,
+		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
 		               inverse_array.begin(), inverse_array.end(), offset);
 	}
 
