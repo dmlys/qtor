@@ -167,7 +167,14 @@ namespace qtor
 			QStringRef inserted_prefix, updated_prefix, erased_prefix;
 
 			value_ptr_vector * vptr_array;
-			int_vector * index_array, *inverse_array;
+			int_vector * index_array, * inverse_array;
+			QModelIndexList::const_iterator model_index_first, model_index_last;
+		};
+
+		struct sort_context
+		{
+			value_ptr_vector * vptr_array;
+			int_vector * index_array, * inverse_array;
 			QModelIndexList::const_iterator model_index_first, model_index_last;
 		};
 
@@ -187,6 +194,16 @@ namespace qtor
 			}
 		};
 
+		struct const_name_filter
+		{
+			bool operator()(const value_ptr & p) const noexcept
+			{
+				return false;/*
+				auto && name = get_name(p);
+				return name.contains(QStringLiteral("file"));*/
+			}
+		};
+
 	protected:
 		static constexpr get_name_type           get_name {};
 		static constexpr get_children_type       get_children {};
@@ -200,7 +217,7 @@ namespace qtor
 		page_type m_root; //= { /*.parent =*/ nullptr};		
 
 		dirs_first_sorter m_sorter;
-		test_filter m_filter;
+		const_name_filter m_filter;
 
 		/// raii connections
 		scoped_connection m_clear_con;
@@ -209,7 +226,7 @@ namespace qtor
 
 	protected:
 		template <class Type> static inline void mark_pointer(Type & ptr)   noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) |= 1; }
-		template <class Type> static inline void unmark_pointer(Type & ptr) noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) &= 0; }
+		template <class Type> static inline void unmark_pointer(Type & ptr) noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) &= ~(std::uintptr_t)1; }
 		template <class Type> static inline bool is_marked(Type ptr)        noexcept { static_assert(std::is_pointer_v<Type>); return reinterpret_cast<std::uintptr_t>(ptr) & 1; }
 
 	protected:
@@ -310,7 +327,8 @@ namespace qtor
 
 		/// sorts m_store's [first; last) with m_sort_pred, stable sort
 		/// emits qt layoutAboutToBeChanged(..., VerticalSortHint), layoutUpdated(..., VerticalSortHint)
-		//virtual void sort_and_notify();
+		virtual void sort_and_notify();
+		virtual void sort_and_notify(page_type & page, sort_context & ctx);
 
 		/// refilters m_store with m_filter_pred according to rtype:
 		/// * same        - does nothing and immediately returns(does not emit any qt signals)

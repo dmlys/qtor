@@ -427,6 +427,68 @@ namespace qtor
 		varalgo::stable_sort(zfirst, zlast, comp);
 	}
 
+	void FileTreeModel::sort_and_notify()
+	{
+		sort_context ctx;
+		int_vector index_array, inverse_buffer_array;
+		value_ptr_vector valptr_array;
+
+		ctx.index_array   = &index_array;
+		ctx.inverse_array = &inverse_buffer_array;
+		ctx.vptr_array    = &valptr_array;
+
+		layoutAboutToBeChanged(viewed::AbstractItemModel::empty_model_list, NoLayoutChangeHint);
+
+		auto indexes = persistentIndexList();
+		ctx.model_index_first = indexes.begin();
+		ctx.model_index_last = indexes.end();
+
+		sort_and_notify(m_root, ctx);
+
+		layoutChanged(viewed::AbstractItemModel::empty_model_list, NoLayoutChangeHint);
+	}
+
+	void FileTreeModel::sort_and_notify(page_type & page, sort_context & ctx)
+	{
+		auto & container = page.children;
+		auto & seq_view = container.get<by_seq>();
+		auto seq_ptr_view = seq_view | ext::outdirected;
+		constexpr int offset = 0;
+
+		value_ptr_vector & valptr_vector = *ctx.vptr_array;
+		int_vector & index_array = *ctx.index_array;
+		int_vector & inverse_array = *ctx.inverse_array;
+
+		valptr_vector.assign(seq_ptr_view.begin(), seq_ptr_view.end());
+		index_array.resize(seq_ptr_view.size());
+
+		auto first = valptr_vector.begin();
+		auto middle = first + page.upassed;
+		auto last = valptr_vector.end();
+
+		auto ifirst = index_array.begin();
+		auto imiddle = ifirst + page.upassed;
+		auto ilast = index_array.end();
+
+		std::iota(ifirst, ilast, offset);
+		stable_sort(first, middle, ifirst, imiddle);
+		
+		seq_view.rearrange(boost::make_transform_iterator(first, [](auto * ptr) { return std::ref(*ptr); }));
+		inverse_index_array(inverse_array, ifirst, ilast, offset);
+		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
+		               inverse_array.begin(), inverse_array.end(), offset);
+
+		for (auto & child : page.children) 
+		{
+			if (child.type == PAGE)
+			{
+				auto * child_page = reinterpret_cast<page_type *>(child.ptr);
+				sort_and_notify(*child_page, ctx);
+			}
+		}
+	}
+
+
 	auto FileTreeModel::copy_context(const processing_context & ctx, QStringRef newprefix) -> processing_context
 	{
 		auto newctx = ctx;
@@ -611,7 +673,7 @@ namespace qtor
 		auto ilast  = index_array.end();
 		std::iota(ifirst, ilast, offset);
 
-		auto fpred = viewed::make_indirect_fun(std::cref(m_filter));		
+		auto fpred = viewed::make_indirect_fun(std::cref(m_filter));
 		auto index_pass_pred = [vfirst, fpred](int index) { return fpred(vfirst[index]); };
 
 
@@ -650,15 +712,17 @@ namespace qtor
 			nlast = std::move(sfirst, nlast, vlast);
 		else
 		{
+			// TODO: after std::remove(reverse(slast)...) indexes are changed, can't be used like that
 			for (auto it = schanged_first; it != schanged_last; ++it)
 				mark_pointer(vfirst[*it]);
 
 			// [spp, npp) - gathered elements from [sfirst, nlast) satisfying fpred
-			auto spp = std::partition(sfirst, slast, [](auto ptr) { return not is_marked(ptr); });
+			auto spp = std::partition(sfirst, slast, [](auto * ptr) { return not is_marked(ptr); });
 			auto npp = std::partition(nfirst, nlast, fpred);
+			auto nshadow_count = nlast - npp;
 
 			for (auto it = spp; it != slast; ++it)
-				unmark_pointer(*it);
+				unmark_pointer(*it);			
 
 			// rotate them at the beginning of shadow area
 			// and in fact merge those with visible area			
@@ -692,12 +756,11 @@ namespace qtor
 		}
 
 		bool resort_old = vchanged_first != vchanged_pp;
-		//merge_newdata(vfirst, vlast, nlast, resort_old);
 		merge_newdata(vfirst, vlast, nlast, ifirst, imiddle, ifirst + (nlast - vfirst), resort_old);
 
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, [](auto * ptr) { return std::ref(*ptr); }));
 		seq_view.resize(seq_view.size() - ctx.erased_count);
-		page.upassed = nlast - vfirst;
+		page.upassed = vlast - vfirst;
 		
 		inverse_index_array(inverse_array, ifirst, ilast, offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
