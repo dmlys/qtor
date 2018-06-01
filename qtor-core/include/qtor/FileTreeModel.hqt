@@ -217,7 +217,7 @@ namespace qtor
 		page_type m_root; //= { /*.parent =*/ nullptr};		
 
 		dirs_first_sorter m_sorter;
-		const_name_filter m_filter;
+		viewed::null_filter m_filter;
 
 		/// raii connections
 		scoped_connection m_clear_con;
@@ -225,9 +225,9 @@ namespace qtor
 		scoped_connection m_erase_con;
 
 	protected:
-		template <class Type> static inline void mark_pointer(Type & ptr)   noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) |= 1; }
-		template <class Type> static inline void unmark_pointer(Type & ptr) noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) &= ~(std::uintptr_t)1; }
-		template <class Type> static inline bool is_marked(Type ptr)        noexcept { static_assert(std::is_pointer_v<Type>); return reinterpret_cast<std::uintptr_t>(ptr) & 1; }
+		template <class Type> static inline auto & mark_pointer(Type & ptr)   noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) |= 1;                  return ptr; }
+		template <class Type> static inline auto & unmark_pointer(Type & ptr) noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) &= ~(std::uintptr_t)1; return ptr; }
+		template <class Type> static inline bool   is_marked(Type ptr)        noexcept { static_assert(std::is_pointer_v<Type>); return reinterpret_cast<std::uintptr_t>(ptr) & 1; }
 
 	protected:
 		static auto analyze(const QStringRef & prefix, const torrent_file & item)

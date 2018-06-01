@@ -654,6 +654,7 @@ namespace qtor
 		auto & seq_view = container.get<by_seq>();
 		auto seq_ptr_view = seq_view | ext::outdirected;
 		constexpr int offset = 0;
+		int upassed_new;
 
 		value_ptr_vector & valptr_vector = *ctx.vptr_array;
 		int_vector & index_array = *ctx.index_array;		
@@ -704,28 +705,32 @@ namespace qtor
 			ifirst[index] = -1;
 		}
 
-		// remove erased ones, and filtered out ones
-		vlast  = std::remove(vfirst, vlast, nullptr);
-		sfirst = std::remove(std::make_reverse_iterator(slast), std::make_reverse_iterator(sfirst), nullptr).base();
-
 		if (not viewed::active(m_filter))
-			nlast = std::move(sfirst, nlast, vlast);
+		{
+			// remove erased ones, and filtered out ones
+			vlast  = std::remove(vfirst, vlast, nullptr);
+			sfirst = std::remove(std::make_reverse_iterator(slast), std::make_reverse_iterator(sfirst), nullptr).base();
+			nlast  = std::move(sfirst, nlast, vlast);
+			upassed_new = nlast - vfirst;
+		}
 		else
 		{
-			// TODO: after std::remove(reverse(slast)...) indexes are changed, can't be used like that
 			for (auto it = schanged_first; it != schanged_last; ++it)
 				mark_pointer(vfirst[*it]);
+
+			vlast  = std::remove_if(vfirst, vlast, [](auto ptr) { return unmark_pointer(ptr) == nullptr; });
+			sfirst = std::remove(std::make_reverse_iterator(slast), std::make_reverse_iterator(sfirst), nullptr).base();
 
 			// [spp, npp) - gathered elements from [sfirst, nlast) satisfying fpred
 			auto spp = std::partition(sfirst, slast, [](auto * ptr) { return not is_marked(ptr); });
 			auto npp = std::partition(nfirst, nlast, fpred);
-			auto nshadow_count = nlast - npp;
+			upassed_new = vlast - vfirst + npp - spp;
 
 			for (auto it = spp; it != slast; ++it)
 				unmark_pointer(*it);			
 
 			// rotate them at the beginning of shadow area
-			// and in fact merge those with visible area			
+			// and in fact merge those with visible area
 			std::rotate(sfirst, spp, nlast);
 			nlast = std::move(sfirst, nlast, vlast);
 		}
@@ -760,7 +765,7 @@ namespace qtor
 
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, [](auto * ptr) { return std::ref(*ptr); }));
 		seq_view.resize(seq_view.size() - ctx.erased_count);
-		page.upassed = vlast - vfirst;
+		page.upassed = upassed_new;
 		
 		inverse_index_array(inverse_array, ifirst, ilast, offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
