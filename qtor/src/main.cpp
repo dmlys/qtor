@@ -175,8 +175,6 @@ int main(int argc, char * argv[])
 
 	store->assign_records(paths);
 
-	//QPersistentModelIndex idx = model.index(0, 0);
-
 	store->assign_records(paths2);
 	store->assign_records(paths);
 	
@@ -184,7 +182,6 @@ int main(int argc, char * argv[])
 	view.setSelectionMode(QTreeView::ExtendedSelection);
 	view.setModel(&model);
 	view.show();
-
 
 
 #ifdef Q_OS_WIN

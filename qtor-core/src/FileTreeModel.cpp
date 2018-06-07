@@ -11,97 +11,6 @@ namespace qtor
 {
 	const FileTreeModel::value_container FileTreeModel::ms_empty_container;
 
-	inline void FileTreeModel::value_ptr::destroy() noexcept
-	{
-		if (owning)
-		{
-			if (type == PAGE)
-				delete reinterpret_cast<page_type *>(ptr);
-			else
-				delete reinterpret_cast<leaf_type *>(ptr);
-		}
-	}
-
-	inline FileTreeModel::value_ptr::value_ptr() noexcept
-	{
-		this->val = 0;
-	}
-
-	inline FileTreeModel::value_ptr::~value_ptr() noexcept
-	{
-		destroy();
-	}
-
-	inline FileTreeModel::value_ptr::value_ptr(value_ptr && op) noexcept
-	{
-		val = std::exchange(op.val, 0);
-	}
-
-	inline auto FileTreeModel::value_ptr::operator =(value_ptr && op) noexcept -> value_ptr &
-	{
-		if (this != &op)
-		{
-			std::destroy_at(this);
-			new(this) value_ptr(std::move(op));
-		}
-
-		return *this;
-	}
-
-	inline FileTreeModel::value_ptr::value_ptr(const leaf_type * ptr) noexcept
-	{
-		this->owning = 0;
-		this->type = LEAF;
-		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
-	}
-
-	inline FileTreeModel::value_ptr::value_ptr(const page_type * ptr) noexcept
-	{
-		this->owning = 0;
-		this->type = PAGE;
-		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
-	}
-
-	inline auto FileTreeModel::value_ptr::operator =(const leaf_type * ptr) noexcept -> value_ptr &
-	{
-		destroy();
-
-		this->owning = 0;
-		this->type = LEAF;
-		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
-
-		return *this;
-	}
-
-	inline auto FileTreeModel::value_ptr::operator =(const page_type * ptr) noexcept -> value_ptr &
-	{
-		destroy();
-
-		this->owning = 0;
-		this->type = PAGE;
-		this->ptr = reinterpret_cast<std::uintptr_t>(ptr);
-
-		return *this;
-	}
-
-	template <class Type>
-	inline FileTreeModel::value_ptr::value_ptr(std::unique_ptr<Type> ptr) noexcept
-		: value_ptr(ptr.release())
-	{
-		static_assert(not std::is_const_v<Type>);
-		this->owning = 1;
-	}
-
-	template <class Type>
-	inline auto FileTreeModel::value_ptr::operator =(std::unique_ptr<Type> ptr) noexcept -> value_ptr &
-	{
-		destroy();
-
-		static_assert(not std::is_const_v<Type>);
-		this->owning = 1;
-		return operator =(ptr.release());
-	}
-
 	inline auto FileTreeModel::get_page(const QModelIndex & index) const -> page_type *
 	{
 		return static_cast<page_type *>(index.internalPointer());
@@ -118,10 +27,15 @@ namespace qtor
 		return seq_view[index.row()];
 	}
 
+	filepath_type FileTreeModel::get_name_type::operator()(const QString & filepath) const
+	{
+		int pos = filepath.lastIndexOf('/') + 1;
+		return filepath.mid(pos);
+	}
+
 	filepath_type FileTreeModel::get_name_type::operator()(const leaf_type * ptr) const
 	{
-		int pos = ptr->filename.lastIndexOf('/') + 1;
-		return ptr->filename.mid(pos);
+		return operator()(ptr->filename);
 	}
 
 	filepath_type FileTreeModel::get_name_type::operator()(const page_type * ptr) const
@@ -131,7 +45,7 @@ namespace qtor
 
 	filepath_type FileTreeModel::get_name_type::operator()(const value_ptr & val) const
 	{
-		return val.visit(*this);
+		return viewed::pv_visit(*this, val);
 	}
 
 	int FileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
@@ -184,8 +98,8 @@ namespace qtor
 				return {};
 
 			// only page can have children
-			assert(element.type == PAGE);
-			auto * page = reinterpret_cast<page_type *>(element.ptr);
+			assert(element.index() == PAGE);
+			auto * page = static_cast<page_type *>(element.pointer());
 			return createIndex(row, column, page);
 		}
 	}
@@ -381,7 +295,8 @@ namespace qtor
 	{
 		if (not viewed::active(m_sorter)) return;
 
-		auto comp = viewed::make_indirect_fun(m_sorter);
+		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto comp = viewed::make_indirect_fun(std::move(sorter));
 
 		if (resort_old) varalgo::stable_sort(first, middle, comp);
 		varalgo::sort(middle, last, comp);
@@ -396,7 +311,8 @@ namespace qtor
 		assert(last - first == ilast - ifirst);
 		assert(middle - first == imiddle - ifirst);
 
-		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(m_sorter));
+		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(std::move(sorter)));
 
 		auto zfirst  = ext::make_zip_iterator(first, ifirst);
 		auto zmiddle = ext::make_zip_iterator(middle, imiddle);
@@ -411,7 +327,8 @@ namespace qtor
 	{
 		if (not viewed::active(m_sorter)) return;
 
-		auto comp = viewed::make_indirect_fun(m_sorter);
+		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto comp = viewed::make_indirect_fun(std::move(sorter));
 		varalgo::stable_sort(first, last, comp);
 	}
 
@@ -420,7 +337,8 @@ namespace qtor
 	{
 		if (not viewed::active(m_sorter)) return;
 
-		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(m_sorter));
+		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(std::move(sorter)));
 
 		auto zfirst = ext::make_zip_iterator(first, ifirst);
 		auto zlast = ext::make_zip_iterator(last, ilast);
@@ -480,9 +398,9 @@ namespace qtor
 
 		for (auto & child : page.children) 
 		{
-			if (child.type == PAGE)
+			if (child.index() == PAGE)
 			{
-				auto * child_page = reinterpret_cast<page_type *>(child.ptr);
+				auto * child_page = static_cast<page_type *>(child.pointer());
 				sort_and_notify(*child_page, ctx);
 			}
 		}
@@ -613,7 +531,7 @@ namespace qtor
 			bool inserted = false;
 			auto it = container.find(name);
 			if (it != container.end())
-				child_page = reinterpret_cast<page_type *>(it->ptr);				
+				child_page = static_cast<page_type *>(it->pointer());				
 			else 
 			{
 				assert(ctx.updated_diff or ctx.inserted_diff);
@@ -674,7 +592,8 @@ namespace qtor
 		auto ilast  = index_array.end();
 		std::iota(ifirst, ilast, offset);
 
-		auto fpred = viewed::make_indirect_fun(std::cref(m_filter));
+		auto filter = value_ptr_filter_type(std::cref(m_filter));
+		auto fpred = viewed::make_indirect_fun(std::move(filter));
 		auto index_pass_pred = [vfirst, fpred](int index) { return fpred(vfirst[index]); };
 
 
@@ -724,7 +643,7 @@ namespace qtor
 			// [spp, npp) - gathered elements from [sfirst, nlast) satisfying fpred
 			auto spp = std::partition(sfirst, slast, [](auto * ptr) { return not is_marked(ptr); });
 			auto npp = std::partition(nfirst, nlast, fpred);
-			upassed_new = vlast - vfirst + npp - spp;
+			upassed_new = (vlast - vfirst) + (npp - spp);
 
 			for (auto it = spp; it != slast; ++it)
 				unmark_pointer(*it);			
@@ -817,15 +736,16 @@ namespace qtor
 	void FileTreeModel::sort_children(page_type & page)
 	{
 		auto & seq_view = page.children.get<by_seq>();
+		auto seq_ptr_view = seq_view | ext::outdirected;
 
-		std::vector<std::reference_wrapper<const value_ptr>> refs;
-		refs.assign(seq_view.begin(), seq_view.end());
+		value_ptr_vector refs;
+		refs.assign(seq_ptr_view.begin(), seq_ptr_view.end());
 
 		auto refs_first = refs.begin();
 		auto refs_last = refs.end();
-		std::sort(refs_first, refs_last, m_sorter);
+		stable_sort(refs_first, refs_last);		
 
-		seq_view.rearrange(refs_first);
+		seq_view.rearrange(boost::make_transform_iterator(refs_first, [](auto * ptr) { return std::ref(*ptr); }));
 	}
 
 	void FileTreeModel::erase_records(const signal_range_type & sorted_erased)

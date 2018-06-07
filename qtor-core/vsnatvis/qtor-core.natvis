@@ -1,21 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
-  <Type Name="qtor::FileTreeModel::value_ptr">
-    <DisplayString Condition="type == 0">{reinterpret_cast&lt;const qtor::FileTreeModel::page_type *&gt;(ptr)}</DisplayString>
-    <DisplayString Condition="type == 1">{reinterpret_cast&lt;const qtor::FileTreeModel::leaf_type *&gt;(ptr)}</DisplayString>
+  <Type Name="viewed::pointer_variant&lt;*&gt;">
+    <Intrinsic Name="uptr" Expression="m_ptr &lt;&lt; PTR_OFFSET"/>
+    <DisplayString Condition="m_type == 0" Optional="true">{reinterpret_cast&lt;$T1&gt;(uptr())}</DisplayString>
+    <DisplayString Condition="m_type == 1" Optional="true">{reinterpret_cast&lt;$T2&gt;(uptr())}</DisplayString>
+    <DisplayString Condition="m_type == 2" Optional="true">{reinterpret_cast&lt;$T3&gt;(uptr())}</DisplayString>
+    <DisplayString Condition="m_type == 3" Optional="true">{reinterpret_cast&lt;$T4&gt;(uptr())}</DisplayString>
+    <DisplayString Condition="m_type == 4" Optional="true">{reinterpret_cast&lt;$T5&gt;(uptr())}</DisplayString>
+    <DisplayString Condition="m_type == 5" Optional="true">{reinterpret_cast&lt;$T6&gt;(uptr())}</DisplayString>
+    <DisplayString Condition="m_type == 6" Optional="true">{reinterpret_cast&lt;$T7&gt;(uptr())}</DisplayString>
+    <DisplayString Condition="m_type == 7" Optional="true">{reinterpret_cast&lt;$T8&gt;(uptr())}</DisplayString>
 
-    <Expand>     
-      <ExpandedItem Condition="type == 0">reinterpret_cast&lt;const qtor::FileTreeModel::page_type *&gt;(ptr)</ExpandedItem>
-      <ExpandedItem Condition="type == 1">reinterpret_cast&lt;const qtor::FileTreeModel::leaf_type *&gt;(ptr)</ExpandedItem>
-      
-      <Item Name="[valptr internals]">"[valptr internals]"</Item>
-      <Item Name="type" Condition="type == 0">PAGE</Item>
-      <Item Name="type" Condition="type == 1">LEAF</Item>
-      <Item Name="owning" Condition="owning == 0">true</Item>
-      <Item Name="owning" Condition="owning == 1">false</Item>
-      
-      <Item Name="val">val</Item>
+    <Expand>
+      <ExpandedItem Condition="m_type == 0" Optional="true">reinterpret_cast&lt;$T1&gt;(uptr())</ExpandedItem>
+      <ExpandedItem Condition="m_type == 1" Optional="true">reinterpret_cast&lt;$T2&gt;(uptr())</ExpandedItem>
+      <ExpandedItem Condition="m_type == 2" Optional="true">reinterpret_cast&lt;$T3&gt;(uptr())</ExpandedItem>
+      <ExpandedItem Condition="m_type == 3" Optional="true">reinterpret_cast&lt;$T4&gt;(uptr())</ExpandedItem>
+      <ExpandedItem Condition="m_type == 4" Optional="true">reinterpret_cast&lt;$T5&gt;(uptr())</ExpandedItem>
+      <ExpandedItem Condition="m_type == 5" Optional="true">reinterpret_cast&lt;$T6&gt;(uptr())</ExpandedItem>
+      <ExpandedItem Condition="m_type == 6" Optional="true">reinterpret_cast&lt;$T7&gt;(uptr())</ExpandedItem>
+      <ExpandedItem Condition="m_type == 7" Optional="true">reinterpret_cast&lt;$T8&gt;(uptr())</ExpandedItem>
+
+      <Item Name="[pointer_variant internals]">"[pointer_variant internals]"</Item>
+
+      <Item Name="type">m_type</Item>
+      <Item Name="owning" Condition="m_owning == 0">true</Item>
+      <Item Name="owning" Condition="m_owning == 1">false</Item>
+      <Item Name="ptr">m_ptr &lt;&lt; PTR_OFFSET, x</Item>
+      <Item Name="val">m_val, x</Item>
     </Expand>
   </Type>
   
