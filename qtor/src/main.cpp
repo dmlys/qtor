@@ -118,7 +118,7 @@
 //}
 
 #include <qtor/FileTreeModel.hqt>
-#include <QtWidgets/QTreeView>
+#include <qtor/FileTreeView.hqt>
 
 int main(int argc, char * argv[])
 {
@@ -171,17 +171,15 @@ int main(int argc, char * argv[])
 	//});
 
 	auto store = std::make_shared<torrent_file_store>();
-	qtor::FileTreeModel model {store};
+	auto model = std::make_shared<FileTreeModel>(store);
+	
+	FileTreeView view;
+	view.SetModel(model);
+	view.show();
 
 	store->assign_records(paths);
-
 	store->assign_records(paths2);
 	store->assign_records(paths);
-	
-	QTreeView view;
-	view.setSelectionMode(QTreeView::ExtendedSelection);
-	view.setModel(&model);
-	view.show();
 
 
 #ifdef Q_OS_WIN

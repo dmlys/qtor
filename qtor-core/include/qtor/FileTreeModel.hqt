@@ -26,6 +26,7 @@ namespace qtor
 {
 	class FileTreeModel : public QAbstractItemModel
 	{
+		using self_type = FileTreeModel;
 		using base_type = QAbstractItemModel;
 
 	public:
@@ -136,7 +137,14 @@ namespace qtor
 			QModelIndexList::const_iterator model_index_first, model_index_last;
 		};
 
-		struct sort_context
+		struct resort_context
+		{
+			value_ptr_vector * vptr_array;
+			int_vector * index_array, * inverse_array;
+			QModelIndexList::const_iterator model_index_first, model_index_last;
+		};
+
+		struct refilter_context
 		{
 			value_ptr_vector * vptr_array;
 			int_vector * index_array, * inverse_array;
@@ -213,6 +221,10 @@ namespace qtor
 		template <class Type> static inline auto & mark_pointer(Type & ptr)   noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) |= 1;                  return ptr; }
 		template <class Type> static inline auto & unmark_pointer(Type & ptr) noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) &= ~(std::uintptr_t)1; return ptr; }
 		template <class Type> static inline bool   is_marked(Type ptr)        noexcept { static_assert(std::is_pointer_v<Type>); return reinterpret_cast<std::uintptr_t>(ptr) & 1; }
+
+	protected:
+		template <class Functor>
+		static void for_each_child(page_type & page, Functor && func);
 
 	protected:
 		static auto analyze(const QStringRef & prefix, const torrent_file & item)
@@ -313,19 +325,21 @@ namespace qtor
 		/// sorts m_store's [first; last) with m_sort_pred, stable sort
 		/// emits qt layoutAboutToBeChanged(..., VerticalSortHint), layoutUpdated(..., VerticalSortHint)
 		virtual void sort_and_notify();
-		virtual void sort_and_notify(page_type & page, sort_context & ctx);
+		virtual void sort_and_notify(page_type & page, resort_context & ctx);
 
 		/// refilters m_store with m_filter_pred according to rtype:
 		/// * same        - does nothing and immediately returns(does not emit any qt signals)
 		/// * incremental - calls refilter_full_and_notify
 		/// * full        - calls refilter_incremental_and_notify
-		//virtual void refilter_and_notify(viewed::refilter_type rtype);
+		virtual void refilter_and_notify(viewed::refilter_type rtype);
 		/// removes elements not passing m_filter_pred from m_store
 		/// emits qt layoutAboutToBeChanged(..., NoLayoutChangeHint), layoutUpdated(..., NoLayoutChangeHint)
-		//virtual void refilter_incremental_and_notify();
+		virtual void refilter_incremental_and_notify();
+		virtual void refilter_incremental_and_notify(page_type & page, refilter_context & ctx);
 		/// fills m_store from owner with values passing m_filter_pred and sorts them according to m_sort_pred
 		/// emits qt layoutAboutToBeChanged(..., NoLayoutChangeHint), layoutUpdated(..., NoLayoutChangeHint)
-		//virtual void refilter_full_and_notify();
+		virtual void refilter_full_and_notify();
+		virtual void refilter_full_and_notify(page_type & page, refilter_context & ctx);
 
 	public:
 		/// returns pointer to owning container
@@ -358,6 +372,9 @@ namespace qtor
 		virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 		virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
+	public:
+		virtual void FilterBy(QString expr);
+
 	protected:
 		void fill_page(page_type & page, QStringRef prefix,
 			std::vector<torrent_file>::const_iterator first, 
@@ -366,4 +383,19 @@ namespace qtor
 	public:
 		FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);
 	};
+
+
+
+	template <class Functor>
+	void FileTreeModel::for_each_child(page_type & page, Functor && func)
+	{
+		for (auto & child : page.children)
+		{
+			if (child.index() == PAGE)
+			{
+				auto * child_page = static_cast<page_type *>(child.pointer());
+				std::forward<Functor>(func)(*child_page);
+			}
+		}
+	}
 }

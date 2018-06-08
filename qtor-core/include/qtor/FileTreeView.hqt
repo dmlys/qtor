@@ -3,58 +3,40 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QLineEdit>
-#include <QtWidgets/QTableView>
-#include <QtWidgets/QListView>
+#include <QtWidgets/QTreeView>
 
 #include <QtTools/HeaderControlModel.hqt>
 #include <QtTools/Delegates/SearchDelegate.hpp>
 
-#include <qtor/TorrentsModel.hpp>
-#include <qtor/TorrentListDelegate.hqt>
-
+#include <qtor/FileTreeModel.hqt>
 
 namespace qtor
 {
 	class MainWindow;
 
-	/// Torrent item view widget. Consists of QAbstractItemView + QLineEdit filter.
-	/// QAbstractItemView can be table view or list view.
-	/// Provides methods for behavior customization
-	class TorrentsView : public QFrame
+	/// File Tree Item view widget. Consists of QAbstractItemView + QLineEdit filter.
+	/// Provides methods for behavior customization.
+	class FileTreeView : public QFrame
 	{
-		Q_OBJECT;
-		
+		Q_OBJECT
+
 	private:
 		using base_type = QFrame;
 
-	public:
-		enum ViewMode : unsigned
-		{
-			ListMode,
-			TableMode,
-		};
-
-	protected:
-		/// display model
-		std::shared_ptr<AbstractSparseContainerModel> m_model;
+	private:
+		std::shared_ptr<FileTreeModel> m_model;
 		/// parent window
 		MainWindow * m_parent = nullptr;
 
 		/// table headers customization/tracking
 		QtTools::HeaderControlModel * m_headerModel = nullptr;
 		QtTools::HeaderSectionInfoList * m_headerConfig = nullptr;
-
 		QtTools::Delegates::SearchDelegate * m_nameDelegate = nullptr;
-		TorrentListDelegate * m_listDelegate = nullptr;
-
-		ViewMode m_viewMode = TableMode;
-		QAbstractItemView * m_itemView = nullptr;
-
+		
 		/// child widgets/graphical objects
 		QVBoxLayout * m_verticalLayout = nullptr;
 		QLineEdit   * m_rowFilter = nullptr;
-		QTableView  * m_tableView = nullptr;
-		QListView   * m_listView = nullptr;
+		QTreeView   * m_treeView = nullptr;
 
 		/// hints for initial widget size
 		const QSize m_defMinSizeHint = QSize(640, 480);
@@ -66,28 +48,20 @@ namespace qtor
 		int m_sortColumn = -1;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
 
-		/// menu holding avail columns for sorting, constructed from model
-		QMenu * m_sortMenu = nullptr;		
-
 	protected:
 		void ModelChanged();
 		void OnFilterChanged();
 
 	protected:
-		virtual void OnSortingChanged(int column, Qt::SortOrder order);
-		/// creates menu for sorting items in a view
-		virtual QMenu * CreateSortMenu();
-
-	protected:
-		/// Joins clipboard text from items and sets it into clipboard
-		virtual void CopySelectedIntoClipboard();
-		/// creates context menu for an item with idx,
-		/// if idx is not valid, common menu was requested
-		virtual QMenu * CreateItemMenu(const QModelIndex & idx);
-		/// basic menu handler
-		virtual void contextMenuEvent(QContextMenuEvent * ev) override;
-		/// to change ListView clipboard handling
-		virtual bool eventFilter(QObject * watched, QEvent * event) override;
+		///// Joins clipboard text from items and sets it into clipboard
+		//virtual void CopySelectedIntoClipboard();
+		///// creates context menu for an item with idx,
+		///// if idx is not valid, common menu was requested
+		//virtual QMenu * CreateItemMenu(const QModelIndex & idx);
+		///// basic menu handler
+		//virtual void contextMenuEvent(QContextMenuEvent * ev) override;
+		///// to change ListView clipboard handling
+		//virtual bool eventFilter(QObject * watched, QEvent * event) override;
 
 	protected:
 		virtual void ConnectModel();
@@ -102,22 +76,18 @@ namespace qtor
 		QVBoxLayout * GetLayout() const { return m_verticalLayout; }
 		/// filter field
 		QLineEdit * GetFilterWidget() const { return m_rowFilter; }
-		/// table view
-		QTableView * GetTableView() const { return m_tableView; }
+		/// tree view
+		QTreeView * GetTreeView() const { return m_treeView; }
 
 	public:
 		/// opens table headers configuration widget,
 		virtual void OpenHeaderConfigurationWidget();
 		/// opens table settings widget, for now it's OpenHeaderConfigurationWidget
-		virtual void TableSettings();
+		virtual void ViewSettings();
 		/// adjusts resizes table columns by content
 		virtual void ResizeColumnsToContents();
 
 	public:
-		virtual void SetViewMode(ViewMode mode);
-		virtual ViewMode GetViewMode() const { return m_viewMode; }
-		Q_SIGNAL void ViewModeChanged(ViewMode mode);
-
 		virtual void SetFilter(QString newFilter);
 		virtual auto GetFilter() const -> QString { return m_filterString; }
 		Q_SIGNAL void FilterChanged(QString newFilter);
@@ -128,8 +98,8 @@ namespace qtor
 
 		/// initializes widget
 		/// @Param model specifies model, if null - deinitializes widget
-		virtual void SetModel(std::shared_ptr<AbstractSparseContainerModel> model);
-		virtual auto GetModel() const -> const std::shared_ptr<AbstractSparseContainerModel> & { return m_model; }
+		virtual void SetModel(std::shared_ptr<FileTreeModel> model);
+		virtual auto GetModel() const -> const std::shared_ptr<FileTreeModel> & { return m_model; }
 
 		/// initializes headers tracking, additionally sets headerConf configuration, see also QtTools::HeaderControlModel.
 		/// TorrentsView must be initialized before calling this method.
@@ -139,8 +109,8 @@ namespace qtor
 		QSize sizeHint() const override;
 
 	public:
-		TorrentsView(QWidget * parent = nullptr);
-		~TorrentsView();
+		FileTreeView(QWidget * parent = nullptr);
+		~FileTreeView();
 
 	protected:
 		void setupUi();
