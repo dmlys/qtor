@@ -138,7 +138,7 @@ namespace viewed
 		pointer_variant(const pointer_variant &) = delete;
 		pointer_variant & operator =(const pointer_variant &) = delete;
 
-		constexpr pointer_variant() noexcept;
+		pointer_variant() noexcept;
 		~pointer_variant() noexcept;
 	};
 
@@ -208,7 +208,7 @@ namespace viewed
 	}
 
 	template <class ... PointerTypes>	
-	constexpr inline pointer_variant<PointerTypes...>::pointer_variant() noexcept
+	inline pointer_variant<PointerTypes...>::pointer_variant() noexcept
 	{
 		m_val = 0;
 	}

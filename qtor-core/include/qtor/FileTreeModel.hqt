@@ -16,7 +16,6 @@
 #include <QtCore/QString>
 #include <QtCore/QAbstractItemModel>
 
-#include <boost/integer/static_log2.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
@@ -24,6 +23,21 @@
 
 namespace qtor
 {
+	class SimpleTextFilter
+	{
+		QString m_filterWord;
+
+	public:
+		viewed::refilter_type set_expr(QString expr);
+
+		bool always_matches() const { return m_filterWord.isEmpty(); }
+		bool matches(const QString & rec) const;
+
+		inline bool operator()(const QString & rec) const { return matches(rec); }
+		inline explicit operator bool() const { return not always_matches(); }
+	};
+
+
 	class FileTreeModel : public QAbstractItemModel
 	{
 		using self_type = FileTreeModel;
@@ -62,8 +76,10 @@ namespace qtor
 		{
 			using result_type = filepath_type;
 			result_type operator()(const QString & name) const;
-			result_type operator()(const leaf_type * lead) const;
-			result_type operator()(const page_type * lead) const;
+			result_type operator()(const leaf_type & leaf) const;
+			result_type operator()(const page_type & page) const;
+			result_type operator()(const leaf_type * leaf) const;
+			result_type operator()(const page_type * page) const;
 			result_type operator()(const value_ptr & val)  const;
 		};
 
@@ -115,9 +131,9 @@ namespace qtor
 			result_type operator()(const Type * ptr) const { return operator()(*ptr); }
 		};
 
-		struct processing_context
+		struct upsert_context
 		{
-			leaf_ptr_vector::iterator
+			signal_range_type::iterator
 				inserted_first, inserted_last,
 				updated_first,  updated_last,
 				erased_first,   erased_last;
@@ -134,6 +150,13 @@ namespace qtor
 
 			value_ptr_vector * vptr_array;
 			int_vector * index_array, * inverse_array;
+			QModelIndexList::const_iterator model_index_first, model_index_last;
+		};
+
+		struct erase_context
+		{
+			value_ptr_vector * vptr_array;
+			int_vector * index_array, *inverse_array;
 			QModelIndexList::const_iterator model_index_first, model_index_last;
 		};
 
@@ -184,16 +207,17 @@ namespace qtor
 
 		struct dirs_first_sorter
 		{
-			bool operator()(const page_type & p1, const page_type & p2) const noexcept { return p1.name < p2.name; }
+			bool operator()(const page_type & p1, const page_type & p2) const noexcept { return get_name(p1) < get_name(p2); }
 			bool operator()(const page_type & p1, const leaf_type & l2) const noexcept { return true; }
-			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return get_name(l1.filename) <  get_name(l2.filename); }
+			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return get_name(l1) <  get_name(l2); }
 			bool operator()(const leaf_type & l1, const page_type & p2) const noexcept { return false; }
 		};
 
 		struct test_filter
 		{
-			bool operator()(const leaf_type & l) const noexcept { return true; }
-			bool operator()(const page_type & p) const noexcept { return true; }
+			bool operator()(const leaf_type & l) const noexcept { return m_tfilt(get_name(l)); }
+			bool operator()(const page_type & p) const noexcept { return m_tfilt(get_name(p)); }
+			explicit operator bool() const noexcept { return static_cast<bool>(m_tfilt); }
 		};
 
 	protected:
@@ -210,6 +234,7 @@ namespace qtor
 
 		dirs_first_sorter m_sorter;
 		test_filter m_filter;
+		static SimpleTextFilter m_tfilt;
 		//viewed::null_filter m_filter;
 
 		/// raii connections
@@ -231,18 +256,18 @@ namespace qtor
 			-> std::tuple<std::uintptr_t, QString, QStringRef>;
 
 		static bool is_subelement(const QStringRef & prefix, const QString & name, const torrent_file & item);
-		static auto copy_context(const processing_context & ctx, QStringRef newprefix) -> processing_context;
+		static auto copy_context(const upsert_context & ctx, QStringRef newprefix) -> upsert_context;
 
 		template <class ForwardIterator>
 		void fill_page(page_type & page, QStringRef prefix, ForwardIterator first, ForwardIterator last);		
 
-		virtual auto process_erased(page_type & page, processing_context & ctx) -> std::tuple<QString, QStringRef>;
-		virtual auto process_updated(page_type & page, processing_context & ctx) -> std::tuple<QString, QStringRef>;
-		virtual auto process_inserted(page_type & page, processing_context & ctx) -> std::tuple<QString, QStringRef>;
-		virtual void update_page(page_type & page, processing_context & ctx);
+		virtual auto process_erased(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
+		virtual auto process_updated(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
+		virtual auto process_inserted(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
+		virtual void update_page(page_type & page, upsert_context & ctx);
 
 		virtual void sort_children(page_type & page);
-		virtual void super_AMOLED(page_type & page, processing_context & ctx);
+		virtual void rearrange_children(page_type & page, upsert_context & ctx);
 
 	protected:
 		/// acquires pointer to qt model, normally you would inherit both QAbstractItemModel and this class.
@@ -341,6 +366,11 @@ namespace qtor
 		virtual void refilter_full_and_notify();
 		virtual void refilter_full_and_notify(page_type & page, refilter_context & ctx);
 
+	protected:
+		void fill_page(page_type & page, QStringRef prefix,
+			std::vector<torrent_file>::const_iterator first,
+			std::vector<torrent_file>::const_iterator last);
+
 	public:
 		/// returns pointer to owning container
 		const auto & get_owner() const noexcept { return m_owner; }
@@ -374,11 +404,6 @@ namespace qtor
 
 	public:
 		virtual void FilterBy(QString expr);
-
-	protected:
-		void fill_page(page_type & page, QStringRef prefix,
-			std::vector<torrent_file>::const_iterator first, 
-			std::vector<torrent_file>::const_iterator last);
 
 	public:
 		FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);

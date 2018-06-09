@@ -9,6 +9,30 @@
 
 namespace qtor
 {
+	viewed::refilter_type SimpleTextFilter::set_expr(QString expr)
+	{
+		expr = expr.trimmed();
+		if (expr.compare(m_filterWord, Qt::CaseInsensitive) == 0)
+			return viewed::refilter_type::same;
+
+		if (expr.startsWith(m_filterWord, Qt::CaseInsensitive))
+		{
+			m_filterWord = expr;
+			return viewed::refilter_type::incremental;
+		}
+		else
+		{
+			m_filterWord = expr;
+			return viewed::refilter_type::full;
+		}
+	}
+
+	bool SimpleTextFilter::matches(const QString & rec) const
+	{
+		return rec.contains(m_filterWord, Qt::CaseInsensitive);
+	}
+
+	SimpleTextFilter FileTreeModel::m_tfilt;
 	constexpr auto make_ref = [](auto * ptr) { return std::ref(*ptr); };
 	const FileTreeModel::value_container FileTreeModel::ms_empty_container;
 
@@ -34,14 +58,24 @@ namespace qtor
 		return filepath.mid(pos);
 	}
 
-	filepath_type FileTreeModel::get_name_type::operator()(const leaf_type * ptr) const
+	filepath_type FileTreeModel::get_name_type::operator()(const leaf_type & leaf) const
 	{
-		return operator()(ptr->filename);
+		return operator()(leaf.filename);
 	}
 
-	filepath_type FileTreeModel::get_name_type::operator()(const page_type * ptr) const
+	filepath_type FileTreeModel::get_name_type::operator()(const page_type & page) const
 	{
-		return ptr->name;
+		return operator()(page.name);
+	}
+
+	filepath_type FileTreeModel::get_name_type::operator()(const leaf_type * leaf) const
+	{
+		return operator()(leaf->filename);
+	}
+
+	filepath_type FileTreeModel::get_name_type::operator()(const page_type * page) const
+	{
+		return operator()(page->name);
 	}
 
 	filepath_type FileTreeModel::get_name_type::operator()(const value_ptr & val) const
@@ -435,6 +469,8 @@ namespace qtor
 
 	void FileTreeModel::refilter_incremental_and_notify(page_type & page, refilter_context & ctx)
 	{
+		for_each_child(page, [this, &ctx](auto & page) { refilter_incremental_and_notify(page, ctx); });
+
 		auto & container = page.children;
 		auto & seq_view = container.get<by_seq>();
 		auto seq_ptr_view = seq_view | ext::outdirected;
@@ -471,11 +507,9 @@ namespace qtor
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, make_ref));
 		page.upassed = upassed_new;
 
-		inverse_index_array(inverse_array, ivfirst, ivlast, offset);
+		inverse_index_array(inverse_array, index_array.begin(), index_array.end(), offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
 					   inverse_array.begin(), inverse_array.end(), offset);
-
-		for_each_child(page, [this, &ctx](auto & page) { refilter_full_and_notify(page, ctx); });
 	}
 
 	void FileTreeModel::refilter_full_and_notify()
@@ -501,10 +535,13 @@ namespace qtor
 
 	void FileTreeModel::refilter_full_and_notify(page_type & page, refilter_context & ctx)
 	{
+		for_each_child(page, [this, &ctx](auto & page) { refilter_full_and_notify(page, ctx); });
+
 		auto & container = page.children;
 		auto & seq_view = container.get<by_seq>();
 		auto seq_ptr_view = seq_view | ext::outdirected;
 		constexpr int offset = 0;
+		int upassed_new;
 
 		value_ptr_vector & valptr_vector = *ctx.vptr_array;
 		int_vector & index_array = *ctx.index_array;
@@ -529,37 +566,43 @@ namespace qtor
 
 		std::iota(ivfirst, islast, offset);
 
-		auto [vpp, ivpp] = std::stable_partition(
-			ext::make_zip_iterator(vfirst, ivfirst),
-			ext::make_zip_iterator(vlast, ivlast),
-			zfpred).get_iterator_tuple();
+		if (not viewed::active(m_filter))
+		{
+			upassed_new = slast - vfirst;
+			merge_newdata(vfirst, vlast, slast, ivfirst, ivlast, islast, false);
+		}
+		else
+		{
+			auto[vpp, ivpp] = std::stable_partition(
+				ext::make_zip_iterator(vfirst, ivfirst),
+				ext::make_zip_iterator(vlast, ivlast),
+				zfpred).get_iterator_tuple();
 
-		auto [spp, ispp] = std::partition(
-			ext::make_zip_iterator(sfirst, isfirst),
-			ext::make_zip_iterator(slast, islast),
-			zfpred).get_iterator_tuple();
+			auto[spp, ispp] = std::partition(
+				ext::make_zip_iterator(sfirst, isfirst),
+				ext::make_zip_iterator(slast, islast),
+				zfpred).get_iterator_tuple();
 
-		auto inverse = [](int idx) { return -idx; };
-		std::transform(ivpp, ivlast, ivpp, inverse);
-		std::transform(ispp, islast, ispp, inverse);
+			auto inverse = [](int idx) { return -idx; };
+			std::transform(ivpp, ivlast, ivpp, inverse);
+			std::transform(ispp, islast, ispp, inverse);
 
-		vlast = std::rotate(vpp, spp, slast);
-		ivlast = std::rotate(ivpp, ispp, islast);
-
-		int upassed_new = vlast - vfirst;
-		merge_newdata(vfirst, vlast, slast, ivfirst, ivlast, islast, false);
+			vlast = std::rotate(vpp, sfirst, spp);
+			ivlast = std::rotate(ivpp, isfirst, ispp);
+			
+			upassed_new = vlast - vfirst;
+			merge_newdata(vfirst, vpp, vlast, ivfirst, ivpp, ivlast, false);
+		}
 
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, make_ref));
 		page.upassed = upassed_new;
 
-		inverse_index_array(inverse_array, ivfirst, islast, offset);
+		inverse_index_array(inverse_array, index_array.begin(), index_array.end(), offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
 					   inverse_array.begin(), inverse_array.end(), offset);
-
-		for_each_child(page, [this, &ctx](auto & page) { refilter_full_and_notify(page, ctx); });
 	}
 
-	auto FileTreeModel::copy_context(const processing_context & ctx, QStringRef newprefix) -> processing_context
+	auto FileTreeModel::copy_context(const upsert_context & ctx, QStringRef newprefix) -> upsert_context
 	{
 		auto newctx = ctx;
 		newctx.prefix = std::move(newprefix);
@@ -569,7 +612,7 @@ namespace qtor
 		return newctx;
 	}
 
-	auto FileTreeModel::process_inserted(page_type & page, processing_context & ctx)
+	auto FileTreeModel::process_inserted(page_type & page, upsert_context & ctx)
 		-> std::tuple<QString, QStringRef>
 	{
 		auto & container = page.children;
@@ -590,7 +633,7 @@ namespace qtor
 		return {QString::null, QStringRef()};
 	}
 
-	auto FileTreeModel::process_updated(page_type & page, processing_context & ctx)
+	auto FileTreeModel::process_updated(page_type & page, upsert_context & ctx)
 		-> std::tuple<QString, QStringRef>
 	{
 		auto & container = page.children;
@@ -614,7 +657,7 @@ namespace qtor
 		return {QString::null, QStringRef()};
 	}
 
-	auto FileTreeModel::process_erased(page_type & page, processing_context & ctx)
+	auto FileTreeModel::process_erased(page_type & page, upsert_context & ctx)
 		-> std::tuple<QString, QStringRef>
 	{
 		auto & container = page.children;
@@ -641,7 +684,7 @@ namespace qtor
 		return {QString::null, QStringRef()};
 	}
 
-	void FileTreeModel::update_page(page_type & page, processing_context & ctx)
+	void FileTreeModel::update_page(page_type & page, upsert_context & ctx)
 	{
 		const auto & prefix = ctx.prefix;
 		auto & container = page.children;
@@ -715,10 +758,10 @@ namespace qtor
 		ctx.updated_count = ctx.changed_last - ctx.changed_first;
 		ctx.erased_count = ctx.removed_last - ctx.removed_first;
 
-		super_AMOLED(page, ctx);
+		rearrange_children(page, ctx);
 	}
 
-	void FileTreeModel::super_AMOLED(page_type & page, processing_context & ctx)
+	void FileTreeModel::rearrange_children(page_type & page, upsert_context & ctx)
 	{
 		auto & container = page.children;
 		auto & seq_view = container.get<by_seq>();
@@ -847,24 +890,31 @@ namespace qtor
 	{
 		int_vector affected_indexes, index_array, inverse_buffer_array;
 		value_ptr_vector valptr_array;
-		leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
+		//leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
 		
 		affected_indexes.resize(sorted_erased.size() + std::max(sorted_updated.size(), inserted.size()));
-		updated_vec.assign(sorted_updated.begin(), sorted_updated.end());
-		erased_vec.assign(sorted_erased.begin(), sorted_erased.end());
-		inserted_vec.assign(inserted.begin(), inserted.end());
+		//updated_vec.assign(sorted_updated.begin(), sorted_updated.end());
+		//erased_vec.assign(sorted_erased.begin(), sorted_erased.end());
+		//inserted_vec.assign(inserted.begin(), inserted.end());
 		
-		processing_context ctx;
+		upsert_context ctx;
 		ctx.index_array = &index_array;
 		ctx.inverse_array = &inverse_buffer_array;
 		ctx.vptr_array = &valptr_array;
 
-		ctx.erased_first = erased_vec.begin();
-		ctx.erased_last  = erased_vec.end();
-		ctx.inserted_first = inserted_vec.begin();
-		ctx.inserted_last = inserted_vec.end();
-		ctx.updated_first = updated_vec.begin();
-		ctx.updated_last = updated_vec.end();
+		//ctx.erased_first = erased_vec.begin();
+		//ctx.erased_last  = erased_vec.end();
+		//ctx.inserted_first = inserted_vec.begin();
+		//ctx.inserted_last = inserted_vec.end();
+		//ctx.updated_first = updated_vec.begin();
+		//ctx.updated_last = updated_vec.end();
+
+		ctx.erased_first = sorted_erased.begin();
+		ctx.erased_last  = sorted_erased.end();
+		ctx.inserted_first = inserted.begin();
+		ctx.inserted_last = inserted.end();
+		ctx.updated_first = sorted_updated.begin();
+		ctx.updated_last = sorted_updated.end();
 
 		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
 		ctx.changed_first = ctx.changed_last = affected_indexes.end();
@@ -914,7 +964,8 @@ namespace qtor
 
 	void FileTreeModel::FilterBy(QString expr)
 	{
-
+		auto rtype = m_tfilt.set_expr(expr);
+		refilter_and_notify(rtype);
 	}
 
 	FileTreeModel::FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)
