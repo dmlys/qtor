@@ -139,47 +139,47 @@ int main(int argc, char * argv[])
 
 	std::cout << QtTools::ScreenInfo << endl;
 
-	std::vector<torrent_file> paths, paths2;
-	paths.assign({
-		{ QStringLiteral("folder/file1.txt") },
-		{ QStringLiteral("folder/file2.txt") },
-		{ QStringLiteral("dir/file.sft") },
-		{ QStringLiteral("dir/file.txt") },
-		{ QStringLiteral("ops.sh") },
-		{ QStringLiteral("westworld.mkv") },
-		{ QStringLiteral("folder/sup/file3.txt")},
-		{ QStringLiteral("folder/sup/inner/file.txt")},
-	});
-
-	paths2 = paths;
-	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
-	
+	//std::vector<torrent_file> paths, paths2;
 	//paths.assign({
-	//	{ QStringLiteral("file1.txt") },
-	//	{ QStringLiteral("file2.txt") },
-	//	{ QStringLiteral("file.sft") },
-	//	{ QStringLiteral("file.txt") },
+	//	{ QStringLiteral("folder/file1.txt") },
+	//	{ QStringLiteral("folder/file2.txt") },
+	//	{ QStringLiteral("dir/file.sft") },
+	//	{ QStringLiteral("dir/file.txt") },
 	//	{ QStringLiteral("ops.sh") },
 	//	{ QStringLiteral("westworld.mkv") },
+	//	{ QStringLiteral("folder/sup/file3.txt")},
+	//	{ QStringLiteral("folder/sup/inner/file.txt")},
 	//});
 
-	//paths2.assign({
-	//		{QStringLiteral("file1.txt")},
-	//		{QStringLiteral("file.sft")},
-	//		{QStringLiteral("ziggaman.sh")},
-	//		{QStringLiteral("westworld.mkv")},
-	//});
+	//paths2 = paths;
+	//paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+	//
+	////paths.assign({
+	////	{ QStringLiteral("file1.txt") },
+	////	{ QStringLiteral("file2.txt") },
+	////	{ QStringLiteral("file.sft") },
+	////	{ QStringLiteral("file.txt") },
+	////	{ QStringLiteral("ops.sh") },
+	////	{ QStringLiteral("westworld.mkv") },
+	////});
 
-	auto store = std::make_shared<torrent_file_store>();
-	auto model = std::make_shared<FileTreeModel>(store);
-	
-	FileTreeView view;
-	view.SetModel(model);
-	view.show();
+	////paths2.assign({
+	////		{QStringLiteral("file1.txt")},
+	////		{QStringLiteral("file.sft")},
+	////		{QStringLiteral("ziggaman.sh")},
+	////		{QStringLiteral("westworld.mkv")},
+	////});
 
-	store->assign_records(paths);
-	store->assign_records(paths2);
-	store->assign_records(paths);
+	//auto store = std::make_shared<torrent_file_store>();
+	//auto model = std::make_shared<FileTreeModel>(store);
+	//
+	//FileTreeView view;
+	//view.SetModel(model);
+	//view.show();
+
+	//store->assign_records(paths);
+	//store->assign_records(paths2);
+	//store->assign_records(paths);
 
 
 #ifdef Q_OS_WIN
@@ -195,16 +195,17 @@ int main(int argc, char * argv[])
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("bin/data.db"s);
 
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
-	//
-	//qtor::TransmissionRemoteApp app {std::move(source)};
-	//qtor::MainWindow mainWindow;
-	//
-	//mainWindow.Init(app);
-	//mainWindow.show();
-	//
-	//QTimer::singleShot(100, [&app] { app.Connect(); });
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
+	
+	qtor::TransmissionRemoteApp app {std::move(source)};
+	qtor::MainWindow mainWindow;
+	
+	mainWindow.Init(app);
+	mainWindow.show();
+	
+	QTimer::singleShot(100, [&app] { app.Connect(); });
+
 	//auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
 	//
 	//std::error_code err {10066, ext::system_utf8_category()};

@@ -227,7 +227,7 @@ namespace qtor
 		for (auto it = first; it != last; ++it, ++i)
 		{
 			int val = *it;
-			inverse[std::abs(val) - offset] = val >= 0 ? i : -1;
+			inverse[viewed::unmark_index(val) - offset] = viewed::marked_index(val) ? i : -1;
 		}
 
 		//std::copy(buffer.begin(), buffer.end(), first);
@@ -500,8 +500,8 @@ namespace qtor
 			ext::make_zip_iterator(vlast, ivlast),
 			zfpred).get_iterator_tuple();
 
-		auto inverse = [](int idx) { return -idx; };
-		std::transform(ivpp, ivlast, ivpp, inverse);
+		auto mark_index = [](int idx) { return viewed::mark_index(idx); };
+		std::transform(ivpp, ivlast, ivpp, mark_index);
 
 		int upassed_new = vpp - vfirst;
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, make_ref));
@@ -583,9 +583,9 @@ namespace qtor
 				ext::make_zip_iterator(slast, islast),
 				zfpred).get_iterator_tuple();
 
-			auto inverse = [](int idx) { return -idx; };
-			std::transform(ivpp, ivlast, ivpp, inverse);
-			std::transform(ispp, islast, ispp, inverse);
+			auto mark_index = [](int idx) { return viewed::mark_index(idx); };
+			std::transform(ivpp, ivlast, ivpp, mark_index);
+			std::transform(ispp, islast, ispp, mark_index);
 
 			vlast = std::rotate(vpp, sfirst, spp);
 			ivlast = std::rotate(ivpp, isfirst, ispp);
@@ -830,18 +830,18 @@ namespace qtor
 		else
 		{
 			for (auto it = schanged_first; it != schanged_last; ++it)
-				mark_pointer(vfirst[*it]);
+				vfirst[*it] = mark_pointer(vfirst[*it]);
 
 			vlast  = std::remove_if(vfirst, vlast, [](auto ptr) { return unmark_pointer(ptr) == nullptr; });
 			sfirst = std::remove(std::make_reverse_iterator(slast), std::make_reverse_iterator(sfirst), nullptr).base();
 
 			// [spp, npp) - gathered elements from [sfirst, nlast) satisfying fpred
-			auto spp = std::partition(sfirst, slast, [](auto * ptr) { return not is_marked(ptr); });
+			auto spp = std::partition(sfirst, slast, [](auto * ptr) { return not marked_pointer(ptr); });
 			auto npp = std::partition(nfirst, nlast, fpred);
 			upassed_new = (vlast - vfirst) + (npp - spp);
 
 			for (auto it = spp; it != slast; ++it)
-				unmark_pointer(*it);			
+				*it = unmark_pointer(*it);
 
 			// rotate them at the beginning of shadow area
 			// and in fact merge those with visible area
@@ -864,14 +864,14 @@ namespace qtor
 		{
 			int index = *it;
 			*rlast++ = seq_ptr_view[index];
-			*ilast++ = -index;
+			*ilast++ = viewed::mark_index(index);
 		}
 
 		for (auto it = ctx.removed_first; it != ctx.removed_last; ++it)
 		{
 			int index = *it;
 			*rlast++ = seq_ptr_view[index];
-			*ilast++ = -index;
+			*ilast++ = viewed::mark_index(index);
 		}
 
 		bool resort_old = vchanged_first != vchanged_pp;

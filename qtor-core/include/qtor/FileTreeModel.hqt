@@ -243,11 +243,6 @@ namespace qtor
 		scoped_connection m_erase_con;
 
 	protected:
-		template <class Type> static inline auto & mark_pointer(Type & ptr)   noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) |= 1;                  return ptr; }
-		template <class Type> static inline auto & unmark_pointer(Type & ptr) noexcept { static_assert(std::is_pointer_v<Type>); reinterpret_cast<std::uintptr_t &>(ptr) &= ~(std::uintptr_t)1; return ptr; }
-		template <class Type> static inline bool   is_marked(Type ptr)        noexcept { static_assert(std::is_pointer_v<Type>); return reinterpret_cast<std::uintptr_t>(ptr) & 1; }
-
-	protected:
 		template <class Functor>
 		static void for_each_child(page_type & page, Functor && func);
 

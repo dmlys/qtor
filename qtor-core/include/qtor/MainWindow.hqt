@@ -55,8 +55,6 @@ namespace qtor
 		virtual void Connect();
 		virtual void Disconnect();
 
-
-
 	public: // torrent actions
 		void StartTorrent(const QModelIndex & idx);
 		void StartTorrentNow(const QModelIndex & idx);
