@@ -2,7 +2,7 @@
 #include <ext/iterator/outdirect_iterator.hpp>
 #include <ext/iterator/indirect_iterator.hpp>
 #include <ext/range/adaptors/outdirected.hpp>
-#include <boost/range/counting_range.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 
 #include <QtTools/ToolsBase.hpp>
 #include <qtor/FileTreeModel.hqt>
@@ -261,17 +261,56 @@ namespace qtor
 		return ref == name;
 	}
 
-	void FileTreeModel::init()
+	template <class RandomAccessIterator>
+	void FileTreeModel::group_by_dirs(RandomAccessIterator first, RandomAccessIterator last)
 	{
-		connect_signals();
-		reinit_view();
+		auto sort_pred = viewed::make_indirect_fun(torrent_file_id_greater());
+		std::sort(first, last, sort_pred);
 	}
 
-	void FileTreeModel::connect_signals()
+	void FileTreeModel::reinit_view(page_type & page, reinit_context & ctx)
 	{
-		m_clear_con  = m_owner->on_clear([this] { clear_view(); });
-		m_update_con = m_owner->on_update([this](const signal_range_type & e, const signal_range_type & u, const signal_range_type & i) { update_data(e, u, i); });
-		m_erase_con  = m_owner->on_erase([this](const signal_range_type & r) { erase_records(r); });
+		while (ctx.first != ctx.last)
+		{
+			const auto * item_ptr = *ctx.first;
+			auto[type, name, newprefix] = analyze(ctx.prefix, *item_ptr);
+			if (type == LEAF)
+			{
+				auto * leaf = item_ptr;
+				page.children.insert(leaf);
+				++ctx.first;
+			}
+			else // PAGE
+			{
+				auto page_ptr = std::make_unique<page_type>();
+				page_ptr->parent = &page;
+				page_ptr->name = name;
+
+				auto newctx = ctx;
+				newctx.prefix = std::move(newprefix);
+				newctx.first = ctx.first;
+
+				auto issub = std::bind(is_subelement, std::cref(ctx.prefix), std::cref(name), std::placeholders::_1);
+				newctx.last = std::find_if_not(ctx.first, ctx.last, viewed::make_indirect_fun(std::move(issub)));
+				reinit_view(*page_ptr, newctx);
+
+				page.children.insert(std::move(page_ptr));
+				ctx.first = newctx.last;
+			}
+		}
+
+		page.upassed = page.children.size();
+		auto & seq_view = page.children.get<by_seq>();
+		auto seq_ptr_view = seq_view | ext::outdirected;
+
+		value_ptr_vector & refs = *ctx.vptr_array;
+		refs.assign(seq_ptr_view.begin(), seq_ptr_view.end());
+
+		auto refs_first = refs.begin();
+		auto refs_last = refs.end();
+		stable_sort(refs_first, refs_last);
+
+		seq_view.rearrange(boost::make_transform_iterator(refs_first, make_ref));
 	}
 
 	void FileTreeModel::reinit_view()
@@ -281,49 +320,25 @@ namespace qtor
 		m_root.upassed = 0;
 		m_root.children.clear();
 
-		std::vector<signal_range_type::value_type> elements;
+		value_ptr_vector valptr_array;
+		reinit_context ctx;
+
+		leaf_ptr_vector elements;
 		elements.assign(
-			ext::make_outdirect_iterator(m_owner->begin()),
-			ext::make_outdirect_iterator(m_owner->end())
+			boost::make_transform_iterator(m_owner->begin(), get_view_pointer),
+			boost::make_transform_iterator(m_owner->end(), get_view_pointer)
 		);
 
 		auto first = elements.begin();
 		auto last  = elements.end();
-		std::sort(first, last, [](auto & v1, auto & v2) { return v1->filename < v2->filename; });
-		fill_page(m_root, {}, first, last);
+		group_by_dirs(first, last);
+
+		ctx.vptr_array = &valptr_array;
+		ctx.first = first;
+		ctx.last = last;
+		reinit_view(m_root, ctx);
 
 		endResetModel();
-	}
-	
-	template <class ForwardIterator>
-	void FileTreeModel::fill_page(page_type & page, QStringRef prefix, ForwardIterator first, ForwardIterator last)
-	{
-		while (first != last)
-		{
-			auto item_ptr = *first;
-			auto [type, name, newprefix] = analyze(prefix, *item_ptr);
-			if (type == LEAF)
-			{
-				auto * leaf = item_ptr;
-				page.children.insert(leaf);
-				++first;
-			}
-			else // PAGE
-			{
-				auto page_ptr = std::make_unique<page_type>();
-				page_ptr->parent = &page;
-				page_ptr->name = name;
-
-				auto issub = std::bind(is_subelement, std::cref(prefix), std::cref(name), std::placeholders::_1);
-				auto it = std::find_if_not(first, last, viewed::make_indirect_fun(std::move(issub)));
-				fill_page(*page_ptr, std::move(newprefix), first, it);
-				page.children.insert(std::move(page_ptr));
-				first = it;
-			}
-		}
-
-		page.upassed = page.children.size();
-		sort_children(page);
 	}
 
 	void FileTreeModel::merge_newdata(value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last, bool resort_old /* = true */)
@@ -677,7 +692,7 @@ namespace qtor
 			auto pos = seqit - seq_view.begin();
 			*ctx.removed_last++ = pos;
 
-			// erasion will be done later, in AMOLED
+			// erasion will be done later, in rearrange_children
 			// container.erase(it);
 		}
 
@@ -717,16 +732,16 @@ namespace qtor
 			newctx.updated_last  = ctx.updated_first;
 			newctx.erased_last   = ctx.erased_first;
 
-			ctx.inserted_diff = newctx.inserted_first != newctx.inserted_last;
-			ctx.updated_diff = newctx.updated_first != newctx.updated_last;
-			ctx.erased_diff = newctx.erased_first != newctx.erased_last;
+			ctx.inserted_diff = newctx.inserted_last - newctx.inserted_first;
+			ctx.updated_diff  = newctx.updated_last  - newctx.updated_first;
+			ctx.erased_diff   = newctx.erased_last   - newctx.erased_first;
 			assert(ctx.inserted_diff or ctx.updated_diff or ctx.erased_diff);
 
 			page_type * child_page = nullptr;
 			bool inserted = false;
 			auto it = container.find(name);
 			if (it != container.end())
-				child_page = static_cast<page_type *>(it->pointer());				
+				child_page = static_cast<page_type *>(it->pointer());
 			else 
 			{
 				assert(ctx.updated_diff or ctx.inserted_diff);
@@ -735,7 +750,7 @@ namespace qtor
 
 				child_page->name = name;
 				child_page->parent = &page;
-				std::tie(it, inserted) = page.children.insert(std::move(child));
+				std::tie(it, inserted) = container.insert(std::move(child));
 			}			
 
 			// process child
@@ -747,7 +762,7 @@ namespace qtor
 				auto pos = seqit - seq_view.begin();
 
 				if (child_page->children.size() == 0)
-					// erasion will be done later in AMOLED
+					// actual erasion will be done later in rearrange_children
 					*ctx.removed_last++ = pos;
 				else if (not inserted)
 					*--ctx.changed_first = pos;
@@ -770,7 +785,7 @@ namespace qtor
 		int upassed_new;
 
 		value_ptr_vector & valptr_vector = *ctx.vptr_array;
-		int_vector & index_array = *ctx.index_array;		
+		int_vector & index_array = *ctx.index_array;
 		int_vector & inverse_array = *ctx.inverse_array;
 
 		valptr_vector.assign(seq_ptr_view.begin(), seq_ptr_view.end());
@@ -886,15 +901,15 @@ namespace qtor
 		               inverse_array.begin(), inverse_array.end(), offset);
 	}
 
-	void FileTreeModel::update_data(const signal_range_type & sorted_erased, const signal_range_type & sorted_updated, const signal_range_type & inserted)
+	void FileTreeModel::update_data(const signal_range_type & erased, const signal_range_type & updated, const signal_range_type & inserted)
 	{
 		int_vector affected_indexes, index_array, inverse_buffer_array;
 		value_ptr_vector valptr_array;
 		//leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
 		
-		affected_indexes.resize(sorted_erased.size() + std::max(sorted_updated.size(), inserted.size()));
-		//updated_vec.assign(sorted_updated.begin(), sorted_updated.end());
-		//erased_vec.assign(sorted_erased.begin(), sorted_erased.end());
+		affected_indexes.resize(erased.size() + std::max(updated.size(), inserted.size()));
+		//updated_vec.assign(updated.begin(), updated.end());
+		//erased_vec.assign(erased.begin(), erased.end());
 		//inserted_vec.assign(inserted.begin(), inserted.end());
 		
 		upsert_context ctx;
@@ -909,20 +924,19 @@ namespace qtor
 		//ctx.updated_first = updated_vec.begin();
 		//ctx.updated_last = updated_vec.end();
 
-		ctx.erased_first = sorted_erased.begin();
-		ctx.erased_last  = sorted_erased.end();
+		ctx.erased_first = erased.begin();
+		ctx.erased_last  = erased.end();
 		ctx.inserted_first = inserted.begin();
 		ctx.inserted_last = inserted.end();
-		ctx.updated_first = sorted_updated.begin();
-		ctx.updated_last = sorted_updated.end();
+		ctx.updated_first = updated.begin();
+		ctx.updated_last = updated.end();
 
 		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
 		ctx.changed_first = ctx.changed_last = affected_indexes.end();
 
-		auto sort_pred = viewed::make_indirect_fun(torrent_file_id_greater());
-		std::sort(ctx.erased_first, ctx.erased_last, sort_pred);
-		std::sort(ctx.inserted_first, ctx.inserted_last, sort_pred);
-		std::sort(ctx.updated_first, ctx.updated_last, sort_pred);
+		group_by_dirs(ctx.erased_first, ctx.erased_last);
+		group_by_dirs(ctx.inserted_first, ctx.inserted_last);
+		group_by_dirs(ctx.updated_first, ctx.updated_last);
 		
 		layoutAboutToBeChanged(viewed::AbstractItemModel::empty_model_list, NoLayoutChangeHint);
 		
@@ -935,24 +949,10 @@ namespace qtor
 		layoutChanged(viewed::AbstractItemModel::empty_model_list, NoLayoutChangeHint);
 	}
 
-	void FileTreeModel::sort_children(page_type & page)
+	void FileTreeModel::erase_records(const signal_range_type & erased)
 	{
-		auto & seq_view = page.children.get<by_seq>();
-		auto seq_ptr_view = seq_view | ext::outdirected;
-
-		value_ptr_vector refs;
-		refs.assign(seq_ptr_view.begin(), seq_ptr_view.end());
-
-		auto refs_first = refs.begin();
-		auto refs_last = refs.end();
-		stable_sort(refs_first, refs_last);		
-
-		seq_view.rearrange(boost::make_transform_iterator(refs_first, make_ref));
-	}
-
-	void FileTreeModel::erase_records(const signal_range_type & sorted_erased)
-	{
-
+		signal_range_type inserted, updated;
+		update_data(erased, updated, inserted);
 	}
 
 	void FileTreeModel::clear_view()
@@ -966,6 +966,19 @@ namespace qtor
 	{
 		auto rtype = m_tfilt.set_expr(expr);
 		refilter_and_notify(rtype);
+	}
+
+	void FileTreeModel::init()
+	{
+		connect_signals();
+		reinit_view();
+	}
+
+	void FileTreeModel::connect_signals()
+	{
+		m_clear_con = m_owner->on_clear([this] { clear_view(); });
+		m_update_con = m_owner->on_update([this](const signal_range_type & e, const signal_range_type & u, const signal_range_type & i) { update_data(e, u, i); });
+		m_erase_con = m_owner->on_erase([this](const signal_range_type & r) { erase_records(r); });
 	}
 
 	FileTreeModel::FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)

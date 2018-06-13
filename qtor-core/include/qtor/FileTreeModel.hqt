@@ -55,8 +55,15 @@ namespace qtor
 		using scoped_connection = typename container_type::scoped_connection;
 		using model_type = viewed::AbstractItemModel;
 
-		static     torrent_file_ptr get_view_pointer(const torrent_file & val) { return container_type::get_view_pointer(val); }
-		static const torrent_file & get_view_reference(torrent_file_ptr ptr)   { return container_type::get_view_reference(ptr); }
+		struct get_view_pointer_type
+		{
+			torrent_file_ptr operator()(const torrent_file & val) const noexcept { return container_type::get_view_pointer(val); }
+		};
+
+		struct get_view_reference_type
+		{
+			const torrent_file & operator()(torrent_file_ptr ptr) { return container_type::get_view_reference(ptr); }
+		};
 
 	protected:
 		struct page_type;
@@ -69,6 +76,8 @@ namespace qtor
 		using value_ptr = viewed::pointer_variant<const page_type *, const leaf_type *>;
 
 		using leaf_ptr_vector = std::vector<const leaf_type *>;
+		using leaf_ptr_iterator = leaf_ptr_vector::iterator;
+
 		using value_ptr_vector = std::vector<const value_ptr *>;
 		using value_ptr_iterator = value_ptr_vector::iterator;
 
@@ -141,8 +150,8 @@ namespace qtor
 			int_vector::iterator
 				removed_first, removed_last, // share same array, append by incrementing removed_last
 				changed_first, changed_last; //                   append by decrementing changed_first
-
-			std::ptrdiff_t inserted_diff, updated_diff, erased_diff;			
+			
+			std::ptrdiff_t inserted_diff, updated_diff, erased_diff;
 			std::size_t inserted_count, updated_count, erased_count;
 
 			QStringRef prefix;
@@ -153,11 +162,11 @@ namespace qtor
 			QModelIndexList::const_iterator model_index_first, model_index_last;
 		};
 
-		struct erase_context
+		struct reinit_context
 		{
+			leaf_ptr_iterator first, last;
+			QStringRef prefix;
 			value_ptr_vector * vptr_array;
-			int_vector * index_array, *inverse_array;
-			QModelIndexList::const_iterator model_index_first, model_index_last;
 		};
 
 		struct resort_context
@@ -225,6 +234,9 @@ namespace qtor
 		static constexpr get_children_type       get_children {};
 		static constexpr get_children_count_type get_children_count {};
 
+		static constexpr get_view_pointer_type   get_view_pointer {};
+		static constexpr get_view_reference_type get_view_reference {};
+
 	protected:
 		static const value_container ms_empty_container;
 
@@ -253,16 +265,16 @@ namespace qtor
 		static bool is_subelement(const QStringRef & prefix, const QString & name, const torrent_file & item);
 		static auto copy_context(const upsert_context & ctx, QStringRef newprefix) -> upsert_context;
 
-		template <class ForwardIterator>
-		void fill_page(page_type & page, QStringRef prefix, ForwardIterator first, ForwardIterator last);		
-
+		template <class RandomAccessIterator>
+		static void group_by_dirs(RandomAccessIterator first, RandomAccessIterator last);
+		
 		virtual auto process_erased(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
 		virtual auto process_updated(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
 		virtual auto process_inserted(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
-		virtual void update_page(page_type & page, upsert_context & ctx);
-
-		virtual void sort_children(page_type & page);
 		virtual void rearrange_children(page_type & page, upsert_context & ctx);
+		virtual void upsert_page(page_type & page, upsert_context & ctx);
+
+		virtual void reinit_view(page_type & page, reinit_context & ctx);
 
 	protected:
 		/// acquires pointer to qt model, normally you would inherit both QAbstractItemModel and this class.
@@ -288,20 +300,22 @@ namespace qtor
 		
 		/// called when new data is updated in owning container
 		/// view have to synchronize itself.
-		/// @Param sorted_newrecs range of pointers to updated records, sorted by pointer value
+		/// @Param erased range of pointers to erased records
+		/// @Param updated range of pointers to updated records
+		/// @Param inserted range of pointers to inserted
 		/// 
-		/// default implementation removes erased, appends inserted records, and does nothing with sorted_updated
+		/// default implementation removes erased, appends inserted records, and does nothing with updated
 		virtual void update_data(
-			const signal_range_type & sorted_erased,
-			const signal_range_type & sorted_updated,
+			const signal_range_type & erased,
+			const signal_range_type & updated,
 			const signal_range_type & inserted);
 
 		/// called when some records are erased from container
 		/// view have to synchronize itself.
-		/// @Param sorted_newrecs range of pointers to updated records, sorted by pointer value
+		/// @Param erased range of pointers to updated records
 		/// 
 		/// default implementation, erases those records from main store
-		virtual void erase_records(const signal_range_type & sorted_erased);
+		virtual void erase_records(const signal_range_type & erased);
 
 		/// called when container is cleared, clears m_store.
 		virtual void clear_view();
@@ -360,11 +374,6 @@ namespace qtor
 		/// emits qt layoutAboutToBeChanged(..., NoLayoutChangeHint), layoutUpdated(..., NoLayoutChangeHint)
 		virtual void refilter_full_and_notify();
 		virtual void refilter_full_and_notify(page_type & page, refilter_context & ctx);
-
-	protected:
-		void fill_page(page_type & page, QStringRef prefix,
-			std::vector<torrent_file>::const_iterator first,
-			std::vector<torrent_file>::const_iterator last);
 
 	public:
 		/// returns pointer to owning container
