@@ -141,14 +141,14 @@ int main(int argc, char * argv[])
 
 	std::vector<torrent_file> paths, paths2;
 	paths.assign({
-		{ QStringLiteral("folder/file1.txt") },
-		{ QStringLiteral("folder/file2.txt") },
-		{ QStringLiteral("dir/file.sft") },
-		{ QStringLiteral("dir/file.txt") },
-		{ QStringLiteral("ops.sh") },
-		{ QStringLiteral("westworld.mkv") },
-		{ QStringLiteral("folder/sup/file3.txt")},
-		{ QStringLiteral("folder/sup/inner/file.txt")},
+		{ QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
+		{ QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100},
+		{ QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100},
+		{ QStringLiteral("dir/file.txt"),     100 * 100, 20 * 100},
+		{ QStringLiteral("ops.sh"),           100 * 100, 20 * 100},
+		{ QStringLiteral("westworld.mkv"),    100 * 100, 20 * 100},
+		{ QStringLiteral("folder/sup/file3.txt"), 100 * 100, 20 * 100},
+		{ QStringLiteral("folder/sup/inner/file.txt"), 100 * 100, 20 * 100},
 	});
 
 	paths2 = paths;
@@ -176,37 +176,37 @@ int main(int argc, char * argv[])
 	store->assign_records(paths);
 	store->assign_records(paths2);
 	store->assign_records(paths);
-
-	store->erase(paths.back());
 	
+	//QTableView view;
+	//view.setModel(model.get());
 	FileTreeView view;
 	view.SetModel(model);
 	view.show();
 
 
-#ifdef Q_OS_WIN
-	// On windows the highlighted colors for inactive widgets are the
-	// same as non highlighted colors.This is a regression from Qt 4.
-	// https://bugreports.qt-project.org/browse/QTBUG-41060
-	auto palette = qapp.palette();
-	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
-	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
-	qapp.setPalette(palette);
-#endif
-
-	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	//source->set_address("bin/data.db"s);
-
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
-	//
-	//qtor::TransmissionRemoteApp app {std::move(source)};
-	//qtor::MainWindow mainWindow;
-	//
-	//mainWindow.Init(app);
-	//mainWindow.show();
-	//
-	//QTimer::singleShot(100, [&app] { app.Connect(); });
+//#ifdef Q_OS_WIN
+//	// On windows the highlighted colors for inactive widgets are the
+//	// same as non highlighted colors.This is a regression from Qt 4.
+//	// https://bugreports.qt-project.org/browse/QTBUG-41060
+//	auto palette = qapp.palette();
+//	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
+//	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
+//	qapp.setPalette(palette);
+//#endif
+//
+//	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+//	source->set_address("bin/data.db"s);
+//
+//	//auto source = std::make_shared<qtor::transmission::data_source>();
+//	//source->set_address("http://melkiy:9091/transmission/rpc"s);
+//	
+//	qtor::TransmissionRemoteApp app {std::move(source)};
+//	qtor::MainWindow mainWindow;
+//	
+//	mainWindow.Init(app);
+//	mainWindow.show();
+//	
+//	QTimer::singleShot(100, [&app] { app.Connect(); });
 
 	//auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
 	//

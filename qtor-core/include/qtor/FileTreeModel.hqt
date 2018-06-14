@@ -62,7 +62,7 @@ namespace qtor
 
 		struct get_view_reference_type
 		{
-			const torrent_file & operator()(torrent_file_ptr ptr) { return container_type::get_view_reference(ptr); }
+			const torrent_file & operator()(torrent_file_ptr ptr) const noexcept { return container_type::get_view_reference(ptr); }
 		};
 
 	protected:
@@ -140,6 +140,27 @@ namespace qtor
 			result_type operator()(const Type * ptr) const { return operator()(*ptr); }
 		};
 
+		struct get_total_size_type
+		{
+			template <class Type>
+			auto operator()(const Type * item)      const { return item->total_size; }
+			auto operator()(const value_ptr & item) const { return viewed::pv_visit(*this, item); }
+		};
+
+		struct get_have_size_type
+		{
+			template <class Type>
+			auto operator()(const Type * item)      const { return item->have_size; }
+			auto operator()(const value_ptr & item) const { return viewed::pv_visit(*this, item); }
+		};
+
+		struct get_wanted_type
+		{
+			Qt::CheckState operator()(const leaf_type * item) const { return item->wanted ? Qt::Checked : Qt::Unchecked; }
+			Qt::CheckState operator()(const page_type * item) const { return item->wanted; }
+			Qt::CheckState operator()(const value_ptr & item) const { return viewed::pv_visit(*this, item); }
+		};
+
 		struct upsert_context
 		{
 			signal_range_type::iterator
@@ -156,6 +177,7 @@ namespace qtor
 
 			QStringRef prefix;
 			QStringRef inserted_prefix, updated_prefix, erased_prefix;
+			QString inserted_name, updated_name, erased_name;
 
 			value_ptr_vector * vptr_array;
 			int_vector * index_array, * inverse_array;
@@ -230,12 +252,15 @@ namespace qtor
 		};
 
 	protected:
-		static constexpr get_name_type           get_name {};
-		static constexpr get_children_type       get_children {};
-		static constexpr get_children_count_type get_children_count {};
-
 		static constexpr get_view_pointer_type   get_view_pointer {};
 		static constexpr get_view_reference_type get_view_reference {};
+
+		static constexpr get_name_type           get_name {};
+		static constexpr get_total_size_type     get_total_size {};
+		static constexpr get_have_size_type      get_have_size {};
+		static constexpr get_wanted_type         get_wanted {};
+		static constexpr get_children_type       get_children {};
+		static constexpr get_children_count_type get_children_count {};
 
 	protected:
 		static const value_container ms_empty_container;
@@ -268,11 +293,12 @@ namespace qtor
 		template <class RandomAccessIterator>
 		static void group_by_dirs(RandomAccessIterator first, RandomAccessIterator last);
 		
-		virtual auto process_erased(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
-		virtual auto process_updated(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
-		virtual auto process_inserted(page_type & page, upsert_context & ctx) -> std::tuple<QString, QStringRef>;
+		virtual auto process_erased(page_type & page, upsert_context & ctx) -> std::tuple<QString &, QStringRef &>;
+		virtual auto process_updated(page_type & page, upsert_context & ctx) -> std::tuple<QString &, QStringRef &>;
+		virtual auto process_inserted(page_type & page, upsert_context & ctx) -> std::tuple<QString &, QStringRef &>;
 		virtual void rearrange_children(page_type & page, upsert_context & ctx);
-		virtual void upsert_page(page_type & page, upsert_context & ctx);
+		virtual void update_page(page_type & page, upsert_context & ctx);
+		virtual void recalculate_page(page_type & page);
 
 		virtual void reinit_view(page_type & page, reinit_context & ctx);
 

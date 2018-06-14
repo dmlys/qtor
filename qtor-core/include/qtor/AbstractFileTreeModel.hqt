@@ -1,0 +1,30 @@
+#pragma once
+#include <QtCore/QString>
+#include <QtCore/QAbstractItemModel>
+
+#include <qtor/formatter.hqt>
+
+namespace qtor
+{
+	class AbstractFileTreeModel : public QAbstractItemModel
+	{
+		Q_OBJECT;
+
+	private:
+		using self_type = AbstractFileTreeModel;
+		using base_type = QAbstractItemModel;
+
+	public:
+		static constexpr int FNAME = 0;
+		static constexpr int TOTAL_SIZE = 1;
+		static constexpr int HAVE_SIZE = 1;
+
+	protected:
+		static const QStringList m_columnNames;
+
+		QString m_filterStr;
+		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
+		int m_sortColumn = -1;
+
+	};
+}

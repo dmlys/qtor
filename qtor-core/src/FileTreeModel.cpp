@@ -33,7 +33,7 @@ namespace qtor
 	}
 
 	SimpleTextFilter FileTreeModel::m_tfilt;
-	constexpr auto make_ref = [](auto * ptr) { return std::ref(*ptr); };
+	const auto make_ref = [](auto * ptr) { return std::ref(*ptr); };
 	const FileTreeModel::value_container FileTreeModel::ms_empty_container;
 
 	inline auto FileTreeModel::get_page(const QModelIndex & index) const -> page_type *
@@ -85,7 +85,7 @@ namespace qtor
 
 	int FileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
-		return 1;
+		return 4;
 	}
 
 	int FileTreeModel::rowCount(const QModelIndex & parent /* = QModelIndex() */) const
@@ -141,26 +141,39 @@ namespace qtor
 
 	QVariant FileTreeModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const
 	{
-		if (not index.isValid()) return {};
+		if (not index.isValid()) 
+			return {};
+
+		if (role != Qt::DisplayRole and role != Qt::ToolTipRole)
+			return {};
 
 		const auto & val = get_element_ptr(index);
-		switch (role)
+		switch (index.column())
 		{
-			case Qt::DisplayRole:
-			case Qt::ToolTipRole:
-				return get_name(val);
+			case 0:  return get_name(val);
+			case 1:  return get_total_size(val);
+			case 2:  return get_have_size(val);
+			case 3:  return get_wanted(val);
 
-			default:
-				return {};
+			default: return {};
 		}
+
 	}
 
 	QVariant FileTreeModel::headerData(int section, Qt::Orientation orientation, int role /* = Qt::DisplayRole */) const
 	{
-		if (section == 0 and orientation == Qt::Horizontal and role == Qt::DisplayRole)
-			return QStringLiteral("fname");
+		if (orientation != Qt::Horizontal or role != Qt::DisplayRole)
+			return {};
+		
+		switch (section)
+		{
+			case 0:  return QStringLiteral("fname");
+			case 1:  return QStringLiteral("total size");
+			case 2:  return QStringLiteral("have size");
+			case 3:  return QStringLiteral("wanted");
 
-		return {};
+			default: return {};
+		}
 	}
 
 	auto FileTreeModel::get_model() -> model_type *
@@ -619,47 +632,74 @@ namespace qtor
 
 	auto FileTreeModel::copy_context(const upsert_context & ctx, QStringRef newprefix) -> upsert_context
 	{
-		auto newctx = ctx;
-		newctx.prefix = std::move(newprefix);
-		newctx.changed_first = newctx.changed_last;
-		newctx.removed_last = newctx.removed_first;
+		upsert_context newctx;
+		newctx.inserted_first = ctx.inserted_first;
+		newctx.inserted_last = ctx.inserted_last;
+		newctx.updated_first = ctx.updated_first;
+		newctx.updated_last = ctx.updated_last;
+		newctx.erased_first = ctx.erased_first;
+		newctx.erased_last = ctx.erased_last;
+
+		newctx.changed_first = newctx.changed_last = ctx.changed_first;
+		newctx.removed_last = newctx.removed_first = ctx.removed_last;
+
+		newctx.prefix = std::move(newprefix);		
+
+		newctx.vptr_array = ctx.vptr_array;
+		newctx.index_array = ctx.index_array;
+		newctx.inverse_array = ctx.inverse_array;
+
+		newctx.model_index_first = ctx.model_index_first;
+		newctx.model_index_last = ctx.model_index_last;
 
 		return newctx;
 	}
 
 	auto FileTreeModel::process_inserted(page_type & page, upsert_context & ctx)
-		-> std::tuple<QString, QStringRef>
+		-> std::tuple<QString &, QStringRef &>
 	{
 		auto & container = page.children;
 		//auto & seq_view = container.get<by_seq>();
 		//auto & code_view = container.get<by_code>();
+		
+		// consumed nothing from previous step, return same name/prefix
+		if (ctx.inserted_diff == 0)
+			return std::tie(ctx.inserted_name, ctx.inserted_prefix);
 
 		for (; ctx.inserted_first != ctx.inserted_last; ++ctx.inserted_first)
 		{
 			const auto * item = *ctx.inserted_first;
-			auto [type, name, prefix] = analyze(ctx.prefix, *item);
-			if (type == PAGE) return {std::move(name), std::move(prefix)};
+			std::uintptr_t type;
+			std::tie(type, ctx.inserted_name, ctx.inserted_prefix) = analyze(ctx.prefix, *item);
+			if (type == PAGE) return std::tie(ctx.inserted_name, ctx.inserted_prefix);
 
 			bool inserted;
 			std::tie(std::ignore, inserted) = container.insert(item);
 			assert(inserted); (void)inserted;	
 		}
 
-		return {QString::null, QStringRef()};
+		ctx.inserted_name = QString::null;
+		ctx.inserted_prefix = {};
+		return std::tie(ctx.inserted_name, ctx.inserted_prefix);
 	}
 
 	auto FileTreeModel::process_updated(page_type & page, upsert_context & ctx)
-		-> std::tuple<QString, QStringRef>
+		-> std::tuple<QString &, QStringRef &>
 	{
 		auto & container = page.children;
 		auto & seq_view = container.get<by_seq>();
 		auto & code_view = container.get<by_code>();
 
+		// consumed nothing from previous step, return same name/prefix
+		if (ctx.updated_diff == 0)
+			return std::tie(ctx.updated_name, ctx.updated_prefix);
+
 		for (; ctx.updated_first != ctx.updated_last; ++ctx.updated_first)
 		{
 			const auto * item = *ctx.updated_first;
-			auto [type, name, prefix] = analyze(ctx.prefix, *item);
-			if (type == PAGE) return {std::move(name), std::move(prefix)};
+			std::uintptr_t type;
+			std::tie(type, ctx.updated_name, ctx.updated_prefix) = analyze(ctx.prefix, *item);
+			if (type == PAGE) return std::tie(ctx.updated_name, ctx.updated_prefix);
 
 			auto it = container.find(get_name(item));
 			assert(it != container.end());
@@ -669,21 +709,28 @@ namespace qtor
 			*--ctx.changed_first = pos;
 		}
 
-		return {QString::null, QStringRef()};
+		ctx.updated_name = QString::null;
+		ctx.updated_prefix = {};
+		return std::tie(ctx.updated_name, ctx.updated_prefix);
 	}
 
 	auto FileTreeModel::process_erased(page_type & page, upsert_context & ctx)
-		-> std::tuple<QString, QStringRef>
+		-> std::tuple<QString &, QStringRef &>
 	{
 		auto & container = page.children;
 		auto & seq_view = container.get<by_seq>();
 		auto & code_view = container.get<by_code>();
 
+		// consumed nothing from previous step, return same name/prefix
+		if (ctx.erased_diff == 0)
+			return std::tie(ctx.erased_name, ctx.erased_prefix);
+
 		for (; ctx.erased_first != ctx.erased_last; ++ctx.erased_first)
 		{
 			const auto * item = *ctx.erased_first;
-			auto [type, name, prefix] = analyze(ctx.prefix, *item);
-			if (type == PAGE) return {std::move(name), std::move(prefix)};
+			std::uintptr_t type;
+			std::tie(type, ctx.erased_name, ctx.erased_prefix) = analyze(ctx.prefix, *item);
+			if (type == PAGE) return std::tie(ctx.erased_name, ctx.erased_prefix);
 
 			auto it = container.find(get_name(item));
 			assert(it != container.end());
@@ -696,7 +743,9 @@ namespace qtor
 			// container.erase(it);
 		}
 
-		return {QString::null, QStringRef()};
+		ctx.erased_name = QString::null;
+		ctx.erased_prefix = {};
+		return std::tie(ctx.erased_name, ctx.erased_prefix);
 	}
 
 	void FileTreeModel::update_page(page_type & page, upsert_context & ctx)
@@ -706,19 +755,17 @@ namespace qtor
 		auto & seq_view  = container.get<by_seq>();
 		auto & code_view = container.get<by_code>();
 		auto oldsz = container.size();
+		ctx.inserted_diff = ctx.updated_diff = ctx.erased_diff = -1;
 
 		for (;;)
 		{
-			QStringRef erased_newprefix, inserted_newprefix, updated_newprefix;
-			QString erased_name, inserted_name, updated_name;
-
-			std::tie(inserted_name, inserted_newprefix) = process_inserted(page, ctx);
-			std::tie(updated_name, updated_newprefix) = process_updated(page, ctx);
-			std::tie(erased_name, erased_newprefix) = process_erased(page, ctx);
+			process_inserted(page, ctx);
+			process_updated(page, ctx);
+			process_erased(page, ctx);
 
 			// at this point only pages are at front of ranges
-			auto newprefix = std::max({erased_newprefix, updated_newprefix, inserted_newprefix});
-			auto name = std::max({erased_name, updated_name, inserted_name});
+			auto newprefix = std::max({ctx.erased_prefix, ctx.updated_prefix, ctx.inserted_prefix});
+			auto name = std::max({ctx.erased_name, ctx.updated_name, ctx.inserted_name});
 			if (name.isEmpty()) break;
 
 			auto newctx = copy_context(ctx, std::move(newprefix));
@@ -774,6 +821,7 @@ namespace qtor
 		ctx.erased_count = ctx.removed_last - ctx.removed_first;
 
 		rearrange_children(page, ctx);
+		recalculate_page(page);
 	}
 
 	void FileTreeModel::rearrange_children(page_type & page, upsert_context & ctx)
@@ -899,6 +947,17 @@ namespace qtor
 		inverse_index_array(inverse_array, ifirst, ilast, offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
 		               inverse_array.begin(), inverse_array.end(), offset);
+	}
+
+	void FileTreeModel::recalculate_page(page_type & page)
+	{
+		constexpr size_type zero = 0;
+		auto & children = page.children.get<by_seq>();
+		auto first = children.begin();
+		auto last  = children.end();
+		
+		page.total_size = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_total_size(item); });
+		page.have_size = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item); });
 	}
 
 	void FileTreeModel::update_data(const signal_range_type & erased, const signal_range_type & updated, const signal_range_type & inserted)

@@ -352,24 +352,25 @@ namespace qtor
 		m_treeView = new QTreeView(this);
 		m_treeView->setSortingEnabled(true);
 		m_treeView->setAlternatingRowColors(true);
+		m_treeView->setUniformRowHeights(true);
+		m_treeView->setAnimated(true);
 		m_treeView->setTabKeyNavigation(false);
-
-		m_treeView->header()->setSortIndicator(-1, Qt::AscendingOrder);
-		//m_treeView->header()->setSectionsMovable(true);
-		m_treeView->header()->setContextMenuPolicy(Qt::CustomContextMenu);
-		m_treeView->header()->setDefaultAlignment(Qt::AlignLeft);
-		//m_treeView->header()->setTextElideMode(Qt::ElideRight);
-
-		m_treeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-		m_treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
-		m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-
-		m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);
 
 		auto * vertHeader = m_treeView->header();
 		//vertHeader->setDefaultSectionSize(QtTools::CalculateDefaultRowHeight(m_treeView));
-		vertHeader->setDefaultSectionSize(21);
-		vertHeader->hide();		
+		vertHeader->setDefaultSectionSize(21);		
+
+		vertHeader->setSortIndicator(-1, Qt::AscendingOrder);
+		//vertHeader->setSectionsMovable(true);
+		vertHeader->setContextMenuPolicy(Qt::CustomContextMenu);
+		vertHeader->setDefaultAlignment(Qt::AlignLeft);
+		//vertHeader->setTextElideMode(Qt::ElideRight);
+
+		m_treeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+		m_treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+		m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);		
+
+		m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);		
 
 		m_verticalLayout->addWidget(m_rowFilter);
 		m_verticalLayout->addWidget(m_treeView);
