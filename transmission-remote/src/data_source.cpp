@@ -11,9 +11,9 @@ namespace transmission
 	void data_source::emit_signal(event_sig & sig, event_type ev)
 	{
 		if (not m_queue)
-			m_queue->Add([&sig, ev] { sig(ev); });
-		else
 			sig(ev);
+		else
+			m_queue->Add([&sig, ev] { sig(ev); });
 	}
 
 	void data_source::set_address(std::string addr)
