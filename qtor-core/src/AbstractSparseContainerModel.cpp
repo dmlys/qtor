@@ -3,11 +3,11 @@
 
 namespace qtor
 {
-	int AbstractSparseContainerModel::FindColumn(unsigned name) const
+	int AbstractSparseContainerModel::FindColumn(unsigned id) const
 	{
 		auto first = m_columns.begin();
 		auto last = m_columns.end();
-		auto it = std::find(first, last, name);
+		auto it = std::find(first, last, id);
 
 		return it == last ? -1 : it - first;
 	}

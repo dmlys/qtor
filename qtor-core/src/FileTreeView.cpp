@@ -29,7 +29,7 @@ namespace qtor
 
 		if (m_model)
 		{
-			m_model->FilterBy(m_filterString);
+			m_model->SetFilter(m_filterString);
 			m_treeView->viewport()->update();
 		}
 	}

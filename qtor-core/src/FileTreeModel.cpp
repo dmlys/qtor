@@ -83,10 +83,10 @@ namespace qtor
 		return viewed::pv_visit(*this, val);
 	}
 
-	int FileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
-	{
-		return 4;
-	}
+	//int FileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
+	//{
+	//	return 4;
+	//}
 
 	int FileTreeModel::rowCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
@@ -139,42 +139,81 @@ namespace qtor
 		}
 	}
 
-	QVariant FileTreeModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const
+	QVariant FileTreeModel::GetItem(const QModelIndex & idx) const
 	{
-		if (not index.isValid()) 
-			return {};
-
-		if (role != Qt::DisplayRole and role != Qt::ToolTipRole)
-			return {};
-
-		const auto & val = get_element_ptr(index);
-		switch (index.column())
-		{
-			case 0:  return get_name(val);
-			case 1:  return get_total_size(val);
-			case 2:  return get_have_size(val);
-			case 3:  return get_wanted(val);
-
-			default: return {};
-		}
-
+		return GetValueShort(idx);
 	}
 
-	QVariant FileTreeModel::headerData(int section, Qt::Orientation orientation, int role /* = Qt::DisplayRole */) const
+	QString FileTreeModel::GetValue(const QModelIndex & idx) const
 	{
-		if (orientation != Qt::Horizontal or role != Qt::DisplayRole)
-			return {};
-		
-		switch (section)
-		{
-			case 0:  return QStringLiteral("fname");
-			case 1:  return QStringLiteral("total size");
-			case 2:  return QStringLiteral("have size");
-			case 3:  return QStringLiteral("wanted");
+		auto & val = get_element_ptr(idx);
+		auto col = idx.column();
 
-			default: return {};
+		switch (col)
+		{
+			case torrent_file::FileName:  return m_fmt->format_string(get_name(val));
+			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
+			case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
+			case torrent_file::Index:     return QStringLiteral("<null>");
+			case torrent_file::Priority:  return QStringLiteral("<null>");
+			case torrent_file::Wanted:    return QStringLiteral("<null>");
+			default:                      return QStringLiteral("<null>");
 		}
 	}
+
+	QString FileTreeModel::GetValueShort(const QModelIndex & idx) const
+	{
+		auto & val = get_element_ptr(idx);
+		auto col = idx.column();
+
+		switch (col)
+		{
+			case torrent_file::FileName:  return m_fmt->format_short_string(get_name(val));
+			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
+			case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
+			case torrent_file::Index:     return QStringLiteral("<null>");
+			case torrent_file::Priority:  return QStringLiteral("<null>");
+			case torrent_file::Wanted:    return QStringLiteral("<null>");
+			default:                      return QStringLiteral("<null>");
+		}
+	}
+
+	//QVariant FileTreeModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const
+	//{
+	//	if (not index.isValid()) 
+	//		return {};
+
+	//	if (role != Qt::DisplayRole and role != Qt::ToolTipRole)
+	//		return {};
+
+	//	const auto & val = get_element_ptr(index);
+	//	switch (index.column())
+	//	{
+	//		case 0:  return get_name(val);
+	//		case 1:  return get_total_size(val);
+	//		case 2:  return get_have_size(val);
+	//		case 3:  return get_wanted(val);
+
+	//		default: return {};
+	//	}
+
+	//}
+
+	//QVariant FileTreeModel::headerData(int section, Qt::Orientation orientation, int role /* = Qt::DisplayRole */) const
+	//{
+	//	if (orientation != Qt::Horizontal or role != Qt::DisplayRole)
+	//		return {};
+	//	
+	//	switch (section)
+	//	{
+	//		case 0:  return QStringLiteral("fname");
+	//		case 1:  return QStringLiteral("total size");
+	//		case 2:  return QStringLiteral("have size");
+	//		case 3:  return QStringLiteral("wanted");
+
+	//		default: return {};
+	//	}
+	//}
 
 	auto FileTreeModel::get_model() -> model_type *
 	{
@@ -1021,6 +1060,11 @@ namespace qtor
 		endResetModel();
 	}
 
+	void FileTreeModel::SortBy(int column, Qt::SortOrder order)
+	{
+		//sort_and_notify();
+	}
+
 	void FileTreeModel::FilterBy(QString expr)
 	{
 		auto rtype = m_tfilt.set_expr(expr);
@@ -1044,5 +1088,7 @@ namespace qtor
 		: base_type(parent), m_owner(std::move(store))
 	{
 		init();
+		InitColumns();
+		m_fmt = new formatter(this);
 	}
 }

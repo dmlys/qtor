@@ -2,6 +2,7 @@
 #include <QtCore/QString>
 #include <QtCore/QAbstractItemModel>
 
+#include <qtor/torrent.hpp>
 #include <qtor/formatter.hqt>
 
 namespace qtor
@@ -14,17 +15,49 @@ namespace qtor
 		using self_type = AbstractFileTreeModel;
 		using base_type = QAbstractItemModel;
 
-	public:
-		static constexpr int FNAME = 0;
-		static constexpr int TOTAL_SIZE = 1;
-		static constexpr int HAVE_SIZE = 1;
-
 	protected:
-		static const QStringList m_columnNames;
+		QStringList m_columnNames;
+		const formatter * m_fmt;
 
 		QString m_filterStr;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
 		int m_sortColumn = -1;
 
+	protected:
+		virtual void FilterBy(QString expr) = 0;
+		virtual void SortBy(int column, Qt::SortOrder order) = 0;
+		virtual void InitColumns();
+
+	public:
+		auto GetFormatter() const noexcept { return m_fmt; }
+
+		virtual int FindColumn(unsigned id) const;
+		virtual QString FieldName(int section) const;
+
+		virtual QVariant GetItem(const QModelIndex & idx)  const = 0;
+		virtual QString GetValue(const QModelIndex & idx)  const = 0;
+		virtual QString GetValueShort(const QModelIndex & idx) const = 0;
+
+		void SetFilter(QString expr);
+		auto GetFilter() const noexcept { return m_filterStr; }
+
+		void SetSorting(int column, Qt::SortOrder order = Qt::AscendingOrder) { sort(column, order); }
+		auto GetSorting() const noexcept { return std::make_pair(m_sortColumn, m_sortOrder); }
+
+	public:
+		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
+		int columnCount(const QModelIndex & parent = QModelIndex()) const override;
+		void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) final override;
+
+		// some default implementations with help of GetValueShort / GetFieldName / others
+		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+
+	Q_SIGNALS:
+		void SortingChanged(int column, Qt::SortOrder order);
+		void FilterChanged(QString expr);
+
+	public:
+		using base_type::base_type;
 	};
 }

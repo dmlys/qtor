@@ -31,7 +31,7 @@ namespace qtor
 	public:
 		auto GetMeta() const noexcept { return m_meta; }
 
-		virtual int FindColumn(unsigned name) const;
+		virtual int FindColumn(unsigned id) const;
 		virtual QString FieldName(int section) const;
 		virtual QString GetValue(int row, int column) const;
 		virtual QString GetValueShort(int row, int column) const;

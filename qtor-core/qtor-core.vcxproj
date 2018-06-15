@@ -53,6 +53,7 @@
     <ClInclude Include="include\qtor\view_manager.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AbstractFileTreeModel.cpp" />
     <ClCompile Include="src\FileTreeView.cpp" />
     <ClCompile Include="src\AbstractSparseContainerModel.cpp" />
     <ClCompile Include="src\FileTreeModel.cpp" />
@@ -75,6 +76,7 @@
     <ClCompile Include="src\view_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <QtMOCCompile Include="include\qtor\AbstractFileTreeModel.hqt" />
     <QtMOCCompile Include="include\qtor\AbstractSparseContainerModel.hqt" />
     <QtMOCCompile Include="include\qtor\FileTreeModel.hqt" />
     <QtMOCCompile Include="include\qtor\FileTreeView.hqt" />

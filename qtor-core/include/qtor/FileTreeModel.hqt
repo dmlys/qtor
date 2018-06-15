@@ -6,15 +6,13 @@
 #include <qtor/torrent.hpp>
 #include <qtor/torrent_file_store.hpp>
 #include <qtor/pointer_variant.hpp>
+#include <qtor/AbstractFileTreeModel.hqt>
 
 #include <viewed/algorithm.hpp>
 #include <viewed/refilter_type.hpp>
 #include <viewed/indirect_functor.hpp>
 #include <viewed/sfview_qtbase.hpp>
 #include <viewed/qt_model.hpp>
-
-#include <QtCore/QString>
-#include <QtCore/QAbstractItemModel>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -38,10 +36,10 @@ namespace qtor
 	};
 
 
-	class FileTreeModel : public QAbstractItemModel
+	class FileTreeModel : public AbstractFileTreeModel
 	{
 		using self_type = FileTreeModel;
-		using base_type = QAbstractItemModel;
+		using base_type = AbstractFileTreeModel;
 
 	public:
 		using container_type = torrent_file_store;
@@ -267,7 +265,7 @@ namespace qtor
 
 	protected:
 		std::shared_ptr<container_type> m_owner = nullptr; // pointer to owning container
-		page_type m_root; //= { /*.parent =*/ nullptr};		
+		page_type m_root; //= { /*.parent =*/ nullptr};
 
 		dirs_first_sorter m_sorter;
 		test_filter m_filter;
@@ -422,18 +420,23 @@ namespace qtor
 		const value_ptr & get_element_ptr(const QModelIndex & index) const;
 		QModelIndex createIndex(int row, int column, page_type * ptr) const { return base_type::createIndex(row, column, ptr); }
 
+	protected:
+		virtual void SortBy(int column, Qt::SortOrder order) override;
+		virtual void FilterBy(QString expr) override;
+
 	public:
 		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
-		virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
+		//virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
 		virtual QModelIndex parent(const QModelIndex & index) const override;
 		virtual QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const override;
 
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
-		virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-		virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-
-	public:
-		virtual void FilterBy(QString expr);
+		//virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+		//virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+		
+		virtual QVariant GetItem(const QModelIndex & idx)  const override;
+		virtual QString  GetValue(const QModelIndex & idx)  const override;
+		virtual QString  GetValueShort(const QModelIndex & idx) const override;
 
 	public:
 		FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);

@@ -23,6 +23,78 @@ namespace qtor
 		constexpr unsigned seeding_queued = 6;
 	}
 
+	class  torrent;
+	struct torrent_file;
+	struct torrent_peer;
+
+	struct tracker_stat;
+	struct session_stat;
+
+	using torrent_id_type = string_type;
+	using torrent_id_list = std::vector<torrent_id_type>;
+	using torrent_list = std::vector<torrent>;
+
+	using torrent_peer_list = std::vector<torrent_peer>;
+	using torrent_file_list = std::vector<torrent_file>;
+	using tracker_list = std::vector<tracker_stat>;
+
+
+
+	/************************************************************************/
+	/*                   torrent_file                                       */
+	/************************************************************************/
+	struct torrent_file
+	{
+		enum : unsigned
+		{
+			FileName,
+			TotalSize,
+			HaveSize,
+			Index,
+			Priority,
+			Wanted,
+
+			FirstField = FileName,
+			LastField = Wanted,
+			FiledCount = LastField + 1,
+		};
+
+		filepath_type filename;
+		size_type     total_size;
+		size_type     have_size;
+		int_type      index;
+		int_type      priority;
+		bool          wanted;
+	};
+
+
+	struct torrent_file_id_hasher
+	{
+		auto operator()(const torrent_file & val) const noexcept
+		{
+			return std::hash<filepath_type>{} (val.filename);
+		}
+	};
+
+	struct torrent_file_id_equal
+	{
+		bool operator()(const torrent_file & f1, const torrent_file & f2) const noexcept
+		{
+			return f1.filename == f2.filename;
+		}
+	};
+
+	template <class relation_comparator>
+	struct torrent_file_id_comparator : relation_comparator
+	{
+		bool operator()(const torrent_file & f1, const torrent_file & f2) const noexcept
+		{
+			return relation_comparator::operator()(f1.filename, f2.filename);
+		}
+	};
+
+	using torrent_file_id_less    = torrent_file_id_comparator<std::less<>>;
+	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
 
 	//struct peer
 	//{
@@ -42,6 +114,12 @@ namespace qtor
 	//	speed_type rateToPeer;
 	//	double progress;
 	//};
+
+
+
+	/************************************************************************/
+	/*                       torrent                                        */
+	/************************************************************************/	
 
 #define QTOR_REQ 1
 #define QTOR_OPT 0
@@ -159,63 +237,6 @@ namespace qtor
 	}                                                                                                            \
 
 
-
-
-	class  torrent;
-	struct torrent_file;
-	struct torrent_peer;
-
-	struct tracker_stat;
-	struct session_stat;
-
-	using torrent_id_type = string_type;
-	using torrent_id_list = std::vector<torrent_id_type>;
-	using torrent_list    = std::vector<torrent>;
-
-	using torrent_peer_list = std::vector<torrent_peer>;
-	using torrent_file_list = std::vector<torrent_file>;
-	using tracker_list = std::vector<tracker_stat>;
-
-
-
-	struct torrent_file
-	{
-		filepath_type filename;
-		size_type     total_size;
-		size_type     have_size;
-		int_type      index;
-		int_type      priority;
-		bool          wanted;
-	};
-
-
-	struct torrent_file_id_hasher
-	{
-		auto operator()(const torrent_file & val) const noexcept
-		{
-			return std::hash<filepath_type>{} (val.filename);
-		}
-	};
-
-	struct torrent_file_id_equal
-	{
-		bool operator()(const torrent_file & f1, const torrent_file & f2) const noexcept
-		{
-			return f1.filename == f2.filename;
-		}
-	};
-
-	template <class relation_comparator>
-	struct torrent_file_id_comparator : relation_comparator
-	{
-		bool operator()(const torrent_file & f1, const torrent_file & f2) const noexcept
-		{
-			return relation_comparator::operator()(f1.filename, f2.filename);
-		}
-	};
-
-	using torrent_file_id_less    = torrent_file_id_comparator<std::less<>>;
-	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
 
 	class torrent : public sparse_container
 	{
