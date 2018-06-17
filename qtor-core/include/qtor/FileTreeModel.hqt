@@ -1,23 +1,9 @@
 #pragma once
-#include <variant>
-#include <vector>
-
 #include <qtor/types.hpp>
 #include <qtor/torrent.hpp>
 #include <qtor/torrent_file_store.hpp>
-#include <qtor/pointer_variant.hpp>
 #include <qtor/AbstractFileTreeModel.hqt>
-
-#include <viewed/algorithm.hpp>
-#include <viewed/refilter_type.hpp>
-#include <viewed/indirect_functor.hpp>
-#include <viewed/sfview_qtbase.hpp>
-#include <viewed/qt_model.hpp>
-
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/random_access_index.hpp>
-
+#include <qtor/sftree_view_qtbase.hpp>
 
 namespace qtor
 {
@@ -36,108 +22,57 @@ namespace qtor
 	};
 
 
-	class FileTreeModel : public AbstractFileTreeModel
+	struct FileTreeModelTraits
 	{
-		using self_type = FileTreeModel;
-		using base_type = AbstractFileTreeModel;
-
-	public:
-		using container_type = torrent_file_store;
-
-	protected:
-		// store <-> view exchange
-		using torrent_file_ptr = container_type::view_pointer_type;
-		static_assert(std::is_pointer_v<torrent_file_ptr>);
-
-		using signal_range_type = typename container_type::signal_range_type;
-		using scoped_connection = typename container_type::scoped_connection;
-		using model_type = viewed::AbstractItemModel;
-
-		struct get_view_pointer_type
-		{
-			torrent_file_ptr operator()(const torrent_file & val) const noexcept { return container_type::get_view_pointer(val); }
-		};
-
-		struct get_view_reference_type
-		{
-			const torrent_file & operator()(torrent_file_ptr ptr) const noexcept { return container_type::get_view_reference(ptr); }
-		};
-
-	protected:
-		struct page_type;
+		using path_type = filepath_type;
+		using pathview_type = QStringRef;
 		using leaf_type = torrent_file;
-		using int_vector = std::vector<int>;
 
-		static constexpr std::uintptr_t PAGE = 0;
-		static constexpr std::uintptr_t LEAF = 1;
-
-		using value_ptr = viewed::pointer_variant<const page_type *, const leaf_type *>;
-
-		using leaf_ptr_vector = std::vector<const leaf_type *>;
-		using leaf_ptr_iterator = leaf_ptr_vector::iterator;
-
-		using value_ptr_vector = std::vector<const value_ptr *>;
-		using value_ptr_iterator = value_ptr_vector::iterator;
-
-		struct get_name_type
+		struct node_type
 		{
-			using result_type = filepath_type;
-			result_type operator()(const QString & name) const;
-			result_type operator()(const leaf_type & leaf) const;
-			result_type operator()(const page_type & page) const;
-			result_type operator()(const leaf_type * leaf) const;
-			result_type operator()(const page_type * page) const;
-			result_type operator()(const value_ptr & val)  const;
-		};
-
-		using value_container = boost::multi_index_container<
-			value_ptr, 
-			boost::multi_index::indexed_by<
-				boost::multi_index::hashed_unique<get_name_type>,
-				boost::multi_index::random_access<>
-			>
-		>;
-
-		static constexpr int by_code = 0;
-		static constexpr int by_seq  = 1;
-
-		using code_view_type = value_container::nth_index<by_code>::type;
-		using seq_view_type  = value_container::nth_index<by_seq>::type;
-
-		struct page_type
-		{
-			page_type *     parent  = nullptr;
-			std::size_t     upassed = 0;
-			value_container children;
-
 			filepath_type  name;
 			size_type      total_size;
 			size_type      have_size;
 			Qt::CheckState wanted;
 		};
 
-		struct get_children_type
+		struct get_segment_type
 		{
-			using result_type = const value_container &;
-			result_type operator()(const leaf_type & leaf) const { return ms_empty_container; }
-			result_type operator()(const page_type & page) const { return page.children; }
-			result_type operator()(const value_ptr & val)  const { return viewed::pv_visit(*this, val); }
+			using result_type = filepath_type;
+			result_type operator()(const path_type & name) const;
+			result_type operator()(const leaf_type & leaf) const;
+			result_type operator()(const node_type & page) const;
+		};		
 
-			template <class Type>
-			result_type operator()(const Type * ptr) const { return operator()(*ptr); }
+		struct dirs_first_sorter
+		{
+			bool operator()(const node_type & p1, const node_type & p2) const noexcept { return get_segment(p1) < get_segment(p2); }
+			bool operator()(const node_type & p1, const leaf_type & l2) const noexcept { return true; }
+			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return get_segment(l1) < get_segment(l2); }
+			bool operator()(const leaf_type & l1, const node_type & p2) const noexcept { return false; }
 		};
 
-		struct get_children_count_type
+		struct test_filter
 		{
-			using result_type = std::size_t;
-			result_type operator()(const leaf_type & leaf) const { return 0; }
-			result_type operator()(const page_type & page) const { return page.upassed; }
-			result_type operator()(const value_ptr & val)  const { return viewed::pv_visit(*this, val); }
-
-			template <class Type>
-			result_type operator()(const Type * ptr) const { return operator()(*ptr); }
+			bool operator()(const leaf_type & l) const noexcept { return m_tfilt(get_segment(l)); }
+			bool operator()(const node_type & p) const noexcept { return m_tfilt(get_segment(p)); }
+			explicit operator bool() const noexcept { return static_cast<bool>(m_tfilt); }
 		};
 
+		using sort_pred_type = dirs_first_sorter;
+		using filter_pred_type = test_filter;
+
+		static constexpr get_segment_type get_segment {};
+		static SimpleTextFilter m_tfilt;
+	};
+
+	class FileTreeModel : public viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>
+	{
+		using self_type = FileTreeModel;
+		using base_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
+		using view_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
+
+	protected:
 		struct get_total_size_type
 		{
 			template <class Type>
@@ -159,101 +94,8 @@ namespace qtor
 			Qt::CheckState operator()(const value_ptr & item) const { return viewed::pv_visit(*this, item); }
 		};
 
-		struct upsert_context
-		{
-			signal_range_type::iterator
-				inserted_first, inserted_last,
-				updated_first,  updated_last,
-				erased_first,   erased_last;
-
-			int_vector::iterator
-				removed_first, removed_last, // share same array, append by incrementing removed_last
-				changed_first, changed_last; //                   append by decrementing changed_first
-			
-			std::ptrdiff_t inserted_diff, updated_diff, erased_diff;
-			std::size_t inserted_count, updated_count, erased_count;
-
-			QStringRef prefix;
-			QStringRef inserted_prefix, updated_prefix, erased_prefix;
-			QString inserted_name, updated_name, erased_name;
-
-			value_ptr_vector * vptr_array;
-			int_vector * index_array, * inverse_array;
-			QModelIndexList::const_iterator model_index_first, model_index_last;
-		};
-
-		struct reinit_context
-		{
-			leaf_ptr_iterator first, last;
-			QStringRef prefix;
-			value_ptr_vector * vptr_array;
-		};
-
-		struct resort_context
-		{
-			value_ptr_vector * vptr_array;
-			int_vector * index_array, * inverse_array;
-			QModelIndexList::const_iterator model_index_first, model_index_last;
-		};
-
-		struct refilter_context
-		{
-			value_ptr_vector * vptr_array;
-			int_vector * index_array, * inverse_array;
-			QModelIndexList::const_iterator model_index_first, model_index_last;
-		};
-
-
-		template <class Pred>
-		struct value_ptr_filter_type
-		{
-			using indirect_type = typename viewed::make_indirect_pred_type<Pred>::type;
-			indirect_type pred;
-
-			value_ptr_filter_type(Pred pred)
-				: pred(viewed::make_indirect_fun(std::move(pred))) {}
-
-			auto operator()(const value_ptr & v) const
-			{
-				return get_children_count(v) > 0 or viewed::pv_visit(pred, v);
-			}			
-		};
-
-		template <class Pred>
-		struct value_ptr_sorter_type
-		{
-			using indirect_type = typename viewed::make_indirect_pred_type<Pred>::type;
-			indirect_type pred;
-
-			value_ptr_sorter_type(Pred pred)
-				: pred(viewed::make_indirect_fun(std::move(pred))) {}
-
-			auto operator()(const value_ptr & v1, const value_ptr & v2) const
-			{
-				return viewed::pv_visit(pred, v1, v2);
-			}
-		};
-
-		struct dirs_first_sorter
-		{
-			bool operator()(const page_type & p1, const page_type & p2) const noexcept { return get_name(p1) < get_name(p2); }
-			bool operator()(const page_type & p1, const leaf_type & l2) const noexcept { return true; }
-			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return get_name(l1) <  get_name(l2); }
-			bool operator()(const leaf_type & l1, const page_type & p2) const noexcept { return false; }
-		};
-
-		struct test_filter
-		{
-			bool operator()(const leaf_type & l) const noexcept { return m_tfilt(get_name(l)); }
-			bool operator()(const page_type & p) const noexcept { return m_tfilt(get_name(p)); }
-			explicit operator bool() const noexcept { return static_cast<bool>(m_tfilt); }
-		};
-
 	protected:
-		static constexpr get_view_pointer_type   get_view_pointer {};
-		static constexpr get_view_reference_type get_view_reference {};
-
-		static constexpr get_name_type           get_name {};
+		//static constexpr get_segment_type           get_path {};
 		static constexpr get_total_size_type     get_total_size {};
 		static constexpr get_have_size_type      get_have_size {};
 		static constexpr get_wanted_type         get_wanted {};
@@ -261,175 +103,17 @@ namespace qtor
 		static constexpr get_children_count_type get_children_count {};
 
 	protected:
-		static const value_container ms_empty_container;
+		bool is_subelement(const pathview_type & prefix, const path_type & name, const torrent_file & item) override;
+		auto analyze(const pathview_type & prefix, const leaf_type & item)
+			-> std::tuple<std::uintptr_t, path_type, pathview_type> override;
 
-	protected:
-		std::shared_ptr<container_type> m_owner = nullptr; // pointer to owning container
-		page_type m_root; //= { /*.parent =*/ nullptr};
-
-		dirs_first_sorter m_sorter;
-		test_filter m_filter;
-		static SimpleTextFilter m_tfilt;
-		//viewed::null_filter m_filter;
-
-		/// raii connections
-		scoped_connection m_clear_con;
-		scoped_connection m_update_con;
-		scoped_connection m_erase_con;
-
-	protected:
-		template <class Functor>
-		static void for_each_child(page_type & page, Functor && func);
-
-	protected:
-		static auto analyze(const QStringRef & prefix, const torrent_file & item)
-			-> std::tuple<std::uintptr_t, QString, QStringRef>;
-
-		static bool is_subelement(const QStringRef & prefix, const QString & name, const torrent_file & item);
-		static auto copy_context(const upsert_context & ctx, QStringRef newprefix) -> upsert_context;
-
-		template <class RandomAccessIterator>
-		static void group_by_dirs(RandomAccessIterator first, RandomAccessIterator last);
-		
-		virtual auto process_erased(page_type & page, upsert_context & ctx) -> std::tuple<QString &, QStringRef &>;
-		virtual auto process_updated(page_type & page, upsert_context & ctx) -> std::tuple<QString &, QStringRef &>;
-		virtual auto process_inserted(page_type & page, upsert_context & ctx) -> std::tuple<QString &, QStringRef &>;
-		virtual void rearrange_children(page_type & page, upsert_context & ctx);
-		virtual void update_page(page_type & page, upsert_context & ctx);
-		virtual void recalculate_page(page_type & page);
-
-		virtual void reinit_view(page_type & page, reinit_context & ctx);
-
-	protected:
-		/// acquires pointer to qt model, normally you would inherit both QAbstractItemModel and this class.
-		/// default implementation uses dynamic_cast
-		virtual model_type * get_model();
-		/// emits qt signal model->dataChanged about changed rows. Changred rows are defined by [first; last)
-		/// default implantation just calls get_model->dataChanged(index(row, 0), inex(row, model->columnCount)
-		virtual void emit_changed(int_vector::const_iterator first, int_vector::const_iterator last);
-		/// changes persistent indexes via get_model->changePersistentIndex.
-		/// [first; last) - range where range[oldIdx - offset] => newIdx.
-		/// if newIdx < 0 - index should be removed(changed on invalid, qt supports it)
-		virtual void change_indexes(page_type & page, QModelIndexList::const_iterator model_index_first, QModelIndexList::const_iterator model_index_last,
-		                            int_vector::const_iterator first, int_vector::const_iterator last, int offset);
-		/// inverses index array in following way:
-		/// inverse[arr[i] - offset] = i for first..last.
-		/// This is for when you have array of arr[new_index] => old_index,
-		/// but need arr[old_index] => new_idx for qt changePersistentIndex
-		void inverse_index_array(int_vector & inverse, int_vector::iterator first, int_vector::iterator last, int offset);
-
-	protected:
-		/// container event handlers, those are called on container signals,
-		/// you could reimplement them to provide proper handling of your view
-		
-		/// called when new data is updated in owning container
-		/// view have to synchronize itself.
-		/// @Param erased range of pointers to erased records
-		/// @Param updated range of pointers to updated records
-		/// @Param inserted range of pointers to inserted
-		/// 
-		/// default implementation removes erased, appends inserted records, and does nothing with updated
-		virtual void update_data(
-			const signal_range_type & erased,
-			const signal_range_type & updated,
-			const signal_range_type & inserted);
-
-		/// called when some records are erased from container
-		/// view have to synchronize itself.
-		/// @Param erased range of pointers to updated records
-		/// 
-		/// default implementation, erases those records from main store
-		virtual void erase_records(const signal_range_type & erased);
-
-		/// called when container is cleared, clears m_store.
-		virtual void clear_view();
-		
-		/// connects container signals to appropriate handlers
-		virtual void connect_signals();
-
-	protected:
-		/// adjusts view with erased/updated/inserted data, preserving filter/sort order. stable,
-		/// new and updated should already be appended to m_store in order: current data..., updated..., inserted...].
-		/// emits appropriate qt signals, uses merge_newdata(iter..., iter..., ...) to calculate index permutations.
-		//virtual void update_store(
-		//	store_iterator first, store_iterator first_updated,
-		//	store_iterator first_inserted, store_iterator last,
-		//	signal_const_iterator first_erased, signal_const_iterator last_erased);
-
-		/// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
-		/// first, middle, last - is are one range, as in std::inplace_merge
-		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
-		virtual void merge_newdata(
-			value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
-			bool resort_old = true);
-		
-		/// merges m_store's [middle, last) into [first, last) according to m_sort_pred. stable.
-		/// first, middle, last - is are one range, as in std::inplace_merge
-		/// if resort_old is true it also resorts [first, middle), otherwise it's assumed it's sorted
-		/// 
-		/// range [ifirst, imiddle, ilast) must be permuted the same way as range [first, middle, last)
-		virtual void merge_newdata(
-			value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
-			int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast,
-			bool resort_old = true);
-		
-		///// sorts m_store's [first; last) with m_sort_pred, stable sort
-		virtual void stable_sort(value_ptr_iterator first, value_ptr_iterator last);
-		///// sorts m_store's [first; last) with m_sort_pred, stable sort
-		///// range [ifirst; ilast) must be permuted the same way as range [first; last)
-		virtual void stable_sort(value_ptr_iterator first, value_ptr_iterator last,
-		                         int_vector::iterator ifirst, int_vector::iterator ilast);
-
-		/// sorts m_store's [first; last) with m_sort_pred, stable sort
-		/// emits qt layoutAboutToBeChanged(..., VerticalSortHint), layoutUpdated(..., VerticalSortHint)
-		virtual void sort_and_notify();
-		virtual void sort_and_notify(page_type & page, resort_context & ctx);
-
-		/// refilters m_store with m_filter_pred according to rtype:
-		/// * same        - does nothing and immediately returns(does not emit any qt signals)
-		/// * incremental - calls refilter_full_and_notify
-		/// * full        - calls refilter_incremental_and_notify
-		virtual void refilter_and_notify(viewed::refilter_type rtype);
-		/// removes elements not passing m_filter_pred from m_store
-		/// emits qt layoutAboutToBeChanged(..., NoLayoutChangeHint), layoutUpdated(..., NoLayoutChangeHint)
-		virtual void refilter_incremental_and_notify();
-		virtual void refilter_incremental_and_notify(page_type & page, refilter_context & ctx);
-		/// fills m_store from owner with values passing m_filter_pred and sorts them according to m_sort_pred
-		/// emits qt layoutAboutToBeChanged(..., NoLayoutChangeHint), layoutUpdated(..., NoLayoutChangeHint)
-		virtual void refilter_full_and_notify();
-		virtual void refilter_full_and_notify(page_type & page, refilter_context & ctx);
-
-	public:
-		/// returns pointer to owning container
-		const auto & get_owner() const noexcept { return m_owner; }
-
-		/// reinitializes view
-		/// default implementation just copies from owner
-		virtual void reinit_view();
-
-		/// normally should not be called outside of view class.
-		/// Provided, when view class used directly without inheritance, to complete initialization.
-		/// Calls connects signals and calls reinit_view.
-		/// 
-		/// Derived views probably will automatically call it constructor
-		/// or directly connect_signals/reinit_view
-		virtual void init();
-
-	protected:
-		page_type * get_page(const QModelIndex & index) const;
-		const value_ptr & get_element_ptr(const QModelIndex & index) const;
-		QModelIndex createIndex(int row, int column, page_type * ptr) const { return base_type::createIndex(row, column, ptr); }
+		void recalculate_page(page_type & page) override;
 
 	protected:
 		virtual void SortBy(int column, Qt::SortOrder order) override;
 		virtual void FilterBy(QString expr) override;
 
 	public:
-		virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
-		//virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
-		virtual QModelIndex parent(const QModelIndex & index) const override;
-		virtual QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const override;
-
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
 		//virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 		//virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
@@ -441,19 +125,4 @@ namespace qtor
 	public:
 		FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);
 	};
-
-
-
-	template <class Functor>
-	void FileTreeModel::for_each_child(page_type & page, Functor && func)
-	{
-		for (auto & child : page.children)
-		{
-			if (child.index() == PAGE)
-			{
-				auto * child_page = static_cast<page_type *>(child.pointer());
-				std::forward<Functor>(func)(*child_page);
-			}
-		}
-	}
 }
