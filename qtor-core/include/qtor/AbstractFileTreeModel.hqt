@@ -1,4 +1,5 @@
 #pragma once
+#include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtCore/QAbstractItemModel>
 
@@ -16,7 +17,15 @@ namespace qtor
 		using base_type = QAbstractItemModel;
 
 	protected:
-		QStringList m_columnNames;
+		struct meta_item
+		{
+			QString fieldName;
+			int columnSizeHint;
+		};
+
+	protected:
+		std::vector<unsigned> m_columns;
+		std::unordered_map<unsigned, meta_item> m_columnMeta;
 		const formatter * m_fmt;
 
 		QString m_filterStr;
@@ -33,9 +42,10 @@ namespace qtor
 
 		virtual int FindColumn(unsigned id) const;
 		virtual QString FieldName(int section) const;
+		virtual int ColumnSizeHint(int section) const;
 
-		virtual QVariant GetItem(const QModelIndex & idx)  const = 0;
-		virtual QString GetValue(const QModelIndex & idx)  const = 0;
+		virtual QVariant GetItem(const QModelIndex & idx) const = 0;
+		virtual QString GetValue(const QModelIndex & idx) const = 0;
 		virtual QString GetValueShort(const QModelIndex & idx) const = 0;
 
 		void SetFilter(QString expr);

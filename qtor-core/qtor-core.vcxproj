@@ -42,6 +42,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\qtor\abstract_data_source.hpp" />
+    <ClInclude Include="include\qtor\listitem_tree_facade.hpp" />
+    <ClInclude Include="include\qtor\listitem_tree_view.hpp" />
     <ClInclude Include="include\qtor\sftree_view_qtbase.hpp" />
     <ClInclude Include="include\qtor\sftree_facade_qtbase.hpp" />
     <ClInclude Include="include\qtor\pointer_variant.hpp" />

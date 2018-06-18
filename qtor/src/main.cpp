@@ -142,13 +142,13 @@ int main(int argc, char * argv[])
 	std::vector<torrent_file> paths, paths2;
 	paths.assign({
 		{ QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
-		{ QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100},
-		{ QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100},
-		{ QStringLiteral("dir/file.txt"),     100 * 100, 20 * 100},
-		{ QStringLiteral("ops.sh"),           100 * 100, 20 * 100},
-		{ QStringLiteral("westworld.mkv"),    100 * 100, 20 * 100},
-		{ QStringLiteral("folder/sup/file3.txt"), 100 * 100, 20 * 100},
-		{ QStringLiteral("folder/sup/inner/file.txt"), 100 * 100, 20 * 100},
+		{ QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100 },
+		{ QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100 },
+		{ QStringLiteral("dir/file.txt"),     100 * 100, 20 * 100 },
+		{ QStringLiteral("ops.sh"),           100 * 100, 20 * 100 },
+		{ QStringLiteral("westworld.mkv"),    100 * 100, 20 * 100 },
+		{ QStringLiteral("folder/sup/file3.txt"), 100 * 100, 20 * 100 },
+		{ QStringLiteral("folder/sup/inner/file.txt"), 100 * 100, 20 * 100 },
 	});
 
 	paths2 = paths;

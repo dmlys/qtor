@@ -4,18 +4,27 @@ namespace qtor
 {
 	void AbstractFileTreeModel::InitColumns()
 	{
-		m_columnNames.clear();
-		m_columnNames 
-			<< tr("fname")
-			<< tr("total size")
-			<< tr("have size")
-			<< tr("wanted");
+		m_columnMeta = 
+		{
+			{torrent_file::FileName,  {QStringLiteral("fname"), 400} },
+			{torrent_file::TotalSize, {QStringLiteral("fname"), 400} },
+			{torrent_file::HaveSize,  {QStringLiteral("fname"), 400} },
+			{torrent_file::Index,     {QStringLiteral("fname"), 400} },
+			{torrent_file::Priority,  {QStringLiteral("fname"), 400} },
+			{torrent_file::Wanted,    {QStringLiteral("fname"), 400} },
+		};
+
+		m_columns.assign({
+			torrent_file::FileName,
+			torrent_file::TotalSize,
+			torrent_file::HaveSize
+		});
 	}
 
 	int AbstractFileTreeModel::FindColumn(unsigned id) const
 	{
-		auto first = m_columnNames.begin();
-		auto last = m_columnNames.end();
+		auto first = m_columns.begin();
+		auto last = m_columns.end();
 		auto it = std::find(first, last, id);
 
 		return it == last ? -1 : it - first;
@@ -23,15 +32,23 @@ namespace qtor
 
 	QString AbstractFileTreeModel::FieldName(int section) const
 	{
-		if (section >= m_columnNames.size())
+		if (section >= m_columns.size())
 			return QString::null;
 
-		return m_columnNames[section];
+		return m_columnMeta.at(m_columns[section]).fieldName;
+	}
+
+	int AbstractFileTreeModel::ColumnSizeHint(int section) const
+	{
+		if (section >= m_columns.size())
+			return -1;
+
+		return m_columnMeta.at(m_columns[section]).columnSizeHint;
 	}
 
 	int AbstractFileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
-		return torrent_file::FiledCount;
+		return qint(m_columns.size());
 	}
 
 	void AbstractFileTreeModel::SetFilter(QString expr)
@@ -51,10 +68,17 @@ namespace qtor
 
 	QVariant AbstractFileTreeModel::headerData(int section, Qt::Orientation orientation, int role /* = Qt::DisplayRole */) const
 	{
-		if (orientation != Qt::Horizontal or role != Qt::DisplayRole)
+		if (orientation != Qt::Horizontal)
 			return {};
 
-		return FieldName(section);
+		switch (role)
+		{
+			case Qt::DisplayRole:
+			case Qt::ToolTipRole:
+				return FieldName(section);
+
+			default: return {};
+		}
 	}
 
 	QVariant AbstractFileTreeModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const
@@ -62,9 +86,16 @@ namespace qtor
 		if (not index.isValid())
 			return {};
 
-		if (role != Qt::DisplayRole and role != Qt::ToolTipRole)
-			return {};
+		switch (role)
+		{
+			case Qt::DisplayRole:
+			case Qt::ToolTipRole:
+				return GetItem(index);
 
-		return GetItem(index);
+			//case Qt::SizeHintRole:
+			//	return QSize {ColumnSizeHint(index.column()), -1};
+
+			default: return {};
+		}
 	}
 }

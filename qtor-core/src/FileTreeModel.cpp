@@ -43,11 +43,6 @@ namespace qtor
 		return operator()(node.name);
 	}
 
-	//int FileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
-	//{
-	//	return 4;
-	//}
-
 	QVariant FileTreeModel::GetItem(const QModelIndex & idx) const
 	{
 		return GetValueShort(idx);
@@ -56,9 +51,9 @@ namespace qtor
 	QString FileTreeModel::GetValue(const QModelIndex & idx) const
 	{
 		auto & val = get_element_ptr(idx);
-		auto col = idx.column();
+		auto type = m_columns[idx.column()];
 
-		switch (col)
+		switch (type)
 		{
 			case torrent_file::FileName:  return m_fmt->format_string(get_segment(val));
 			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
@@ -73,9 +68,9 @@ namespace qtor
 	QString FileTreeModel::GetValueShort(const QModelIndex & idx) const
 	{
 		auto & val = get_element_ptr(idx);
-		auto col = idx.column();
+		auto type = m_columns[idx.column()];
 
-		switch (col)
+		switch (type)
 		{
 			case torrent_file::FileName:  return m_fmt->format_short_string(get_segment(val));
 			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));

@@ -42,7 +42,7 @@ namespace viewed
 	protected:
 		// being some typedefs/members from base class into visibility
 		using typename base_type::model_helper;
-		using typename base_type::int_vector;
+		using int_vector = typename base_type::int_vector;
 
 		using typename base_type::page_type;
 		using typename base_type::leaf_type;
@@ -79,7 +79,7 @@ namespace viewed
 		using base_type::m_filter;
 
 	protected:
-		using int_vector_iterator   = typename base_type::int_vector::iterator;
+		using int_vector_iterator   = typename int_vector::iterator;
 		using signal_range_iterator = typename signal_range_type::iterator;
 
 		struct upsert_context
