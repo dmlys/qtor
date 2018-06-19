@@ -62,9 +62,11 @@ namespace qtor
 		using sort_pred_type = dirs_first_sorter;
 		using filter_pred_type = test_filter;
 
+		static void set_segment(node_type & node, path_type && path) { node.name = std::move(path); }
 		static constexpr get_segment_type get_segment {};
 		static SimpleTextFilter m_tfilt;
 	};
+
 
 	class FileTreeModel : public viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>
 	{

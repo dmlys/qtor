@@ -12,6 +12,7 @@ namespace viewed
 	{
 		using self_type = sftree_view_qtbase;
 		using base_type = sftree_facade_qtbase<Traits, ModelBase>;
+		using traits_type = Traits;
 
 	public:
 		using container_type = Container;
@@ -82,7 +83,7 @@ namespace viewed
 		using int_vector_iterator   = typename int_vector::iterator;
 		using signal_range_iterator = typename signal_range_type::iterator;
 
-		struct upsert_context
+		struct update_context
 		{
 			signal_range_iterator
 				inserted_first, inserted_last,
@@ -105,7 +106,7 @@ namespace viewed
 			QModelIndexList::const_iterator model_index_first, model_index_last;
 		};
 
-		struct reinit_context
+		struct reset_context
 		{
 			leaf_ptr_iterator first, last;
 			pathview_type prefix;
@@ -138,16 +139,16 @@ namespace viewed
 		using base_type::stable_sort;
 
 	protected:
-		static upsert_context copy_context(const upsert_context & ctx, pathview_type newprefix);
+		static update_context copy_context(const update_context & ctx, pathview_type newprefix);
 
-		virtual auto process_erased(page_type & page, upsert_context & ctx)->std::tuple<path_type &, pathview_type &>;
-		virtual auto process_updated(page_type & page, upsert_context & ctx)->std::tuple<path_type &, pathview_type &>;
-		virtual auto process_inserted(page_type & page, upsert_context & ctx)->std::tuple<path_type &, pathview_type &>;
-		virtual void rearrange_children(page_type & page, upsert_context & ctx);
-		virtual void update_page(page_type & page, upsert_context & ctx);
+		virtual auto process_erased(page_type & page, update_context & ctx)->std::tuple<path_type &, pathview_type &>;
+		virtual auto process_updated(page_type & page, update_context & ctx)->std::tuple<path_type &, pathview_type &>;
+		virtual auto process_inserted(page_type & page, update_context & ctx)->std::tuple<path_type &, pathview_type &>;
+		virtual void rearrange_children(page_type & page, update_context & ctx);
+		virtual void update_page(page_type & page, update_context & ctx);
 		virtual void recalculate_page(page_type & page) = 0;
 
-		virtual void reinit_view(page_type & page, reinit_context & ctx);
+		virtual void reinit_view(page_type & page, reset_context & ctx);
 
 	protected:
 		/// container event handlers, those are called on container signals,
@@ -202,12 +203,12 @@ namespace viewed
 	};
 
 	/************************************************************************/
-	/*              upsert method implementation                            */
+	/*              update method implementation                            */
 	/************************************************************************/
 	template <class Traits, class Container, class ModelBase>
-	auto sftree_view_qtbase<Traits, Container, ModelBase>::copy_context(const upsert_context & ctx, pathview_type newprefix) -> upsert_context
+	auto sftree_view_qtbase<Traits, Container, ModelBase>::copy_context(const update_context & ctx, pathview_type newprefix) -> update_context
 	{
-		upsert_context newctx;
+		update_context newctx;
 		newctx.inserted_first = ctx.inserted_first;
 		newctx.inserted_last = ctx.inserted_last;
 		newctx.updated_first = ctx.updated_first;
@@ -231,7 +232,7 @@ namespace viewed
 	}
 
 	template <class Traits, class Container, class ModelBase>
-	auto sftree_view_qtbase<Traits, Container, ModelBase>::process_erased(page_type & page, upsert_context & ctx) -> std::tuple<path_type &, pathview_type &>
+	auto sftree_view_qtbase<Traits, Container, ModelBase>::process_erased(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>
 	{
 		auto & container = page.children;
 		auto & seq_view  = container.template get<by_seq>();
@@ -265,7 +266,7 @@ namespace viewed
 	}
 
 	template <class Traits, class Container, class ModelBase>
-	auto sftree_view_qtbase<Traits, Container, ModelBase>::process_updated(page_type & page, upsert_context & ctx) -> std::tuple<path_type &, pathview_type &>
+	auto sftree_view_qtbase<Traits, Container, ModelBase>::process_updated(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>
 	{
 		auto & container = page.children;
 		auto & seq_view  = container.template get<by_seq>();
@@ -296,7 +297,7 @@ namespace viewed
 	}
 
 	template <class Traits, class Container, class ModelBase>
-	auto sftree_view_qtbase<Traits, Container, ModelBase>::process_inserted(page_type & page, upsert_context & ctx) -> std::tuple<path_type &, pathview_type &>
+	auto sftree_view_qtbase<Traits, Container, ModelBase>::process_inserted(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>
 	{
 		auto & container = page.children;
 		//auto & seq_view  = container.template get<by_seq>();
@@ -324,7 +325,7 @@ namespace viewed
 	}
 
 	template <class Traits, class Container, class ModelBase>
-	void sftree_view_qtbase<Traits, Container, ModelBase>::update_page(page_type & page, upsert_context & ctx)
+	void sftree_view_qtbase<Traits, Container, ModelBase>::update_page(page_type & page, update_context & ctx)
 	{
 		const auto & prefix = ctx.prefix;
 		auto & container = page.children;
@@ -371,7 +372,7 @@ namespace viewed
 				auto child = std::make_unique<page_type>();
 				child_page = child.get();
 
-				child_page->name = name;
+				traits_type::set_segment(*child_page, std::move(name));
 				child_page->parent = &page;
 				std::tie(it, inserted) = container.insert(std::move(child));
 			}			
@@ -401,7 +402,7 @@ namespace viewed
 	}
 
 	template <class Traits, class Container, class ModelBase>
-	void sftree_view_qtbase<Traits, Container, ModelBase>::rearrange_children(page_type & page, upsert_context & ctx)
+	void sftree_view_qtbase<Traits, Container, ModelBase>::rearrange_children(page_type & page, update_context & ctx)
 	{
 		auto & container = page.children;
 		auto & seq_view = container.template get<by_seq>();
@@ -539,7 +540,7 @@ namespace viewed
 		//erased_vec.assign(erased.begin(), erased.end());
 		//inserted_vec.assign(inserted.begin(), inserted.end());
 		
-		upsert_context ctx;
+		update_context ctx;
 		ctx.index_array = &index_array;
 		ctx.inverse_array = &inverse_buffer_array;
 		ctx.vptr_array = &valptr_array;
@@ -588,7 +589,7 @@ namespace viewed
 		m_root.children.clear();
 
 		value_ptr_vector valptr_array;
-		reinit_context ctx;
+		reset_context ctx;
 
 		leaf_ptr_vector elements;
 		elements.assign(
@@ -609,7 +610,7 @@ namespace viewed
 	}
 
 	template <class Traits, class Container, class ModelBase>
-	void sftree_view_qtbase<Traits, Container, ModelBase>::reinit_view(page_type & page, reinit_context & ctx)
+	void sftree_view_qtbase<Traits, Container, ModelBase>::reinit_view(page_type & page, reset_context & ctx)
 	{
 		auto & container = page.children;
 		auto & seq_view = container.template get<by_seq>();

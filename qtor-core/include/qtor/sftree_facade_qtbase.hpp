@@ -46,6 +46,8 @@ namespace viewed
 		using self_type = sftree_facade_qtbase;
 		using traits_type = Traits;
 
+		static_assert(std::is_base_of_v<QAbstractItemModel, ModelBase>);
+
 	protected:
 		using model_base = ModelBase;
 		using model_helper = AbstractItemModel;
@@ -358,7 +360,7 @@ namespace viewed
 		auto & children = parent_page->children;
 		auto & seq_view = children.template get<by_seq>();
 
-		auto code_it = children.find(page->name);
+		auto code_it = children.find(get_segment(page));
 		auto seq_it = children.template project<by_seq>(code_it);
 
 		int row = qint(seq_it - seq_view.begin());
@@ -448,7 +450,7 @@ namespace viewed
 		for (auto it = first; it != last; ++it, ++i)
 		{
 			int val = *it;
-			inverse[viewed::unmark_index(val) - offset] = viewed::marked_index(val) ? i : -1;
+			inverse[viewed::unmark_index(val) - offset] = not viewed::marked_index(val) ? i : -1;
 		}
 
 		//std::copy(buffer.begin(), buffer.end(), first);
@@ -638,8 +640,10 @@ namespace viewed
 
 		auto ivfirst = index_array.begin();
 		auto ivlast = ivfirst + page.upassed;
+		auto isfirst = ivlast;
+		auto islast = index_array.end();
 
-		std::iota(ivfirst, ivlast, offset);
+		std::iota(ivfirst, islast, offset);
 
 		auto[vpp, ivpp] = std::stable_partition(
 			ext::make_zip_iterator(vfirst, ivfirst),

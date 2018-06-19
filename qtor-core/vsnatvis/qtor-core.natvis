@@ -25,8 +25,8 @@
       <Item Name="[pointer_variant internals]">"[pointer_variant internals]"</Item>
 
       <Item Name="type">m_type</Item>
-      <Item Name="owning" Condition="m_owning == 0">true</Item>
-      <Item Name="owning" Condition="m_owning == 1">false</Item>
+      <Item Name="owning" Condition="m_owning == 0">false</Item>
+      <Item Name="owning" Condition="m_owning == 1">true</Item>
       <Item Name="ptr">m_ptr &lt;&lt; PTR_OFFSET, x</Item>
       <Item Name="val">m_val, x</Item>
     </Expand>
