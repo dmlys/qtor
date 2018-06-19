@@ -153,6 +153,7 @@ namespace viewed
 		template <class ErasedRandomAccessIterator, class UpdatedRandomAccessIterator, class InsertedRandomAccessIterator>
 		struct update_context_template
 		{
+			// all should be groped by group_by_dirs
 			ErasedRandomAccessIterator erased_first, erased_last;
 			UpdatedRandomAccessIterator updated_first, updated_last;
 			InsertedRandomAccessIterator inserted_first, inserted_last;
@@ -331,35 +332,7 @@ namespace viewed
 		template <class update_context> void rearrange_children(page_type & page, update_context & ctx);
 		template <class update_context> void update_page(page_type & page, update_context & ctx);
 		
-		template <class reset_context> void reset_page(page_type & page, reset_context & ctx);		
-
-	protected:
-		template <class RandomAccessRange>
-		void reset_data(RandomAccessRange & newdata);
-
-		/// container event handlers, those are called on container signals,
-		/// you could reimplement them to provide proper handling of your view
-
-		/// called when new data is updated in owning container
-		/// view have to synchronize itself.
-		/// @Param erased range of pointers to erased records
-		/// @Param updated range of pointers to updated records
-		/// @Param inserted range of pointers to inserted
-		/// 
-		/// default implementation removes erased, appends inserted records, and does nothing with updated
-		template <class ErasedRandomAccessRange, class UpdatedRandomAccessRange, class InsertedRandomAccessRange>
-		void update_data(ErasedRandomAccessRange & erased, UpdatedRandomAccessRange & updated, InsertedRandomAccessRange & inserted);
-
-		/// called when some records are erased from container
-		/// view have to synchronize itself.
-		/// @Param erased range of pointers to updated records
-		/// 
-		/// default implementation, erases those records from main store
-		template <class RandomAccessRange>
-		void erase_data(RandomAccessRange & erased);
-
-		/// called when container is cleared, clears m_store.
-		void clear_data();
+		template <class reset_context> void reset_page(page_type & page, reset_context & ctx);
 
 	public:
 		using model_base::model_base;
@@ -889,35 +862,6 @@ namespace viewed
 		seq_view.rearrange(boost::make_transform_iterator(refs_first, detail::make_ref));
 	}
 
-	template <class Traits, class ModelBase>
-	template <class RandomAccessRange>
-	void sftree_facade_qtbase<Traits, ModelBase>::reset_data(RandomAccessRange & newdata)
-	{
-		static_assert(ext::is_range_v<RandomAccessRange>);
-		using range_iterator = typename boost::range_iterator<RandomAccessRange>::type;
-		using iter_cat = typename std::iterator_traits<range_iterator>::iterator_category;
-		static_assert(std::is_convertible_v<iter_cat, std::random_access_iterator_tag>, "not a random access iterator");
-
-		this->beginResetModel();
-
-		m_root.upassed = 0;
-		m_root.children.clear();
-
-		value_ptr_vector valptr_array;
-		reset_context_template<range_iterator> ctx;
-
-		auto first = newdata.begin();
-		auto last = newdata.end();
-		group_by_dirs(first, last);
-
-		ctx.vptr_array = &valptr_array;
-		ctx.first = first;
-		ctx.last = last;
-		reset_page(m_root, ctx);
-
-		this->endResetModel();
-	}
-
 	/************************************************************************/
 	/*               update_data methods implementation                     */
 	/************************************************************************/
@@ -1247,90 +1191,5 @@ namespace viewed
 		inverse_index_array(inverse_array, ifirst, ilast, offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
 		               inverse_array.begin(), inverse_array.end(), offset);
-	}
-
-	template <class Traits, class ModelBase>
-	template <class ErasedRandomAccessRange, class UpdatedRandomAccessRange, class InsertedRandomAccessRange>
-	void sftree_facade_qtbase<Traits, ModelBase>::update_data(
-		ErasedRandomAccessRange & erased, UpdatedRandomAccessRange & updated, InsertedRandomAccessRange & inserted)
-	{
-		static_assert(ext::is_range_v<ErasedRandomAccessRange>);
-		static_assert(ext::is_range_v<UpdatedRandomAccessRange>);
-		static_assert(ext::is_range_v<InsertedRandomAccessRange>);
-
-		using ErasedIterator = typename boost::range_iterator<ErasedRandomAccessRange>::type;
-		using UpdatedIterator = typename boost::range_iterator<UpdatedRandomAccessRange>::type;
-		using InsertedIterator = typename boost::range_iterator<InsertedRandomAccessRange>::type;
-
-		using ErasedCategory = typename std::iterator_traits<ErasedIterator>::iterator_category;
-		using UpdatedCategory = typename std::iterator_traits<UpdatedIterator>::iterator_category;
-		using InsertedCategory = typename std::iterator_traits<InsertedIterator>::iterator_category;
-
-		static_assert(std::is_convertible_v<ErasedCategory, std::random_access_iterator_tag>);
-		static_assert(std::is_convertible_v<UpdatedCategory, std::random_access_iterator_tag>);
-		static_assert(std::is_convertible_v<InsertedCategory, std::random_access_iterator_tag>);
-
-
-		int_vector affected_indexes, index_array, inverse_buffer_array;
-		value_ptr_vector valptr_array;
-		//leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
-		
-		affected_indexes.resize(erased.size() + std::max(updated.size(), inserted.size()));
-		//updated_vec.assign(updated.begin(), updated.end());
-		//erased_vec.assign(erased.begin(), erased.end());
-		//inserted_vec.assign(inserted.begin(), inserted.end());
-		
-		update_context_template<ErasedIterator, UpdatedIterator, InsertedIterator> ctx;
-		ctx.index_array = &index_array;
-		ctx.inverse_array = &inverse_buffer_array;
-		ctx.vptr_array = &valptr_array;
-
-		//ctx.erased_first = erased_vec.begin();
-		//ctx.erased_last  = erased_vec.end();
-		//ctx.inserted_first = inserted_vec.begin();
-		//ctx.inserted_last = inserted_vec.end();
-		//ctx.updated_first = updated_vec.begin();
-		//ctx.updated_last = updated_vec.end();
-
-		ctx.erased_first = erased.begin();
-		ctx.erased_last  = erased.end();
-		ctx.inserted_first = inserted.begin();
-		ctx.inserted_last = inserted.end();
-		ctx.updated_first = updated.begin();
-		ctx.updated_last = updated.end();
-
-		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
-		ctx.changed_first = ctx.changed_last = affected_indexes.end();
-
-		group_by_dirs(ctx.erased_first, ctx.erased_last);
-		group_by_dirs(ctx.inserted_first, ctx.inserted_last);
-		group_by_dirs(ctx.updated_first, ctx.updated_last);
-		
-		this->layoutAboutToBeChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
-		
-		auto indexes = this->persistentIndexList();
-		ctx.model_index_first = indexes.begin();
-		ctx.model_index_last  = indexes.end();
-
-		update_page(m_root, ctx);
-
-		this->layoutChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
-	}
-
-
-	template <class Traits, class ModelBase>
-	template <class RandomAccessRange>
-	void sftree_facade_qtbase<Traits, ModelBase>::erase_data(RandomAccessRange & erased)
-	{
-		RandomAccessRange inserted, updated;
-		update_data(erased, updated, inserted);
-	}
-
-	template <class Traits, class ModelBase>
-	void sftree_facade_qtbase<Traits, ModelBase>::clear_data()
-	{
-		this->beginResetModel();
-		m_root.children.clear();
-		this->endResetModel();
 	}
 }

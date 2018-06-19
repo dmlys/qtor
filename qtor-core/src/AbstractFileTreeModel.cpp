@@ -6,12 +6,12 @@ namespace qtor
 	{
 		m_columnMeta = 
 		{
-			{torrent_file::FileName,  {QStringLiteral("fname"), 400} },
-			{torrent_file::TotalSize, {QStringLiteral("fname"), 400} },
-			{torrent_file::HaveSize,  {QStringLiteral("fname"), 400} },
-			{torrent_file::Index,     {QStringLiteral("fname"), 400} },
-			{torrent_file::Priority,  {QStringLiteral("fname"), 400} },
-			{torrent_file::Wanted,    {QStringLiteral("fname"), 400} },
+			{torrent_file::FileName,  {QStringLiteral("fname"),      400} },
+			{torrent_file::TotalSize, {QStringLiteral("total size"), 400} },
+			{torrent_file::HaveSize,  {QStringLiteral("have size"),  400} },
+			{torrent_file::Index,     {QStringLiteral("index"),      400} },
+			{torrent_file::Priority,  {QStringLiteral("priority"),   400} },
+			{torrent_file::Wanted,    {QStringLiteral("wanted"),     400} },
 		};
 
 		m_columns.assign({
