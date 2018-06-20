@@ -27,20 +27,10 @@ namespace qtor
 
 	SimpleTextFilter FileTreeModel::m_tfilt;
 
-	filepath_type FileTreeModelTraits::get_segment_type::operator()(const QString & filepath) const
+	filepath_type FileTreeModelTraits::get_segment(const filepath_type & filepath)
 	{
 		int pos = filepath.lastIndexOf('/') + 1;
 		return filepath.mid(pos);
-	}
-
-	filepath_type FileTreeModelTraits::get_segment_type::operator()(const leaf_type & leaf) const
-	{
-		return operator()(leaf.filename);
-	}
-
-	filepath_type FileTreeModelTraits::get_segment_type::operator()(const node_type & node) const
-	{
-		return operator()(node.name);
 	}
 
 	QVariant FileTreeModel::GetItem(const QModelIndex & idx) const

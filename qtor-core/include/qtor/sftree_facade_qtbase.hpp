@@ -57,8 +57,12 @@ namespace viewed
 		struct page_type;
 		using typename traits_type::leaf_type;
 		using typename traits_type::node_type;
+
 		using typename traits_type::path_type;
 		using typename traits_type::pathview_type;
+		using typename traits_type::path_equal_to;
+		using typename traits_type::path_less;
+		using typename traits_type::path_hasher;
 
 		using typename traits_type::sort_pred_type;
 		using typename traits_type::filter_pred_type;
@@ -84,11 +88,17 @@ namespace viewed
 			result_type operator()(const page_type * page) const { return traits_type::get_segment(*page); }
 		};
 
+		struct segment_group_pred_type : private traits_type::path_less
+		{
+			// arguments - swapped, intended, sort in descending order
+			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return path_less::operator ()(get_segment(l2), get_segment(l1)); }
+			bool operator()(const leaf_type * l1, const leaf_type * l2) const noexcept { return path_less::operator ()(get_segment(l2), get_segment(l1)); }
+		};
 
 		using value_container = boost::multi_index_container<
 			value_ptr,
 			boost::multi_index::indexed_by<
-				boost::multi_index::hashed_unique<get_segment_type>,
+				boost::multi_index::hashed_unique<get_segment_type, path_hasher, path_equal_to>,
 				boost::multi_index::random_access<>
 			>
 		>;
@@ -153,7 +163,7 @@ namespace viewed
 		template <class ErasedRandomAccessIterator, class UpdatedRandomAccessIterator, class InsertedRandomAccessIterator>
 		struct update_context_template
 		{
-			// all should be groped by group_by_dirs
+			// all should be groped by group_by_segments
 			ErasedRandomAccessIterator erased_first, erased_last;
 			UpdatedRandomAccessIterator updated_first, updated_last;
 			InsertedRandomAccessIterator inserted_first, inserted_last;
@@ -227,6 +237,7 @@ namespace viewed
 		static constexpr get_segment_type        get_segment {};
 		static constexpr get_children_type       get_children {};
 		static constexpr get_children_count_type get_children_count {};
+		static constexpr segment_group_pred_type segment_group_pred {};
 
 	protected:
 		static const value_container ms_empty_container;
@@ -242,7 +253,7 @@ namespace viewed
 		static void for_each_child_page(page_type & page, Functor && func);
 
 		template <class RandomAccessIterator>
-		static void group_by_dirs(RandomAccessIterator first, RandomAccessIterator last);
+		static void group_by_segments(RandomAccessIterator first, RandomAccessIterator last);
 
 	protected:
 		// core QAbstractItemModel functionality implementation
@@ -361,10 +372,9 @@ namespace viewed
 
 	template <class Traits, class ModelBase>
 	template <class RandomAccessIterator>
-	void sftree_facade_qtbase<Traits, ModelBase>::group_by_dirs(RandomAccessIterator first, RandomAccessIterator last)
+	void sftree_facade_qtbase<Traits, ModelBase>::group_by_segments(RandomAccessIterator first, RandomAccessIterator last)
 	{
-		auto sort_pred = [](const auto & leaf1, const auto & leaf2) { return get_segment(leaf1) > get_segment(leaf2); };
-		std::sort(first, last, viewed::make_indirect_fun(sort_pred));
+		std::sort(first, last, segment_group_pred);
 	}
 
 	/************************************************************************/

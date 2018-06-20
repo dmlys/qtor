@@ -125,7 +125,7 @@ namespace viewed
 
 		auto first = elements.begin();
 		auto last = elements.end();
-		this->group_by_dirs(first, last);
+		this->group_by_segments(first, last);
 
 		ctx.vptr_array = &valptr_array;
 		ctx.first = first;
@@ -174,9 +174,9 @@ namespace viewed
 		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
 		ctx.changed_first = ctx.changed_last = affected_indexes.end();
 
-		this->group_by_dirs(ctx.erased_first, ctx.erased_last);
-		this->group_by_dirs(ctx.inserted_first, ctx.inserted_last);
-		this->group_by_dirs(ctx.updated_first, ctx.updated_last);
+		this->group_by_segments(ctx.erased_first, ctx.erased_last);
+		this->group_by_segments(ctx.inserted_first, ctx.inserted_last);
+		this->group_by_segments(ctx.updated_first, ctx.updated_last);
 		
 		this->layoutAboutToBeChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
 		
