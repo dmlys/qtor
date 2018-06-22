@@ -23,7 +23,7 @@ namespace qtor
 	};
 
 
-	struct FileTreeModelTraits
+	struct torrent_file_tree_traits
 	{
 		using path_type = filepath_type;
 		using pathview_type = QStringRef;
@@ -49,6 +49,10 @@ namespace qtor
 		static path_type get_segment(const node_type & node) { return get_segment(node.name); }
 		static path_type get_path(const leaf_type & leaf)    { return leaf.filename; }
 
+		static bool is_subelement(const pathview_type & prefix, const path_type & name, const torrent_file & item);
+		static auto analyze(const pathview_type & prefix, const leaf_type & item) 
+			-> std::tuple<std::uintptr_t, path_type, pathview_type>;
+
 		struct dirs_first_sorter
 		{
 			bool operator()(const node_type & p1, const node_type & p2) const noexcept { return get_segment(p1) < get_segment(p2); }
@@ -71,14 +75,14 @@ namespace qtor
 	};
 
 
-	class FileTreeModel : public viewed::sftree_model_qtbase<FileTreeModelTraits, AbstractFileTreeModel>
-	//class FileTreeModel : public viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>
+	class FileTreeModel : public viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>
+	//class FileTreeModel : public viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>
 	{
 		using self_type = FileTreeModel;
-		using base_type = viewed::sftree_model_qtbase<FileTreeModelTraits, AbstractFileTreeModel>;
-		using view_type = viewed::sftree_model_qtbase<FileTreeModelTraits, AbstractFileTreeModel>;
-		//using base_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
-		//using view_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
+		using base_type = viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
+		using view_type = viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
+		//using base_type = viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>;
+		//using view_type = viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>;
 
 	protected:
 		struct get_total_size_type
@@ -111,10 +115,6 @@ namespace qtor
 		static constexpr get_children_count_type get_children_count {};
 
 	protected:
-		bool is_subelement(const pathview_type & prefix, const path_type & name, const torrent_file & item) override;
-		auto analyze(const pathview_type & prefix, const leaf_type & item)
-			-> std::tuple<std::uintptr_t, path_type, pathview_type> override;
-
 		void recalculate_page(page_type & page) override;
 
 	protected:

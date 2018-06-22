@@ -39,10 +39,16 @@ namespace viewed
 		const auto make_ref = [](auto * ptr) { return std::ref(*ptr); };
 	}
 
+	inline namespace sftree_constants
+	{
+		constexpr unsigned PAGE = 0;
+		constexpr unsigned LEAF = 1;
+	}
+
 	template <class Traits, class ModelBase = QAbstractItemModel>
 	class sftree_facade_qtbase : 
-		protected Traits,
-		public ModelBase
+		public ModelBase,
+		protected Traits
 	{
 		using self_type = sftree_facade_qtbase;
 		using traits_type = Traits;
@@ -65,11 +71,11 @@ namespace viewed
 		using typename traits_type::path_less;
 		using typename traits_type::path_hasher;
 
+		using traits_type::analyze;
+		using traits_type::is_subelement;
+
 		using typename traits_type::sort_pred_type;
 		using typename traits_type::filter_pred_type;
-
-		static constexpr unsigned PAGE = 0;
-		static constexpr unsigned LEAF = 1;
 
 		using value_ptr = viewed::pointer_variant<const page_type *, const leaf_type *>;
 
@@ -268,11 +274,6 @@ namespace viewed
 		QModelIndex index(int row, int column, const QModelIndex & parent) const override;
 
 	protected:
-		// implemented by derived class
-		virtual bool is_subelement(const pathview_type & prefix, const path_type & path, const leaf_type & item) = 0;
-		virtual auto analyze(const pathview_type & prefix, const leaf_type & item)
-			-> std::tuple<std::uintptr_t, path_type, pathview_type> = 0;
-
 		// implemented by derived class
 		virtual void recalculate_page(page_type & page) = 0;
 
@@ -1108,8 +1109,8 @@ namespace viewed
 		ctx.updated_count = ctx.changed_last - ctx.changed_first;
 		ctx.erased_count = ctx.removed_last - ctx.removed_first;
 
-		recalculate_page(page);
 		rearrange_children_and_notify(page, ctx);
+		recalculate_page(page);
 	}
 
 	template <class Traits, class ModelBase>

@@ -27,11 +27,40 @@ namespace qtor
 
 	SimpleTextFilter FileTreeModel::m_tfilt;
 
-	filepath_type FileTreeModelTraits::get_segment(const filepath_type & filepath)
+	filepath_type torrent_file_tree_traits::get_segment(const filepath_type & filepath)
 	{
 		int pos = filepath.lastIndexOf('/') + 1;
 		return filepath.mid(pos);
 	}
+
+	auto torrent_file_tree_traits::analyze(const pathview_type & prefix, const leaf_type & item)
+		-> std::tuple<std::uintptr_t, path_type, pathview_type>
+	{
+		const auto & path = item.filename;
+		auto first = path.begin() + prefix.size();
+		auto last = path.end();
+		auto it = std::find(first, last, '/');
+
+		if (it == last)
+		{
+			QString name = QString::null;
+			return std::make_tuple(viewed::LEAF, std::move(name), prefix);
+		}
+		else
+		{
+			QString name = path.mid(prefix.size(), it - first);
+			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
+			return std::make_tuple(viewed::PAGE, std::move(name), path.leftRef(it - path.begin()));
+		}
+	}
+
+	bool torrent_file_tree_traits::is_subelement(const pathview_type & prefix, const path_type & name, const leaf_type & item)
+	{
+		auto ref = item.filename.midRef(prefix.size(), name.size());
+		return ref == name;
+	}
+
+
 
 	QVariant FileTreeModel::GetItem(const QModelIndex & idx) const
 	{
@@ -70,33 +99,6 @@ namespace qtor
 			case torrent_file::Wanted:    return QStringLiteral("<null>");
 			default:                      return QStringLiteral("<null>");
 		}
-	}
-
-	auto FileTreeModel::analyze(const pathview_type & prefix, const leaf_type & item)
-		-> std::tuple<std::uintptr_t, path_type, pathview_type>
-	{
-		const auto & path = item.filename;
-		auto first = path.begin() + prefix.size();
-		auto last = path.end();
-		auto it = std::find(first, last, '/');
-
-		if (it == last)
-		{
-			QString name = QString::null;
-			return std::make_tuple(LEAF, std::move(name), prefix);
-		}
-		else
-		{
-			QString name = path.mid(prefix.size(), it - first);
-			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
-			return std::make_tuple(PAGE, std::move(name), path.leftRef(it - path.begin()));
-		}
-	}
-
-	bool FileTreeModel::is_subelement(const pathview_type & prefix, const path_type & name, const leaf_type & item)
-	{
-		auto ref = item.filename.midRef(prefix.size(), name.size());
-		return ref == name;
 	}
 
 	void FileTreeModel::recalculate_page(page_type & page)
