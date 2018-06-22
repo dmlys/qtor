@@ -4,6 +4,7 @@
 #include <qtor/torrent_file_store.hpp>
 #include <qtor/AbstractFileTreeModel.hqt>
 #include <qtor/sftree_view_qtbase.hpp>
+#include <qtor/sftree_model_qtbase.hpp>
 
 namespace qtor
 {
@@ -46,7 +47,7 @@ namespace qtor
 		static path_type get_segment(const path_type & name);
 		static path_type get_segment(const leaf_type & leaf) { return get_segment(leaf.filename); }
 		static path_type get_segment(const node_type & node) { return get_segment(node.name); }
-
+		static path_type get_path(const leaf_type & leaf)    { return leaf.filename; }
 
 		struct dirs_first_sorter
 		{
@@ -70,11 +71,14 @@ namespace qtor
 	};
 
 
-	class FileTreeModel : public viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>
+	class FileTreeModel : public viewed::sftree_model_qtbase<FileTreeModelTraits, AbstractFileTreeModel>
+	//class FileTreeModel : public viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>
 	{
 		using self_type = FileTreeModel;
-		using base_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
-		using view_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
+		using base_type = viewed::sftree_model_qtbase<FileTreeModelTraits, AbstractFileTreeModel>;
+		using view_type = viewed::sftree_model_qtbase<FileTreeModelTraits, AbstractFileTreeModel>;
+		//using base_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
+		//using view_type = viewed::sftree_view_qtbase<FileTreeModelTraits, torrent_file_store, AbstractFileTreeModel>;
 
 	protected:
 		struct get_total_size_type
@@ -99,7 +103,7 @@ namespace qtor
 		};
 
 	protected:
-		//static constexpr get_segment_type           get_path {};
+		//using view_type::get_segment;
 		static constexpr get_total_size_type     get_total_size {};
 		static constexpr get_have_size_type      get_have_size {};
 		static constexpr get_wanted_type         get_wanted {};
@@ -127,6 +131,7 @@ namespace qtor
 		virtual QString  GetValueShort(const QModelIndex & idx) const override;
 
 	public:
-		FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);
+		//FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);
+		FileTreeModel(QObject * parent = nullptr);
 	};
 }

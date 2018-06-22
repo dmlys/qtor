@@ -20,6 +20,7 @@
 #include <ext/iterator/outdirect_iterator.hpp>
 #include <ext/iterator/indirect_iterator.hpp>
 #include <ext/range/range_traits.hpp>
+#include <ext/range/adaptors/moved.hpp>
 #include <ext/range/adaptors/outdirected.hpp>
 
 #include <boost/multi_index_container.hpp>
@@ -91,8 +92,8 @@ namespace viewed
 		struct segment_group_pred_type : private traits_type::path_less
 		{
 			// arguments - swapped, intended, sort in descending order
-			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return path_less::operator ()(get_segment(l2), get_segment(l1)); }
-			bool operator()(const leaf_type * l1, const leaf_type * l2) const noexcept { return path_less::operator ()(get_segment(l2), get_segment(l1)); }
+			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return path_less::operator ()(traits_type::get_path(l2), traits_type::get_path(l1)); }
+			bool operator()(const leaf_type * l1, const leaf_type * l2) const noexcept { return path_less::operator ()(traits_type::get_path(*l2), traits_type::get_path(*l1)); }
 		};
 
 		using value_container = boost::multi_index_container<
@@ -249,7 +250,7 @@ namespace viewed
 		filter_pred_type m_filter;
 
 	protected:
-		template <class Functor> 
+		template <class Functor>
 		static void for_each_child_page(page_type & page, Functor && func);
 
 		template <class RandomAccessIterator>
@@ -334,16 +335,30 @@ namespace viewed
 		virtual void refilter_full_and_notify();
 		virtual void refilter_full_and_notify(page_type & page, refilter_context & ctx);
 
+	public:
+		const auto & sort_pred()   const { return m_sort_pred; }
+		const auto & filter_pred() const { return m_filter_pred; }
+
+		template <class ... Args> auto filter_by(Args && ... args) -> refilter_type;
+		template <class ... Args> void sort_by(Args && ... args);
+
 	protected:
 		template <class update_context> static update_context copy_context(const update_context & ctx, pathview_type newprefix);
 
 		template <class update_context> auto process_erased(page_type & page, update_context & ctx)   -> std::tuple<path_type &, pathview_type &>;
 		template <class update_context> auto process_updated(page_type & page, update_context & ctx)  -> std::tuple<path_type &, pathview_type &>;
 		template <class update_context> auto process_inserted(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>;
-		template <class update_context> void rearrange_children(page_type & page, update_context & ctx);
-		template <class update_context> void update_page(page_type & page, update_context & ctx);
+		template <class update_context> void rearrange_children_and_notify(page_type & page, update_context & ctx);
+		template <class update_context> void update_page_and_notify(page_type & page, update_context & ctx);
 		
 		template <class reset_context> void reset_page(page_type & page, reset_context & ctx);
+
+	protected:
+		template <class ErasedRandomAccessIterator, class UpdatedRandomAccessIterator, class InsertedRandomAccessIterator>
+		void update_data_and_notify(
+			ErasedRandomAccessIterator erased_first, ErasedRandomAccessIterator erased_last,
+			UpdatedRandomAccessIterator updated_first, UpdatedRandomAccessIterator updated_last,
+			InsertedRandomAccessIterator inserted_first, InsertedRandomAccessIterator inserted_last);
 
 	public:
 		using model_base::model_base;
@@ -822,6 +837,24 @@ namespace viewed
 					   inverse_array.begin(), inverse_array.end(), offset);
 	}
 
+	template <class Traits, class ModelBase>
+	template <class ... Args>
+	auto sftree_facade_qtbase<Traits, ModelBase>::filter_by(Args && ... args) -> viewed::refilter_type
+	{
+		auto rtype = m_filter_pred.set_expr(std::forward<Args>(args)...);
+		refilter_and_notify(rtype);
+
+		return rtype;
+	}
+
+	template <class Traits, class ModelBase>
+	template <class ... Args>
+	void sftree_facade_qtbase<Traits, ModelBase>::sort_by(Args && ... args)
+	{
+		m_sort_pred = sort_pred_type(std::forward<Args>(args)...);
+		sort_and_notify();
+	}
+
 	/************************************************************************/
 	/*               reset_data methods implementation                      */
 	/************************************************************************/	 
@@ -928,7 +961,7 @@ namespace viewed
 			auto pos = seqit - seq_view.begin();
 			*ctx.removed_last++ = pos;
 
-			// erasion will be done later, in rearrange_children
+			// erasion will be done later, in rearrange_children_and_notify
 			// container.erase(it);
 		}
 
@@ -962,6 +995,9 @@ namespace viewed
 			auto seqit = container.project<by_seq>(it);
 			auto pos = seqit - seq_view.begin();
 			*--ctx.changed_first = pos;
+			
+			value_ptr & val = ext::unconst(*it);
+			val = std::forward<decltype(item)>(item);
 		}
 
 		ctx.updated_name = path_type();
@@ -1000,7 +1036,7 @@ namespace viewed
 
 	template <class Traits, class ModelBase>
 	template <class update_context>
-	void sftree_facade_qtbase<Traits, ModelBase>::update_page(page_type & page, update_context & ctx)
+	void sftree_facade_qtbase<Traits, ModelBase>::update_page_and_notify(page_type & page, update_context & ctx)
 	{
 		const auto & prefix = ctx.prefix;
 		auto & container = page.children;
@@ -1055,13 +1091,13 @@ namespace viewed
 			// process child
 			if (child_page)
 			{
-				update_page(*child_page, newctx);
+				update_page_and_notify(*child_page, newctx);
 
 				auto seqit = container.project<by_seq>(it);
 				auto pos = seqit - seq_view.begin();
 
 				if (child_page->children.size() == 0)
-					// actual erasion will be done later in rearrange_children
+					// actual erasion will be done later in rearrange_children_and_notify
 					*ctx.removed_last++ = pos;
 				else if (not inserted)
 					*--ctx.changed_first = pos;
@@ -1072,13 +1108,13 @@ namespace viewed
 		ctx.updated_count = ctx.changed_last - ctx.changed_first;
 		ctx.erased_count = ctx.removed_last - ctx.removed_first;
 
-		rearrange_children(page, ctx);
 		recalculate_page(page);
+		rearrange_children_and_notify(page, ctx);
 	}
 
 	template <class Traits, class ModelBase>
 	template <class update_context>
-	void sftree_facade_qtbase<Traits, ModelBase>::rearrange_children(page_type & page, update_context & ctx)
+	void sftree_facade_qtbase<Traits, ModelBase>::rearrange_children_and_notify(page_type & page, update_context & ctx)
 	{
 		auto & container = page.children;
 		auto & seq_view = container.template get<by_seq>();
@@ -1201,5 +1237,61 @@ namespace viewed
 		inverse_index_array(inverse_array, ifirst, ilast, offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
 		               inverse_array.begin(), inverse_array.end(), offset);
+	}
+
+	template <class Traits, class ModelBase>
+	template <class ErasedRandomAccessIterator, class UpdatedRandomAccessIterator, class InsertedRandomAccessIterator>
+	void sftree_facade_qtbase<Traits, ModelBase>::update_data_and_notify(
+		ErasedRandomAccessIterator erased_first, ErasedRandomAccessIterator erased_last,
+		UpdatedRandomAccessIterator updated_first, UpdatedRandomAccessIterator updated_last,
+		InsertedRandomAccessIterator inserted_first, InsertedRandomAccessIterator inserted_last)
+	{
+		using update_context = update_context_template<ErasedRandomAccessIterator, UpdatedRandomAccessIterator, InsertedRandomAccessIterator>;
+		int_vector affected_indexes, index_array, inverse_buffer_array;
+		value_ptr_vector valptr_array;
+		//leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
+		
+		auto expected_indexes = erased_last - erased_first + std::max(updated_last - updated_first, inserted_last - inserted_first);
+		affected_indexes.resize(expected_indexes);
+		//updated_vec.assign(updated.begin(), updated.end());
+		//erased_vec.assign(erased.begin(), erased.end());
+		//inserted_vec.assign(inserted.begin(), inserted.end());
+		
+		update_context ctx;
+		ctx.index_array = &index_array;
+		ctx.inverse_array = &inverse_buffer_array;
+		ctx.vptr_array = &valptr_array;
+
+		//ctx.erased_first = erased_vec.begin();
+		//ctx.erased_last  = erased_vec.end();
+		//ctx.inserted_first = inserted_vec.begin();
+		//ctx.inserted_last = inserted_vec.end();
+		//ctx.updated_first = updated_vec.begin();
+		//ctx.updated_last = updated_vec.end();
+
+		ctx.erased_first = erased_first;
+		ctx.erased_last  = erased_last;
+		ctx.updated_first = updated_first;
+		ctx.updated_last = updated_last;
+		ctx.inserted_first = inserted_first;
+		ctx.inserted_last = inserted_last;
+
+		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
+		ctx.changed_first = ctx.changed_last = affected_indexes.end();
+
+		auto pred = viewed::make_indirect_fun(segment_group_pred);
+		assert(std::is_sorted(ctx.erased_first, ctx.erased_last, pred));
+		assert(std::is_sorted(ctx.updated_first, ctx.updated_last, pred));
+		assert(std::is_sorted(ctx.inserted_first, ctx.inserted_last, pred));
+		
+		this->layoutAboutToBeChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
+		
+		auto indexes = this->persistentIndexList();
+		ctx.model_index_first = indexes.begin();
+		ctx.model_index_last  = indexes.end();
+
+		this->update_page_and_notify(m_root, ctx);
+
+		this->layoutChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
 	}
 }

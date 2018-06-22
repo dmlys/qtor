@@ -72,8 +72,8 @@ namespace qtor
 		}
 	}
 
-	auto FileTreeModel::analyze(const QStringRef & prefix, const torrent_file & item)
-		-> std::tuple<std::uintptr_t, QString, QStringRef>
+	auto FileTreeModel::analyze(const pathview_type & prefix, const leaf_type & item)
+		-> std::tuple<std::uintptr_t, path_type, pathview_type>
 	{
 		const auto & path = item.filename;
 		auto first = path.begin() + prefix.size();
@@ -93,7 +93,7 @@ namespace qtor
 		}
 	}
 
-	bool FileTreeModel::is_subelement(const QStringRef & prefix, const QString & name, const torrent_file & item)
+	bool FileTreeModel::is_subelement(const pathview_type & prefix, const path_type & name, const leaf_type & item)
 	{
 		auto ref = item.filename.midRef(prefix.size(), name.size());
 		return ref == name;
@@ -107,11 +107,12 @@ namespace qtor
 		auto last  = children.end();
 		
 		page.total_size = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_total_size(item); });
-		page.have_size = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item); });
+		page.have_size  = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item); });
 	}
 
 	void FileTreeModel::SortBy(int column, Qt::SortOrder order)
 	{
+		//sort_by(column, order);
 		//sort_and_notify();
 	}
 
@@ -121,10 +122,17 @@ namespace qtor
 		refilter_and_notify(rtype);
 	}
 
-	FileTreeModel::FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)
-		: base_type(std::move(store), parent)
+	//FileTreeModel::FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)
+	//	: base_type(std::move(store), parent)
+	//{
+	//	init();
+	//	InitColumns();
+	//	m_fmt = new formatter(this);
+	//}
+
+	FileTreeModel::FileTreeModel(QObject * parent /* = nullptr */)
+		: base_type(parent)
 	{
-		init();
 		InitColumns();
 		m_fmt = new formatter(this);
 	}

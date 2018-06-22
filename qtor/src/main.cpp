@@ -117,13 +117,15 @@
 //	}
 //}
 
+#include <boost/pointee.hpp>
 #include <qtor/FileTreeModel.hqt>
 #include <qtor/FileTreeView.hqt>
+
 
 int main(int argc, char * argv[])
 {
 	using namespace std;
-	using namespace qtor;
+	using namespace qtor;	
 
 	ext::winsock2_stream_init();
 	ext::init_future_library(std::thread::hardware_concurrency());
@@ -171,11 +173,16 @@ int main(int argc, char * argv[])
 	//});
 
 	auto store = std::make_shared<torrent_file_store>();
-	auto model = std::make_shared<FileTreeModel>(store);
+	auto model = std::make_shared<FileTreeModel>();
+	//auto model = std::make_shared<FileTreeModel>(store);
 	
-	store->assign_records(paths);
-	store->assign_records(paths2);
-	store->assign_records(paths);
+	//store->assign_records(paths);
+	//store->assign_records(paths2);
+	//store->assign_records(paths);
+
+	model->assign(paths);
+	model->upsert(paths2);
+	model->assign(paths);
 	
 	//QTableView view;
 	//view.setModel(model.get());

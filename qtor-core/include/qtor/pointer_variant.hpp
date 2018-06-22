@@ -189,6 +189,8 @@ namespace viewed
 		m_owning = 0;
 		m_type = idx;
 		m_ptr = pack(ptr);
+
+		return *this;
 	}
 
 	template <class ... PointerTypes>

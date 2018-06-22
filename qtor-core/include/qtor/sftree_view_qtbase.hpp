@@ -37,10 +37,6 @@ namespace viewed
 		static constexpr get_view_reference_type get_view_reference {};
 
 	protected:
-		using typename base_type::int_vector;
-		using typename base_type::value_ptr_vector;
-
-	protected:
 		std::shared_ptr<container_type> m_owner = nullptr; // pointer to owning container
 
 		/// raii connections
@@ -141,53 +137,22 @@ namespace viewed
 		const signal_range_type & erased, const signal_range_type & updated, const signal_range_type & inserted)
 	{
 		using signal_range_iterator = typename signal_range_type::iterator;
-		using update_context = typename base_type::update_context_template<signal_range_iterator, signal_range_iterator, signal_range_iterator>;
 
-		int_vector affected_indexes, index_array, inverse_buffer_array;
-		value_ptr_vector valptr_array;
-		//leaf_ptr_vector updated_vec, inserted_vec, erased_vec;
-		
-		affected_indexes.resize(erased.size() + std::max(updated.size(), inserted.size()));
-		//updated_vec.assign(updated.begin(), updated.end());
-		//erased_vec.assign(erased.begin(), erased.end());
-		//inserted_vec.assign(inserted.begin(), inserted.end());
-		
-		update_context ctx;
-		ctx.index_array = &index_array;
-		ctx.inverse_array = &inverse_buffer_array;
-		ctx.vptr_array = &valptr_array;
+		auto erased_first = erased.begin();
+		auto erased_last = erased.end();
+		auto updated_first = updated.begin();
+		auto updated_last = updated.end();
+		auto inserted_first = inserted.begin();
+		auto inserted_last = inserted.end();
 
-		//ctx.erased_first = erased_vec.begin();
-		//ctx.erased_last  = erased_vec.end();
-		//ctx.inserted_first = inserted_vec.begin();
-		//ctx.inserted_last = inserted_vec.end();
-		//ctx.updated_first = updated_vec.begin();
-		//ctx.updated_last = updated_vec.end();
+		base_type::group_by_segments(erased_first, erased_last);
+		base_type::group_by_segments(updated_first, updated_last);
+		base_type::group_by_segments(inserted_first, inserted_last);
 
-		ctx.erased_first = erased.begin();
-		ctx.erased_last  = erased.end();
-		ctx.inserted_first = inserted.begin();
-		ctx.inserted_last = inserted.end();
-		ctx.updated_first = updated.begin();
-		ctx.updated_last = updated.end();
-
-		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
-		ctx.changed_first = ctx.changed_last = affected_indexes.end();
-
-		this->group_by_segments(ctx.erased_first, ctx.erased_last);
-		this->group_by_segments(ctx.inserted_first, ctx.inserted_last);
-		this->group_by_segments(ctx.updated_first, ctx.updated_last);
-		
-		this->layoutAboutToBeChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
-		
-		auto indexes = this->persistentIndexList();
-		ctx.model_index_first = indexes.begin();
-		ctx.model_index_last  = indexes.end();
-
-		this->update_page(m_root, ctx);
-
-		this->layoutChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
-
+		return base_type::update_data_and_notify(
+			erased_first, erased_last,
+			updated_first, updated_last,
+			inserted_first, inserted_last);
 	}
 
 	template <class Traits, class Container, class ModelBase>
@@ -202,6 +167,7 @@ namespace viewed
 	{
 		this->beginResetModel();
 		this->m_root.children.clear();
+		this->m_root.upassed = 0;
 		this->endResetModel();
 	}
 
