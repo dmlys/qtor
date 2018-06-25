@@ -188,7 +188,14 @@ int main(int argc, char * argv[])
 	//view.setModel(model.get());
 	FileTreeView view;
 	view.SetModel(model);
-	view.show();
+
+	//QTimer::singleShot(3s, [&view] {
+		view.showMaximized();
+		view.activateWindow();
+		view.raise();
+	//});
+	
+
 
 
 //#ifdef Q_OS_WIN

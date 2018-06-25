@@ -11,6 +11,13 @@
 
 namespace viewed
 {
+	/// pointer_variant<int *, type *, ...>
+	/// variant class for pointer types(only pointer types allowed).
+	/// sizeof(pointer_variant<...>) == sizeof(std::uintptr_t) always,
+	/// current type is held in lowest bits of pointer value.
+	/// 
+	/// Only head allocated pointers or pointers with big enough alignment are allowed.
+	/// (only runtime assert checks are made, so you should be careful)
 	template <class ... PointerTypes>
 	class pointer_variant;
 
@@ -267,7 +274,16 @@ namespace viewed
 	/*            pointer_variant pv_visit implementation                   */
 	/************************************************************************/
 	namespace pointer_variant_detail
-	{	
+	{
+		template <class Type>
+		struct is_pointer_variant : std::false_type {};
+
+		template <class ... Types>
+		struct is_pointer_variant<pointer_variant<Types...>> : std::true_type {};
+
+		template <class Type>
+		constexpr bool is_pointer_variant_v = is_pointer_variant<Type>::value;
+
 		template <class... Contants>
 		struct join_index_constants;
 
@@ -281,6 +297,25 @@ namespace viewed
 		using join_index_constants_t = typename join_index_constants<Constatns...>::type;
 
 
+		template <std::size_t ... Indexes, class Visitor, class ... Variants>
+		inline auto dispatch_function1(std::index_sequence<Indexes...>, Visitor && vis, const Variants & ... args)
+			-> std::invoke_result_t<Visitor, boost::mp11::mp_first<ext::remove_cvref_t<Variants>>...>
+		{
+			static_assert(sizeof...(Indexes) == sizeof...(Variants));
+
+			return std::forward<Visitor>(vis)(
+				reinterpret_cast<pointer_variant_alternative_t<Indexes, ext::remove_cvref_t<Variants>>>(args.pointer())...
+			);
+		}
+
+		template <class Indexes, class Visitor, class ... Variants>
+		inline auto dispatch_function2(Visitor && vis, const Variants & ... args)
+			-> std::invoke_result_t<Visitor, boost::mp11::mp_first<ext::remove_cvref_t<Variants>>...>
+		{
+			return dispatch_function1(Indexes {}, std::forward<Visitor>(vis), args...);
+		}
+
+
 		template <class Visitor, class Variants, class Indexes>
 		struct dispatch_table; // undefined
 
@@ -290,21 +325,7 @@ namespace viewed
 			using result_type = std::invoke_result_t<Visitor, boost::mp11::mp_first<ext::remove_cvref_t<Variants>>...>;
 			using sig_type = result_type(*)(Visitor &&, const Variants & ...);
 
-			template <std::size_t ... Indexes, class Visitor, class ... Variants>
-			static inline result_type dispatcher1(std::index_sequence<Indexes...>, Visitor && vis, const Variants & ... args)
-			{
-				return std::forward<Visitor>(vis)(
-					reinterpret_cast<pointer_variant_alternative_t<Indexes, ext::remove_cvref_t<Variants>>>(args.pointer())...
-				);
-			}
-
-			template <class Indexes, class Visitor, class ... Variants>
-			static result_type dispatcher2(Visitor && vis, const Variants & ... args)
-			{
-				return dispatcher1(Indexes {}, std::forward<Visitor>(vis), args...);
-			}
-
-			static constexpr sig_type dispatch_array[] = {&dispatcher2<Indexes, Visitor, Variants...>...};
+			static constexpr sig_type dispatch_array[] = {&dispatch_function2<Indexes, Visitor, Variants...>...};
 		};
 
 		template <class ... Variants>
@@ -320,7 +341,7 @@ namespace viewed
 		{
 			return var.index() * dispatch_scale_v<Rest...> + dispatch_index(rest...);
 		}
-	};
+	} // namespace pointer_variant_detail
 
 
 	template <class Visitor, class ... Variants>
@@ -329,6 +350,8 @@ namespace viewed
 	{
 		using namespace pointer_variant_detail;
 		using namespace boost::mp11;
+
+		static_assert((... && is_pointer_variant_v<std::decay_t<Variants>>));
 	
 		using list_of_sequence_lists = mp_product<
 			join_index_constants_t,
