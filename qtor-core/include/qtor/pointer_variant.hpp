@@ -38,6 +38,16 @@ namespace viewed
 	template <class... PointerTypes>
 	constexpr auto pointer_variant_size_v = pointer_variant_size<PointerTypes...>::value;
 
+
+	template <class Type>
+	struct is_pointer_variant : std::false_type {};
+
+	template <class ... Types>
+	struct is_pointer_variant<pointer_variant<Types...>> : std::true_type {};
+
+	template <class Type>
+	constexpr bool is_pointer_variant_v = is_pointer_variant<Type>::value;
+
 	/************************************************************************/
 	/*                   pointer_variant_alternative                        */
 	/************************************************************************/
@@ -85,8 +95,11 @@ namespace viewed
 		pointer_variant_alternative_t<Index, pointer_variant<Types...>>;
 
 	template <class Visitor, class ... Variants>
-	constexpr auto pv_visit(Visitor && vis, Variants && ... vars) ->
-		std::invoke_result_t<Visitor, boost::mp11::mp_first<ext::remove_cvref_t<Variants>>...>;
+	constexpr auto visit(Visitor && vis, Variants && ... vars) ->
+		std::enable_if_t<
+			std::conjunction_v<is_pointer_variant<ext::remove_cvref_t<Variants>>...>,
+			std::invoke_result_t<Visitor, boost::mp11::mp_first<ext::remove_cvref_t<Variants>>...>
+		>;
 
 	/************************************************************************/
 	/*                    pointer_variant                                   */
@@ -226,7 +239,7 @@ namespace viewed
 	inline void pointer_variant<PointerTypes...>::destroy() noexcept
 	{
 		if (m_owning)
-			pv_visit([](auto * ptr) { delete ptr; }, *this);
+			visit([](auto * ptr) { delete ptr; }, *this);
 	}
 
 	template <class ... PointerTypes>
@@ -271,19 +284,10 @@ namespace viewed
 	}
 
 	/************************************************************************/
-	/*            pointer_variant pv_visit implementation                   */
+	/*            pointer_variant visit implementation                      */
 	/************************************************************************/
 	namespace pointer_variant_detail
 	{
-		template <class Type>
-		struct is_pointer_variant : std::false_type {};
-
-		template <class ... Types>
-		struct is_pointer_variant<pointer_variant<Types...>> : std::true_type {};
-
-		template <class Type>
-		constexpr bool is_pointer_variant_v = is_pointer_variant<Type>::value;
-
 		template <class... Contants>
 		struct join_index_constants;
 
@@ -345,13 +349,14 @@ namespace viewed
 
 
 	template <class Visitor, class ... Variants>
-	constexpr auto pv_visit(Visitor && vis, Variants && ... vars) ->
-		std::invoke_result_t<Visitor, boost::mp11::mp_first<ext::remove_cvref_t<Variants>>...>
+	constexpr auto visit(Visitor && vis, Variants && ... vars) ->
+		std::enable_if_t<
+			std::conjunction_v<is_pointer_variant<ext::remove_cvref_t<Variants>>...>,
+			std::invoke_result_t<Visitor, boost::mp11::mp_first<ext::remove_cvref_t<Variants>>...>
+		>
 	{
 		using namespace pointer_variant_detail;
 		using namespace boost::mp11;
-
-		static_assert((... && is_pointer_variant_v<std::decay_t<Variants>>));
 	
 		using list_of_sequence_lists = mp_product<
 			join_index_constants_t,

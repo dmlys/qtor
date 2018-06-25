@@ -88,9 +88,9 @@ namespace viewed
 			result_type operator()(const path_type & path) const { return traits_type::get_segment(path); }
 			result_type operator()(const leaf_type & leaf) const { return traits_type::get_segment(leaf); }
 			result_type operator()(const page_type & page) const { return traits_type::get_segment(static_cast<const node_type &>page); }
-			result_type operator()(const value_ptr & val)  const { return viewed::pv_visit(*this, val); }
+			result_type operator()(const value_ptr & val)  const { return viewed::visit(*this, val); }
 
-			// important, viewed::pv_visit(*this, val) depends on them, otherwise infinite recursion would occur
+			// important, viewed::visit(*this, val) depends on them, otherwise infinite recursion would occur
 			result_type operator()(const leaf_type * leaf) const { return traits_type::get_segment(*leaf); }
 			result_type operator()(const page_type * page) const { return traits_type::get_segment(*page); }
 		};
@@ -133,9 +133,9 @@ namespace viewed
 			using result_type = const value_container &;
 			result_type operator()(const leaf_type & leaf) const { return ms_empty_container; }
 			result_type operator()(const page_type & page) const { return page.children; }
-			result_type operator()(const value_ptr & val)  const { return viewed::pv_visit(*this, val); }
+			result_type operator()(const value_ptr & val)  const { return viewed::visit(*this, val); }
 
-			// important, viewed::pv_visit(*this, val) depends on them, otherwise infinite recursion would occur
+			// important, viewed::visit(*this, val) depends on them, otherwise infinite recursion would occur
 			template <class Type>
 			result_type operator()(const Type * ptr) const { return operator()(*ptr); }
 		};
@@ -145,9 +145,9 @@ namespace viewed
 			using result_type = std::size_t;
 			result_type operator()(const leaf_type & leaf) const { return 0; }
 			result_type operator()(const page_type & page) const { return page.upassed; }
-			result_type operator()(const value_ptr & val)  const { return viewed::pv_visit(*this, val); }
+			result_type operator()(const value_ptr & val)  const { return viewed::visit(*this, val); }
 
-			// important, viewed::pv_visit(*this, val) depends on them, otherwise infinite recursion would occur
+			// important, viewed::visit(*this, val) depends on them, otherwise infinite recursion would occur
 			template <class Type>
 			result_type operator()(const Type * ptr) const { return operator()(*ptr); }
 		};
@@ -211,7 +211,7 @@ namespace viewed
 
 			auto operator()(const value_ptr & v) const
 			{
-				return get_children_count(v) > 0 or viewed::pv_visit(pred, v);
+				return get_children_count(v) > 0 or viewed::visit(pred, v);
 			}
 
 			explicit operator bool() const noexcept
@@ -231,7 +231,7 @@ namespace viewed
 
 			auto operator()(const value_ptr & v1, const value_ptr & v2) const
 			{
-				return viewed::pv_visit(pred, v1, v2);
+				return viewed::visit(pred, v1, v2);
 			}
 
 			explicit operator bool() const noexcept
