@@ -252,8 +252,8 @@ namespace viewed
 	protected:
 		page_type m_root; //= { /*.parent =*/ nullptr};
 
-		sort_pred_type m_sorter;
-		filter_pred_type m_filter;
+		sort_pred_type m_sort_pred;
+		filter_pred_type m_filter_pred;
 
 	protected:
 		template <class Functor>
@@ -547,9 +547,9 @@ namespace viewed
 	void sftree_facade_qtbase<Traits, ModelBase>::merge_newdata(
 		value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last, bool resort_old /* = true */)
 	{
-		if (not viewed::active(m_sorter)) return;
+		if (not viewed::active(m_sort_pred)) return;
 
-		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto sorter = value_ptr_sorter_type(m_sort_pred);
 		auto comp = viewed::make_indirect_fun(std::move(sorter));
 
 		if (resort_old) varalgo::stable_sort(first, middle, comp);
@@ -563,12 +563,12 @@ namespace viewed
 		value_ptr_iterator first, value_ptr_iterator middle, value_ptr_iterator last,
 		int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast, bool resort_old /* = true */)
 	{
-		if (not viewed::active(m_sorter)) return;
+		if (not viewed::active(m_sort_pred)) return;
 
 		assert(last - first == ilast - ifirst);
 		assert(middle - first == imiddle - ifirst);
 
-		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto sorter = value_ptr_sorter_type(m_sort_pred);
 		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(std::move(sorter)));
 
 		auto zfirst = ext::make_zip_iterator(first, ifirst);
@@ -583,9 +583,9 @@ namespace viewed
 	template <class Traits, class ModelBase>
 	void sftree_facade_qtbase<Traits, ModelBase>::stable_sort(value_ptr_iterator first, value_ptr_iterator last)
 	{
-		if (not viewed::active(m_sorter)) return;
+		if (not viewed::active(m_sort_pred)) return;
 
-		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto sorter = value_ptr_sorter_type(m_sort_pred);
 		auto comp = viewed::make_indirect_fun(std::move(sorter));
 		varalgo::stable_sort(first, last, comp);
 	}
@@ -595,9 +595,9 @@ namespace viewed
 		value_ptr_iterator first, value_ptr_iterator last,
 		int_vector::iterator ifirst, int_vector::iterator ilast)
 	{
-		if (not viewed::active(m_sorter)) return;
+		if (not viewed::active(m_sort_pred)) return;
 
-		auto sorter = value_ptr_sorter_type(m_sorter);
+		auto sorter = value_ptr_sorter_type(m_sort_pred);
 		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(std::move(sorter)));
 
 		auto zfirst = ext::make_zip_iterator(first, ifirst);
@@ -608,7 +608,7 @@ namespace viewed
 	template <class Traits, class ModelBase>
 	void sftree_facade_qtbase<Traits, ModelBase>::sort_and_notify()
 	{
-		if (not viewed::active(m_sorter)) return;
+		if (not viewed::active(m_sort_pred)) return;
 
 		resort_context ctx;
 		int_vector index_array, inverse_buffer_array;
@@ -715,7 +715,7 @@ namespace viewed
 		valptr_vector.assign(seq_ptr_view.begin(), seq_ptr_view.end());
 		index_array.resize(seq_ptr_view.size());
 
-		auto filter = value_ptr_filter_type(std::cref(m_filter));
+		auto filter = value_ptr_filter_type(std::cref(m_filter_pred));
 		auto fpred = viewed::make_indirect_fun(std::move(filter));
 		auto zfpred = viewed::make_get_functor<0>(fpred);
 
@@ -786,7 +786,7 @@ namespace viewed
 		valptr_vector.assign(seq_ptr_view.begin(), seq_ptr_view.end());
 		index_array.resize(seq_ptr_view.size());
 
-		auto filter = value_ptr_filter_type(std::cref(m_filter));
+		auto filter = value_ptr_filter_type(std::cref(m_filter_pred));
 		auto fpred = viewed::make_indirect_fun(std::move(filter));
 		auto zfpred = viewed::make_get_functor<0>(fpred);
 
@@ -802,7 +802,7 @@ namespace viewed
 
 		std::iota(ivfirst, islast, offset);
 
-		if (not viewed::active(m_filter))
+		if (not viewed::active(m_filter_pred))
 		{
 			upassed_new = slast - vfirst;
 			merge_newdata(vfirst, vlast, slast, ivfirst, ivlast, islast, false);
@@ -1141,7 +1141,7 @@ namespace viewed
 		auto ilast  = index_array.end();
 		std::iota(ifirst, ilast, offset);
 
-		auto filter = value_ptr_filter_type(std::cref(m_filter));
+		auto filter = value_ptr_filter_type(std::cref(m_filter_pred));
 		auto fpred = viewed::make_indirect_fun(std::move(filter));
 		auto index_pass_pred = [vfirst, fpred](int index) { return fpred(vfirst[index]); };
 
@@ -1150,7 +1150,7 @@ namespace viewed
 		auto vchanged_last = std::partition(ctx.changed_first, ctx.changed_last,
 			[upassed = page.upassed](int index) { return index < upassed; });
 
-		auto vchanged_pp = viewed::active(m_filter) 
+		auto vchanged_pp = viewed::active(m_filter_pred) 
 			? std::partition(vchanged_first, vchanged_last, index_pass_pred)
 			: vchanged_last;
 
@@ -1173,7 +1173,7 @@ namespace viewed
 			ifirst[index] = -1;
 		}
 
-		if (not viewed::active(m_filter))
+		if (not viewed::active(m_filter_pred))
 		{
 			// remove erased ones, and filtered out ones
 			vlast  = std::remove(vfirst, vlast, nullptr);

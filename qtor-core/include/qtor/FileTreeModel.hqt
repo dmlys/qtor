@@ -8,21 +8,6 @@
 
 namespace qtor
 {
-	class SimpleTextFilter
-	{
-		QString m_filterWord;
-
-	public:
-		viewed::refilter_type set_expr(QString expr);
-
-		bool always_matches() const { return m_filterWord.isEmpty(); }
-		bool matches(const QString & rec) const;
-
-		inline bool operator()(const QString & rec) const { return matches(rec); }
-		inline explicit operator bool() const { return not always_matches(); }
-	};
-
-
 	struct torrent_file_tree_traits
 	{
 		using path_type = filepath_type;
@@ -53,7 +38,7 @@ namespace qtor
 		static auto analyze(const pathview_type & prefix, const leaf_type & item) 
 			-> std::tuple<std::uintptr_t, path_type, pathview_type>;
 
-		struct dirs_first_sorter
+		struct column_sorter
 		{
 			bool operator()(const node_type & p1, const node_type & p2) const noexcept { return get_segment(p1) < get_segment(p2); }
 			bool operator()(const node_type & p1, const leaf_type & l2) const noexcept { return true; }
@@ -61,17 +46,24 @@ namespace qtor
 			bool operator()(const leaf_type & l1, const node_type & p2) const noexcept { return false; }
 		};
 
-		struct test_filter
+		class filepath_filter
 		{
-			bool operator()(const leaf_type & l) const noexcept { return m_tfilt(get_segment(l)); }
-			bool operator()(const node_type & p) const noexcept { return m_tfilt(get_segment(p)); }
-			explicit operator bool() const noexcept { return static_cast<bool>(m_tfilt); }
+			filepath_type m_filterStr;
+
+		public:
+			viewed::refilter_type set_expr(QString expr);
+
+			bool always_matches() const { return m_filterStr.isEmpty(); }
+			bool matches(const filepath_type & name) const;
+
+			inline bool operator()(const filepath_type & name) const noexcept { return matches(name); }
+			inline bool operator()(const leaf_type & l) const noexcept { return matches(get_segment(l)); }
+			inline bool operator()(const node_type & p) const noexcept { return matches(get_segment(p)); }
+			inline explicit operator bool() const { return not always_matches(); }
 		};
 
-		using sort_pred_type = dirs_first_sorter;
-		using filter_pred_type = test_filter;
-
-		static SimpleTextFilter m_tfilt;
+		using sort_pred_type = column_sorter;
+		using filter_pred_type = filepath_filter;
 	};
 
 

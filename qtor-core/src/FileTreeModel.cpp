@@ -2,30 +2,28 @@
 
 namespace qtor
 {
-	viewed::refilter_type SimpleTextFilter::set_expr(QString expr)
+	viewed::refilter_type torrent_file_tree_traits::filepath_filter::set_expr(QString expr)
 	{
 		expr = expr.trimmed();
-		if (expr.compare(m_filterWord, Qt::CaseInsensitive) == 0)
+		if (expr.compare(m_filterStr, Qt::CaseInsensitive) == 0)
 			return viewed::refilter_type::same;
 
-		if (expr.startsWith(m_filterWord, Qt::CaseInsensitive))
+		if (expr.startsWith(m_filterStr, Qt::CaseInsensitive))
 		{
-			m_filterWord = expr;
+			m_filterStr = expr;
 			return viewed::refilter_type::incremental;
 		}
 		else
 		{
-			m_filterWord = expr;
+			m_filterStr = expr;
 			return viewed::refilter_type::full;
 		}
 	}
 
-	bool SimpleTextFilter::matches(const QString & rec) const
+	bool torrent_file_tree_traits::filepath_filter::matches(const QString & rec) const
 	{
-		return rec.contains(m_filterWord, Qt::CaseInsensitive);
+		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
-
-	SimpleTextFilter FileTreeModel::m_tfilt;
 
 	filepath_type torrent_file_tree_traits::get_segment(const filepath_type & filepath)
 	{
@@ -120,8 +118,7 @@ namespace qtor
 
 	void FileTreeModel::FilterBy(QString expr)
 	{
-		auto rtype = m_tfilt.set_expr(expr);
-		refilter_and_notify(rtype);
+		filter_by(expr);
 	}
 
 	//FileTreeModel::FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)

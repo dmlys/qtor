@@ -42,6 +42,7 @@
 #include <QtGui/QTextBlock>
 #include <QtGui/QAbstractTextDocumentLayout>
 #include <QtGui/QTextCursor>
+#include <QtTools/ItemViewUtils.hpp>
 
 //class http_method
 //{
@@ -146,7 +147,7 @@ int main(int argc, char * argv[])
 		{ QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
 		{ QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100 },
 		{ QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100 },
-		{ QStringLiteral("dir/file.txt"),     100 * 100, 20 * 100 },
+		{ QStringLiteral("dir/prox/dir.txt"),     100 * 100, 20 * 100 },
 		{ QStringLiteral("ops.sh"),           100 * 100, 20 * 100 },
 		{ QStringLiteral("westworld.mkv"),    100 * 100, 20 * 100 },
 		{ QStringLiteral("folder/sup/file3.txt"), 100 * 100, 20 * 100 },
@@ -188,6 +189,7 @@ int main(int argc, char * argv[])
 	//view.setModel(model.get());
 	FileTreeView view;
 	view.SetModel(model);
+	QtTools::ResizeColumnsToContents(view.GetTreeView());
 
 	//QTimer::singleShot(3s, [&view] {
 		view.showMaximized();

@@ -9,7 +9,7 @@
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QMenu>
 
-#include <QtTools/TableViewUtils.hpp>
+#include <QtTools/ItemViewUtils.hpp>
 #include <QtTools/HeaderConfigurationWidget.hqt>
 
 #include <QtTools/ToolsBase.hpp>
