@@ -25,24 +25,24 @@ namespace qtor
 
 	protected:
 		std::vector<unsigned> m_columns;
-		std::unordered_map<unsigned, meta_item> m_columnMeta;
-		const formatter * m_fmt;
+		const torrent_file_meta * m_fmt;
 
 		QString m_filterStr;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
 		int m_sortColumn = -1;
 
 	protected:
+		void SetColumns(std::vector<unsigned> columns);
+
+	protected:
 		virtual void FilterBy(QString expr) = 0;
 		virtual void SortBy(int column, Qt::SortOrder order) = 0;
-		virtual void InitColumns();
 
 	public:
-		auto GetFormatter() const noexcept { return m_fmt; }
+		const formatter * GetFormatter() const noexcept { return m_fmt; }
 
 		virtual int FindColumn(unsigned id) const;
 		virtual QString FieldName(int section) const;
-		virtual int ColumnSizeHint(int section) const;
 
 		virtual QVariant GetItem(const QModelIndex & idx) const = 0;
 		virtual QString GetValue(const QModelIndex & idx) const = 0;

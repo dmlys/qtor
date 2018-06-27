@@ -54,16 +54,17 @@ namespace qtor
 		// currently supported types,
 		// it's not enum to allow user custom extension
 		static constexpr unsigned Uint64 = 0;
-		static constexpr unsigned Bool   = 1;
-		static constexpr unsigned Double = 2;
-		static constexpr unsigned String = 3;
+		static constexpr unsigned Int64  = 1;
+		static constexpr unsigned Bool   = 2;
+		static constexpr unsigned Double = 3;
+		static constexpr unsigned String = 4;
 
-		static constexpr unsigned Speed  = 4;
-		static constexpr unsigned Size   = 5;
-		static constexpr unsigned DateTime = 6;
-		static constexpr unsigned Duration = 7;
-		static constexpr unsigned Percent  = 8;
-		static constexpr unsigned Ratio    = 9;
+		static constexpr unsigned Speed  = 5;
+		static constexpr unsigned Size   = 6;
+		static constexpr unsigned DateTime = 7;
+		static constexpr unsigned Duration = 8;
+		static constexpr unsigned Percent  = 9;
+		static constexpr unsigned Ratio    = 10;
 
 		static constexpr unsigned Unknown = -1;
 

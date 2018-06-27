@@ -181,7 +181,11 @@ namespace qtor
 	FileTreeModel::FileTreeModel(QObject * parent /* = nullptr */)
 		: base_type(parent)
 	{
-		InitColumns();
-		m_fmt = new formatter(this);
+		m_fmt = new torrent_file_meta(this);
+		SetColumns({
+			torrent_file::FileName,
+			torrent_file::TotalSize,
+			torrent_file::HaveSize
+		});
 	}
 }

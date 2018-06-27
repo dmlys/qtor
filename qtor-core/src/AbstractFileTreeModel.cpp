@@ -2,23 +2,11 @@
 
 namespace qtor
 {
-	void AbstractFileTreeModel::InitColumns()
+	void AbstractFileTreeModel::SetColumns(std::vector<unsigned> columns)
 	{
-		m_columnMeta = 
-		{
-			{torrent_file::FileName,  {QStringLiteral("fname"),      400} },
-			{torrent_file::TotalSize, {QStringLiteral("total size"), 400} },
-			{torrent_file::HaveSize,  {QStringLiteral("have size"),  400} },
-			{torrent_file::Index,     {QStringLiteral("index"),      400} },
-			{torrent_file::Priority,  {QStringLiteral("priority"),   400} },
-			{torrent_file::Wanted,    {QStringLiteral("wanted"),     400} },
-		};
-
-		m_columns.assign({
-			torrent_file::FileName,
-			torrent_file::TotalSize,
-			torrent_file::HaveSize
-		});
+		beginResetModel();
+		m_columns = std::move(columns);
+		endResetModel();
 	}
 
 	int AbstractFileTreeModel::FindColumn(unsigned id) const
@@ -35,15 +23,7 @@ namespace qtor
 		if (section >= m_columns.size())
 			return QString::null;
 
-		return m_columnMeta.at(m_columns[section]).fieldName;
-	}
-
-	int AbstractFileTreeModel::ColumnSizeHint(int section) const
-	{
-		if (section >= m_columns.size())
-			return -1;
-
-		return m_columnMeta.at(m_columns[section]).columnSizeHint;
+		return m_fmt->item_name(m_columns[section]);
 	}
 
 	int AbstractFileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const

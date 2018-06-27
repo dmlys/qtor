@@ -67,7 +67,6 @@ namespace qtor
 		bool          wanted;
 	};
 
-
 	struct torrent_file_id_hasher
 	{
 		auto operator()(const torrent_file & val) const noexcept
@@ -95,6 +94,23 @@ namespace qtor
 
 	using torrent_file_id_less    = torrent_file_id_comparator<std::less<>>;
 	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
+
+
+	class torrent_file_meta : public virtual formatter
+	{
+	public:
+		using index_type = unsigned;
+
+	public:
+		//virtual index_type items_count() const noexcept;
+		//virtual unsigned item_type(index_type type) const noexcept;
+		virtual  QString item_name(index_type type) const;
+		virtual  QString format_item(const torrent_file & val, index_type type) const;
+		virtual  QString format_item_short(const torrent_file & val, index_type type) const;
+
+	public:
+		torrent_file_meta(QObject * parent = nullptr);
+	};
 
 	//struct peer
 	//{
@@ -289,7 +305,7 @@ namespace qtor
 	using torrent_id_greater = torrent_id_comparator<std::greater<>>;
 
 
-	class torrent_meta : public simple_sparse_container_meta/*<>*/
+	class torrent_meta : public simple_sparse_container_meta
 	{
 		using self_type = torrent_meta;
 		using base_type = simple_sparse_container_meta;

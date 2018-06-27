@@ -75,6 +75,11 @@ namespace qtor
 		return format_item(val, ms_speed_strings);
 	}
 
+	QString formatter::format_int64(int64_type val) const
+	{
+		return m_locale.toString(val);
+	}
+
 	QString formatter::format_uint64(uint64_type val) const
 	{
 		return m_locale.toString(val);
@@ -152,59 +157,6 @@ namespace qtor
 	{
 		return QStringLiteral("N/A");
 	}
-
-	//auto formatter::parse_suffix(const QString & str) const
-	//	-> optional<std::tuple<unsigned, weight>>
-	//{
-	//	return nullopt;
-	//}
-
-	//auto formatter::parse_numeric(const QString & str) const
-	//	-> optional<std::tuple<unsigned, double, weight>>
-	//{
-	//	return nullopt;
-	//}
-
-	//optional<size_type> formatter::parse_size(const QString & str) const
-	//{
-	//	return nullopt;
-	//}
-
-	//optional<speed_type> formatter::parse_speed(const QString & str) const
-	//{
-	//	return nullopt;
-	//}
-
-	//optional<uint64_type> formatter::parse_uint64(const QString & str) const
-	//{
-	//	bool ok;
-	//	uint64_type val = m_locale.toULongLong(str, &ok);
-	//	
-	//	if (ok) return val;
-	//	else return nullopt;
-	//}
-
-	//optional<double> formatter::parse_double(const QString & str) const
-	//{
-	//	bool ok;
-	//	double val = m_locale.toDouble(str, &ok);
-
-	//	if (ok) return val;
-	//	else    return nullopt;
-	//}
-
-	//optional<datetime_type> formatter::parse_datetime(const QString & str) const
-	//{
-	//	auto dt = m_locale.toDateTime(str, QLocale::ShortFormat);
-	//	if (dt.isValid()) return QtTools::ToStdChrono(dt);
-	//	else              return nullopt;
-	//}
-
-	//optional<duration_type> formatter::parse_duration(const QString & str) const
-	//{
-	//	return nullopt;
-	//}
-	
 
 	auto simple_sparse_container_meta::items_count() const noexcept -> index_type
 	{
