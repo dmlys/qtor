@@ -2,6 +2,56 @@
 
 namespace qtor
 {
+	template <class Entity, class Type, Type Entity::*member, class Pred>
+	bool torrent_file_tree_traits::column_sorter::compare_entity(const Entity & e1, const Entity & e2) noexcept
+	{
+		Pred pred;
+		const auto & v1 = e1.*member;
+		const auto & v2 = e2.*member;
+		return pred(v1, v2);
+	}
+
+	void torrent_file_tree_traits::column_sorter::reset(unsigned type, Qt::SortOrder order)
+	{
+#define COMPARE(ENTITY, TYPE, MEMBER)                                           \
+		order == Qt::AscendingOrder                                             \
+			? compare_entity<ENTITY, TYPE, &ENTITY::MEMBER, std::less<>>        \
+			: compare_entity<ENTITY, TYPE, &ENTITY::MEMBER, std::greater<>>		\
+
+		switch (type)
+		{
+			case torrent_file::Index:
+			default:
+
+			case torrent_file::FileName:
+				m_leaf_compare = COMPARE(leaf_type, path_type, filename);
+				m_node_compare = COMPARE(node_type, path_type, name);
+				break;
+
+			case torrent_file::TotalSize:
+				m_leaf_compare = COMPARE(leaf_type, size_type, total_size);
+				m_node_compare = COMPARE(node_type, size_type, total_size);
+				break;
+
+			case torrent_file::HaveSize:
+				m_leaf_compare = COMPARE(leaf_type, size_type, have_size);
+				m_node_compare = COMPARE(node_type, size_type, have_size);
+				break;
+
+			case torrent_file::Priority:
+				m_leaf_compare = COMPARE(leaf_type, int_type, priority);
+				m_node_compare = COMPARE(node_type, int_type, priority);
+				break;
+
+			case torrent_file::Wanted:
+				m_leaf_compare = COMPARE(leaf_type, bool, wanted);
+				m_node_compare = COMPARE(node_type, Qt::CheckState, wanted);
+				break;
+		}
+
+#undef COMPARE
+	}
+
 	viewed::refilter_type torrent_file_tree_traits::filepath_filter::set_expr(QString expr)
 	{
 		expr = expr.trimmed();
@@ -112,8 +162,7 @@ namespace qtor
 
 	void FileTreeModel::SortBy(int column, Qt::SortOrder order)
 	{
-		//sort_by(column, order);
-		//sort_and_notify();
+		sort_by(column, order);
 	}
 
 	void FileTreeModel::FilterBy(QString expr)

@@ -25,6 +25,7 @@ namespace qtor
 			filepath_type  name;
 			size_type      total_size;
 			size_type      have_size;
+			int_type       priority;
 			Qt::CheckState wanted;
 		};
 
@@ -38,12 +39,29 @@ namespace qtor
 		static auto analyze(const pathview_type & prefix, const leaf_type & item) 
 			-> std::tuple<std::uintptr_t, path_type, pathview_type>;
 
-		struct column_sorter
+		class column_sorter
 		{
-			bool operator()(const node_type & p1, const node_type & p2) const noexcept { return get_segment(p1) < get_segment(p2); }
-			bool operator()(const node_type & p1, const leaf_type & l2) const noexcept { return true; }
-			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return get_segment(l1) < get_segment(l2); }
-			bool operator()(const leaf_type & l1, const node_type & p2) const noexcept { return false; }
+			using leaf_compare_function = bool(*)(const leaf_type & l1, const leaf_type & l2) noexcept;
+			using node_compare_function = bool(*)(const node_type & l1, const node_type & l2) noexcept;
+
+			leaf_compare_function m_leaf_compare;
+			node_compare_function m_node_compare;
+
+			template <class Entity, class Type, Type Entity::*member, class Pred>
+			static bool compare_entity(const Entity & e1, const Entity & e2) noexcept;
+
+		public:
+			void reset(unsigned type, Qt::SortOrder order);
+
+		public:
+			inline bool operator()(const node_type & p1, const node_type & p2) const noexcept { return m_node_compare(p1, p2); }
+			inline bool operator()(const node_type & p1, const leaf_type & l2) const noexcept { return true; }
+			inline bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return m_leaf_compare(l1, l2); }
+			inline bool operator()(const leaf_type & l1, const node_type & p2) const noexcept { return false; }
+
+		public:
+			column_sorter() : column_sorter(torrent_file::FileName, Qt::AscendingOrder) {}
+			column_sorter(unsigned type, Qt::SortOrder order) { reset(type, order); }
 		};
 
 		class filepath_filter
