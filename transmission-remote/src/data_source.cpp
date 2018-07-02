@@ -2,7 +2,7 @@
 #include <qtor/transmission/requests.hpp>
 
 #include <ext/netlib/parse_url.hpp>
-#include <ext/netlib/http_response_parser.hpp>
+#include <ext/netlib/http_parser.hpp>
 #include <fmt/format.h>
 
 namespace qtor {
@@ -114,7 +114,7 @@ namespace transmission
 		auto & session = owner->m_xtransmission_session;
 
 		std::string name, body;
-		ext::netlib::http_response_parser parser;
+		ext::netlib::http_parser parser(ext::netlib::http_parser::response);
 		parser.parse_status(stream, body);
 
 		int code = parser.http_code();
@@ -166,7 +166,7 @@ namespace transmission
 		auto & session = owner->m_xtransmission_session;
 
 		std::string name, body;
-		ext::netlib::http_response_parser parser;
+		ext::netlib::http_parser parser(ext::netlib::http_parser::response);
 		parser.parse_status(stream, body);
 
 		int code = parser.http_code();
