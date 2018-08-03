@@ -17,10 +17,15 @@ namespace qtor
 	class abstract_data_source : public virtual ext::netlib::connection_controller
 	{
 	public:
-		typedef std::function<void (torrent_list & list)> torrent_handler;
+		using torrent_handler = std::function<void (torrent_list & list)>;
+		using session_stat_handler = std::function<void (session_stat & stats)>;
 
 	public:
-		virtual auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle = 0;
+		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle = 0;
+		virtual ext::future<session_stat> get_session_stats() = 0;
+
+	public:
+		virtual auto subscribe_torrents(torrent_handler handler)->ext::netlib::subscription_handle = 0;
 
 		virtual ext::future<torrent_list> get_torrents() = 0;
 		virtual ext::future<torrent_list> get_torrents(torrent_id_list ids) = 0;
@@ -39,6 +44,11 @@ namespace qtor
 		virtual ext::future<void> remove_torrents(torrent_id_list ids) = 0;
 		virtual ext::future<void> purge_torrents(torrent_id_list ids) = 0;
 
+	public:
+		virtual ext::future<torrent_file_list> get_torrent_files(torrent_id_type id) = 0;
+		virtual ext::future<torrent_peer_list> get_torrent_peers(torrent_id_type id) = 0;
+		
+	public:
 		virtual void set_address(std::string addr) = 0;
 		virtual void set_timeout(std::chrono::steady_clock::duration timeout) = 0;
 		virtual void set_logger(ext::library_logger::logger * logger) = 0;

@@ -336,13 +336,6 @@ namespace viewed
 		virtual void refilter_full_and_notify();
 		virtual void refilter_full_and_notify(page_type & page, refilter_context & ctx);
 
-	public:
-		const auto & sort_pred()   const { return m_sort_pred; }
-		const auto & filter_pred() const { return m_filter_pred; }
-
-		template <class ... Args> auto filter_by(Args && ... args) -> refilter_type;
-		template <class ... Args> void sort_by(Args && ... args);
-
 	protected:
 		template <class update_context> static update_context copy_context(const update_context & ctx, pathview_type newprefix);
 
@@ -360,6 +353,13 @@ namespace viewed
 			ErasedRandomAccessIterator erased_first, ErasedRandomAccessIterator erased_last,
 			UpdatedRandomAccessIterator updated_first, UpdatedRandomAccessIterator updated_last,
 			InsertedRandomAccessIterator inserted_first, InsertedRandomAccessIterator inserted_last);
+
+	public:
+		const auto & sort_pred()   const { return m_sort_pred; }
+		const auto & filter_pred() const { return m_filter_pred; }
+
+		template <class ... Args> auto filter_by(Args && ... args) -> refilter_type;
+		template <class ... Args> void sort_by(Args && ... args);
 
 	public:
 		using model_base::model_base;

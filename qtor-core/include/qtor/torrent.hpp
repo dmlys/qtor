@@ -112,25 +112,30 @@ namespace qtor
 		torrent_file_meta(QObject * parent = nullptr);
 	};
 
-	//struct peer
-	//{
-	//	bool clientIsChoked;
-	//	bool clientIsInterested;
-	//	bool isDownloadingFrom;
-	//	bool isEncrypted;
-	//	bool isIncoming;
-	//	bool isUploadingTo;
-	//	bool peerIsChoked;
-	//	bool peerIsInterested;
-	//	QString address;
-	//	QString clientName;
-	//	QString flagStr;
-	//	int port;
-	//	speed_type rateToClient;
-	//	speed_type rateToPeer;
-	//	double progress;
-	//};
+	struct torrent_peer
+	{
+		bool client_choked;
+		bool client_interested;
+		bool downloading_from;
+		bool uploading_to;
+		bool encrypted;
+		bool incoming;		
+		bool peer_choked;
+		bool peer_interested;
+		string_type address;
+		string_type client_name;
+		string_type flag_str;
+		int port;
+		speed_type rate_to_client;
+		speed_type rate_to_peer;
+		double progress;
+	};
 
+
+	struct session_stat
+	{
+
+	};
 
 
 	/************************************************************************/

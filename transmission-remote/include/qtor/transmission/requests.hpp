@@ -42,6 +42,8 @@ namespace transmission
 		extern const std::string request_template;
 		extern const std::string request_template_all;
 		extern const std::vector<std::string> request_default_fields;
+		extern const std::vector<std::string> request_torrent_files_fields;
+		extern const std::vector<std::string> request_torrent_peers_fields;
 
 		extern const std::string torrent_get;
 		extern const std::string torrent_set;
@@ -143,10 +145,16 @@ namespace transmission
 			return fmt::format(request_template, command, json_join(fields), json_join(ids | as_stdstring));
 	}
 
-	template <class IdsRange>
-	std::string make_request_command(const std::string & command, const IdsRange & ids)
+	template <class IdsRange, class FieldsRange>
+	std::string make_torrent_get_command(const IdsRange & ids, const FieldsRange & fields)
 	{
-		return make_request_command(command, ids, request_default_fields);
+		return make_request_command(torrent_get, ids, fields);
+	}
+
+	template <class IdsRange>
+	std::string make_torrent_get_command(const IdsRange & ids)
+	{
+		return make_torrent_get_command(ids, request_default_fields);
 	}
 
 

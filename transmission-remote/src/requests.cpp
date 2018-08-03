@@ -85,6 +85,19 @@ namespace transmission
 		static const std::string RateDownload = "rateDownload";
 		static const std::string RateUpload = "rateUpload";
 
+		// files stats
+		static const std::string Files = "files";
+		static const std::string FileStats = "fileStats";
+
+		// peers
+		static const std::string Peers = "peers";
+
+		// tracker stats
+		static const std::string Trackers = "trackers";
+		static const std::string TrackerStats = "trackerStats";
+
+
+
 		//static const std::string BandwidthPriority = "bandwidthPriority";
 		//static const std::string CorruptEver = "corruptEver";
 
@@ -93,8 +106,6 @@ namespace transmission
 		//static const std::string DownloadedEver = "downloadedEver";
 		//static const std::string DownloadLimit = "downloadLimit";
 		//static const std::string DownloadLimited = "downloadLimited";
-		//static const std::string Files = "files";
-		//static const std::string FileStats = "fileStats";
 		//static const std::string HaveUnchecked = "haveUnchecked";
 		//static const std::string HaveValid = "haveValid";
 		//static const std::string HonorsSessionLimits = "honorsSessionLimits";
@@ -103,8 +114,7 @@ namespace transmission
 		//static const std::string ManualAnnounceTime = "manualAnnounceTime";
 		//static const std::string MaxConnectedPeers = "maxConnectedPeers";
 		//static const std::string MetadataPercentComplete = "metadataPercentComplete";
-		//static const std::string PeerLimit = "peer-limit";
-		//static const std::string Peers = "peers";
+		//static const std::string PeerLimit = "peer-limit";		
 		//static const std::string PeersConnected = "peersConnected";
 		//static const std::string PeersFrom = "peersFrom";
 		//static const std::string PeersGettingFromUs = "peersGettingFromUs";
@@ -122,8 +132,6 @@ namespace transmission
 		//static const std::string SeedIdleMode = "seedIdleMode";
 		//static const std::string SeedRatioLimit = "seedRatioLimit";
 		//static const std::string SeedRatioMode = "seedRatioMode";
-		//static const std::string Trackers = "trackers";
-		//static const std::string TrackerStats = "trackerStats";
 		//static const std::string TorrentFile = "torrentFile";
 		//static const std::string UploadedEver = "uploadedEver";
 		//static const std::string UploadLimit = "uploadLimit";
@@ -144,6 +152,16 @@ namespace transmission
 			Eta, EtaIdle,
 			RateDownload, RateUpload,
 			AddedDate, DateCreated, StartDate, DoneDate, ActivityDate,
+		};
+
+		const std::vector<std::string> request_torrent_files_fields =
+		{
+			Files, FileStats,
+		};
+
+		const std::vector<std::string> request_torrent_peers_fields =
+		{
+			Trackers, TrackerStats,
 		};
 	}
 
@@ -290,8 +308,8 @@ namespace transmission
 		if (res != "success")
 			throw std::runtime_error(fmt::format("Bad response: " + res));
 
-		YAML::Node arguments = node[Arguments][Torrents];
-		for (YAML::Node tnode : arguments)
+		YAML::Node torrents = node[Arguments][Torrents];
+		for (YAML::Node tnode : torrents)
 		{
 			result.emplace_back();
 			auto & torr = result.back();
@@ -338,6 +356,26 @@ namespace transmission
 		}
 
 		return result;
+	}
+
+	static torrent_file_list parse_torrent_file_list(const YAML::Node & node)
+	{
+		torrent_file_list result;
+
+		const auto & res = node["result"].Scalar();
+		if (res != "success")
+			throw std::runtime_error(fmt::format("Bad response: " + res));
+
+		YAML::Node files = node[Arguments][Torrents][Files];
+		YAML::Node fileStats = node[Arguments][Torrents][FileStats];
+
+
+
+	}
+
+	static torrent_file_list parse_torrent_file_list(const std::string & json)
+	{
+
 	}
 
 	torrent_list parse_torrent_list(const std::string & json)

@@ -192,6 +192,40 @@ namespace transmission
 		}
 	}
 
+	//template <class Request, class Response, >
+	//class template_request : public data_source::request<std::invoke_result_t<Response, std::string>>
+	//{
+	//public:
+	//	using request_type = Request;
+	//	using response_type = Response;
+
+	//public:
+	//	torrent_id_list m_request_idx;
+	//	request_type m_requester;
+	//	response_type m_responser;
+
+	//public:
+	//	auto request_command() -> std::string override 
+	//	{
+	//		return m_requester(m_request_idx); 
+	//	}
+
+	//	auto parse_response(std::string body) override 
+	//	{
+	//		auto res = m_responser(std::move(body));
+	//		set_value(std::move(tlist));
+	//	}
+
+	//public:
+
+	//};
+
+	//template <class Request, class Response>
+	//static auto make_request(Request request, Response response)
+	//{
+
+	//}
+
 	class data_source::torrent_request : public request<torrent_list, request_base>
 	{
 		typedef data_source::request<torrent_list, request_base> base_type;
@@ -202,7 +236,7 @@ namespace transmission
 	public:
 		auto request_command() -> std::string override
 		{ 
-			return make_request_command(constants::torrent_get, m_request_idx);
+			return make_torrent_get_command(m_request_idx);
 		}
 
 		void parse_response(std::string body) override
@@ -221,7 +255,7 @@ namespace transmission
 	public:
 		auto request_command() -> std::string override
 		{
-			return make_request_command(constants::torrent_get, m_request_idx);
+			return make_torrent_get_command(m_request_idx);
 		}
 
 		void parse_response(std::string body) override
