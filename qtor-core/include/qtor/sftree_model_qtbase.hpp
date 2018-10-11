@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <qtor/sftree_facade_qtbase.hpp>
 
 namespace viewed
@@ -91,7 +91,7 @@ namespace viewed
 			boost::make_transform_iterator(first, make_unique),
 			boost::make_transform_iterator(last, make_unique));
 
-		fill_children_leafs(m_root, existing);
+		fill_children_leafs(this->m_root, existing);
 
 		auto el_first = elements.begin();
 		auto el_last = elements.end();
@@ -143,7 +143,7 @@ namespace viewed
 			boost::make_transform_iterator(first, make_unique),
 			boost::make_transform_iterator(last, make_unique));
 
-		fill_children_leafs(m_root, existing);
+		fill_children_leafs(this->m_root, existing);
 
 		auto el_first = elements.begin();
 		auto el_last = elements.end();

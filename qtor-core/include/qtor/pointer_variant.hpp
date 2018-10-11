@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstddef>
 #include <memory>  // for std::unique_ptr
 #include <utility> // for std::exchange
@@ -27,9 +27,9 @@ namespace viewed
 	template <class Type>
 	struct pointer_variant_size; /* undefined */
 		
-	template <class Type> class pointer_variant_size<         const Type> : pointer_variant<Type>::type {};
-	template <class Type> class pointer_variant_size<      volatile Type> : pointer_variant<Type>::type {};
-	template <class Type> class pointer_variant_size<const volatile Type> : pointer_variant<Type>::type {};
+	template <class Type> struct pointer_variant_size<         const Type> : pointer_variant<Type>::type {};
+	template <class Type> struct pointer_variant_size<      volatile Type> : pointer_variant<Type>::type {};
+	template <class Type> struct pointer_variant_size<const volatile Type> : pointer_variant<Type>::type {};
 
 	template <class... PointerTypes>
 	struct pointer_variant_size<pointer_variant<PointerTypes...>>
@@ -55,19 +55,19 @@ namespace viewed
 	struct pointer_variant_alternative; // undefined
 
 	template <size_t I, class Type>
-	class pointer_variant_alternative<I, const Type>
+	struct pointer_variant_alternative<I, const Type>
 	{
 		using type = std::add_const_t<typename pointer_variant_alternative<I, Type>::type>;
 	};
 
 	template <size_t I, class Type>
-	class pointer_variant_alternative<I, volatile Type>
+	struct pointer_variant_alternative<I, volatile Type>
 	{
 		using type = std::add_volatile_t<typename pointer_variant_alternative<I, Type>::type>;
 	};
 
 	template <size_t I, class Type>
-	class pointer_variant_alternative<I, const volatile Type>
+	struct pointer_variant_alternative<I, const volatile Type>
 	{
 		using type = std::add_cv_t<typename pointer_variant_alternative<I, Type>::type>;
 	};
@@ -300,6 +300,9 @@ namespace viewed
 		template <class ... Constatns>
 		using join_index_constants_t = typename join_index_constants<Constatns...>::type;
 
+		template <class Type>
+		using mp_from_sequence_variants = boost::mp11::mp_from_sequence<std::make_index_sequence<pointer_variant_size_v<ext::remove_cvref_t<Type>>>>;
+
 
 		template <std::size_t ... Indexes, class Visitor, class ... Variants>
 		inline auto dispatch_function1(std::index_sequence<Indexes...>, Visitor && vis, const Variants & ... args)
@@ -360,7 +363,7 @@ namespace viewed
 	
 		using list_of_sequence_lists = mp_product<
 			join_index_constants_t,
-			mp_from_sequence<std::make_index_sequence<pointer_variant_size_v<ext::remove_cvref_t<Variants>>>>...
+			mp_from_sequence_variants<Variants>...
 		>;
 
 		const auto dispatch_idx = dispatch_index(vars...);

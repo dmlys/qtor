@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <vector>
 #include <tuple>
@@ -11,11 +11,11 @@
 #include <viewed/qt_model.hpp>
 #include <qtor/pointer_variant.hpp>
 
-#include <boost/range/detail/range_return.hpp>
 #include <varalgo/sorting_algo.hpp>
 #include <varalgo/on_sorted_algo.hpp>
 
 #include <ext/utility.hpp>
+#include <ext/try_reserve.hpp>
 #include <ext/iterator/zip_iterator.hpp>
 #include <ext/iterator/outdirect_iterator.hpp>
 #include <ext/iterator/indirect_iterator.hpp>
@@ -87,7 +87,7 @@ namespace viewed
 			using result_type = path_type;
 			result_type operator()(const path_type & path) const { return traits_type::get_segment(path); }
 			result_type operator()(const leaf_type & leaf) const { return traits_type::get_segment(leaf); }
-			result_type operator()(const page_type & page) const { return traits_type::get_segment(static_cast<const node_type &>page); }
+			result_type operator()(const page_type & page) const { return traits_type::get_segment(static_cast<const node_type &>(page)); }
 			result_type operator()(const value_ptr & val)  const { return viewed::visit(*this, val); }
 
 			// important, viewed::visit(*this, val) depends on them, otherwise infinite recursion would occur

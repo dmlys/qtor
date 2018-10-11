@@ -1,4 +1,4 @@
-#include <qtor/formatter.hqt>
+﻿#include <qtor/formatter.hqt>
 #include <QtTools/ToolsBase.hpp>
 #include <QtTools/DateUtils.hpp>
 #include <QtCore/QStringBuilder>
@@ -77,12 +77,12 @@ namespace qtor
 
 	QString formatter::format_int64(int64_type val) const
 	{
-		return m_locale.toString(val);
+		return m_locale.toString(static_cast<qlonglong>(val));
 	}
 
 	QString formatter::format_uint64(uint64_type val) const
 	{
-		return m_locale.toString(val);
+		return m_locale.toString(static_cast<qulonglong>(val));
 	}
 
 	QString formatter::format_double(double val) const

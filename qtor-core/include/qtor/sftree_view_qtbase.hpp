@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <qtor/sftree_facade_qtbase.hpp>
 
 
@@ -103,7 +103,7 @@ namespace viewed
 	void sftree_view_qtbase<Traits, Container, ModelBase>::reinit_view()
 	{
 		using leaf_pointer_vector = std::vector<view_pointer_type>;
-		using reset_context = typename base_type::reset_context_template<typename leaf_pointer_vector::iterator>;
+		using reset_context = typename base_type::template reset_context_template<typename leaf_pointer_vector::iterator>;
 
 		leaf_pointer_vector elements;
 		elements.assign(
@@ -113,10 +113,10 @@ namespace viewed
 
 		this->beginResetModel();
 
-		m_root.upassed = 0;
-		m_root.children.clear();
+		this->m_root.upassed = 0;
+		this->m_root.children.clear();
 
-		value_ptr_vector valptr_array;
+		typename base_type::value_ptr_vector valptr_array;
 		reset_context ctx;
 
 		auto first = elements.begin();
@@ -126,7 +126,7 @@ namespace viewed
 		ctx.vptr_array = &valptr_array;
 		ctx.first = first;
 		ctx.last = last;
-		this->reset_page(m_root, ctx);
+		this->reset_page(this->m_root, ctx);
 
 		this->endResetModel();
 
@@ -136,8 +136,6 @@ namespace viewed
 	void sftree_view_qtbase<Traits, Container, ModelBase>::update_data(
 		const signal_range_type & erased, const signal_range_type & updated, const signal_range_type & inserted)
 	{
-		using signal_range_iterator = typename signal_range_type::iterator;
-
 		auto erased_first = erased.begin();
 		auto erased_last = erased.end();
 		auto updated_first = updated.begin();
