@@ -101,7 +101,8 @@ namespace qtor
 	public:
 		using index_type = unsigned;
 
-	public:
+		using formatter::format_item;
+	public:		
 		//virtual index_type items_count() const noexcept;
 		//virtual unsigned item_type(index_type type) const noexcept;
 		virtual  QString item_name(index_type type) const;
@@ -237,12 +238,12 @@ namespace qtor
 	auto NAME(TYPE val) -> self_type &     { return static_cast<self_type &>(set_item(ID, std::move(val))); }    \
 	auto NAME() const   -> TYPE            { return get_item<TYPE>(ID).value(); }                                \
 	                                                                                                             \
-	//template <class Type>                                                                                      \
-	//std::enable_if_t<std::is_convertible_v<std::decay_t<Type>, TYPE>, self_type &>                             \
-	//NAME(optional<Type> val)                                                                                   \
-	//{                                                                                                          \
-	//	return static_cast<self_type &>(set_item(ID, std::move(val)));                                           \
-	//}                                                                                                          \
+	/*template <class Type>                                                                                        \
+	std::enable_if_t<std::is_convertible_v<std::decay_t<Type>, TYPE>, self_type &>                               \
+	NAME(optional<Type> val)                                                                                     \
+	{                                                                                                            \
+	    return static_cast<self_type &>(set_item(ID, std::move(val)));                                           \
+	}*/                                                                                                            \
 
 
 #define QTOR_TORRENT_DEFINE_OPT_PROPERTY(ID, NAME, A3, TYPE)                                                     \

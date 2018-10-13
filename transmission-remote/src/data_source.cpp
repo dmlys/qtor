@@ -43,8 +43,8 @@ namespace transmission
 	class data_source::request_base : public base_type::request_base
 	{
 	public:
-		void request(ext::socket_stream & stream) override;
-		void response(ext::socket_stream & stream) override;
+		void request(ext::netlib::socket_stream & stream) override;
+		void response(ext::netlib::socket_stream & stream) override;
 
 	public:
 		virtual auto request_command() -> std::string = 0;
@@ -61,8 +61,8 @@ namespace transmission
 		void emit_data(Data data, const Handler & handler);
 		
 	public:
-		void request(ext::socket_stream & stream) override;
-		void response(ext::socket_stream & stream) override;
+		void request(ext::netlib::socket_stream & stream) override;
+		void response(ext::netlib::socket_stream & stream) override;
 		auto next_invoke() -> std::chrono::steady_clock::time_point override { return m_next; }
 
 	public:
@@ -88,7 +88,7 @@ namespace transmission
 		}
 	}
 
-	void data_source::subscription_base::request(ext::socket_stream & stream)
+	void data_source::subscription_base::request(ext::netlib::socket_stream & stream)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & uri = owner->m_encoded_uri;
@@ -108,7 +108,7 @@ namespace transmission
 		stream << "\r\n" << body;
 	}
 
-	void data_source::subscription_base::response(ext::socket_stream & stream)
+	void data_source::subscription_base::response(ext::netlib::socket_stream & stream)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
@@ -130,17 +130,17 @@ namespace transmission
 				if (name == "X-Transmission-Session-Id")
 					session = body;
 
-			parse_trailing(parser, stream);
+			parser.parse_trailing(stream);
 		}
 		else
 		{
-			parse_trailing(parser, stream);
+			parser.parse_trailing(stream);
 			auto err = fmt::format("Bad http response: {}, {}", code, body);
 			throw std::runtime_error(std::move(err));
 		}
 	}
 
-	void data_source::request_base::request(ext::socket_stream & stream)
+	void data_source::request_base::request(ext::netlib::socket_stream & stream)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & uri = owner->m_encoded_uri;
@@ -160,7 +160,7 @@ namespace transmission
 		stream << "\r\n" << body;
 	}
 
-	void data_source::request_base::response(ext::socket_stream & stream)
+	void data_source::request_base::response(ext::netlib::socket_stream & stream)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
@@ -181,12 +181,12 @@ namespace transmission
 				if (name == "X-Transmission-Session-Id")
 					session = body;
 
-			parse_trailing(parser, stream);
+			parser.parse_trailing(stream);
 			set_repeat();
 		}
 		else
 		{
-			parse_trailing(parser, stream);
+			parser.parse_trailing(stream);
 			auto err = fmt::format("Bad http response: {}, {}", code, body);
 			throw std::runtime_error(std::move(err));
 		}
@@ -260,7 +260,6 @@ namespace transmission
 
 		void parse_response(std::string body) override
 		{
-			auto owner = static_cast<data_source *>(m_owner);
 			auto tlist = parse_torrent_list(body);
 			emit_data(std::move(tlist), m_handler);
 		}

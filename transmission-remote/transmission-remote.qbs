@@ -4,12 +4,13 @@ import qbs.Environment
 StaticLibrary
 {
 	Depends { name: "cpp" }
+	Depends { name: "Qt"; submodules: ["core"] }
+
 	Depends { name: "extlib" }
     Depends { name: "netlib" }
     Depends { name: "QtTools" }
+	Depends { name: "qtor-core" }
 	
-	Depends { name: "Qt"; submodules: ["core", "gui", "widgets"] }
-		
 	cpp.cxxLanguageVersion : "c++17"
 	cpp.defines: project.additionalDefines
 	//cpp.includePaths: project.additionalIncludePaths
@@ -20,10 +21,10 @@ StaticLibrary
 
 	cpp.includePaths : { 
 		var includes = ["include"]
-		
+
 		if (project.additionalIncludePaths)
 			includes = includes.uniqueConcat(project.additionalIncludePaths)
-			
+		
 		return includes
 	}
 	

@@ -1,4 +1,3 @@
-#pragma once
 #include <QtGui/QPainter>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QTextLayout>
@@ -211,7 +210,7 @@ namespace QtTools::NotificationSystem
 		const auto width = std::max(rectWidth, titleSz.width() + timestampSz.width() + titleSpacer);
 		textDoc.setTextWidth(width);
 
-		QSize textSz {std::lround(textDoc.idealWidth()), std::lround(textDoc.size().height())};
+		QSize textSz(std::lround(textDoc.idealWidth()), std::lround(textDoc.size().height()));
 		int textTop = ms_Spacing + std::max({item.pixmapRect.bottom(), item.titleRect.bottom(), item.timestampRect.bottom()});
 		item.textRect = QRect {{topLeft.x(), textTop}, textSz};
 
@@ -224,8 +223,8 @@ namespace QtTools::NotificationSystem
 		if (item.index == option.index)
 		{
 			auto newTopLeft = option.rect.topLeft();
-			auto diff = option.rect.topLeft() - item.hintTopLeft;
-			item.hintTopLeft = option.rect.topLeft();
+			auto diff = newTopLeft - item.hintTopLeft;
+			item.hintTopLeft = newTopLeft;
 
 			item.titleRect.translate(diff);
 			item.timestampRect.translate(diff);
@@ -242,8 +241,8 @@ namespace QtTools::NotificationSystem
 		const auto locale = option.widget->locale();
 		const auto & notification = model->GetItem(option.index.row());
 		const auto margins = TextMargins(option);
-		const auto rect = option.rect - margins;
-		const auto topLeft = rect.topLeft();
+		//const auto rect = option.rect - margins;
+		//const auto topLeft = rect.topLeft();
 
 		item.hintTopLeft = option.rect.topLeft();
 		item.timestamp = locale.toString(notification.Timestamp(), QLocale::ShortFormat);
@@ -289,7 +288,6 @@ namespace QtTools::NotificationSystem
 
 		painter->drawPixmap(item.pixmapRect, item.pixmap);
 
-		auto & titleRect = item.titleRect;
 		auto timestampRect = item.timestampRect;
 		timestampRect.moveRight(rect.right());
 

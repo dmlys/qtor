@@ -115,101 +115,103 @@ namespace qtor
 	//	qApp->clipboard()->setText(text);
 	//}
 
-//	QMenu * FileTreeView::CreateItemMenu(const QModelIndex & idx)
-//	{
-//		QAction * action;
-//		auto * menu = new QMenu(this);
-//		connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater); // auto delete on hide
-//
-//		if (m_sortMenu)
+/*
+	QMenu * FileTreeView::CreateItemMenu(const QModelIndex & idx)
+	{
+		QAction * action;
+		auto * menu = new QMenu(this);
+		connect(menu, &QMenu::aboutToHide, menu, &QObject::deleteLater); // auto delete on hide
+
+		if (m_sortMenu)
+		{
+			menu->addMenu(m_sortMenu);
+			menu->addSeparator();
+		}
+
+		action = new QAction(tr("Table &settings..."), menu);
+		connect(action, &QAction::triggered, this, &FileTreeView::TableSettings);
+		menu->addAction(action);
+
+		//: TableView context menu item
+		action = new QAction(tr("&Resize columns to content"), menu);
+		connect(action, &QAction::triggered, this, &FileTreeView::ResizeColumnsToContents);
+		menu->addAction(action);
+
+		menu->addSeparator();
+		action = new QAction(tr("&Table mode"), menu);
+		connect(action, &QAction::triggered, this, [this] { SetViewMode(TableMode); });
+		menu->addAction(action);
+
+		action = new QAction(tr("&List mode"), menu);
+		connect(action, &QAction::triggered, this, [this] { SetViewMode(ListMode); });
+		menu->addAction(action);
+
+//		if (idx.isValid())
 //		{
-//			menu->addMenu(m_sortMenu);
-//			menu->addSeparator();
+//			QPersistentModelIndex pidx = idx;
+//
+//#define CONNECT(METHOD)                                                                     \
+//			action->setData(pidx);                                                          \
+//			connect(action, &QAction::triggered, this, [this]                               \
+//			{                                                                               \
+//				auto * action = static_cast<QAction *>(QObject::sender());                  \
+//				QModelIndex idx = qvariant_cast<QPersistentModelIndex>(action->data());     \
+//				m_parent->METHOD(idx);                                                      \
+//			})                                                                              \
+//
+//			action = menu->addAction(tr("&Properties"));
+//			action->setIcon(QIcon::fromTheme("document-properties"));
+//			action->setShortcut(QKeySequence("Alt+Enter"));
+//			CONNECT(OpenTorrentLocationSettings);
+//
+//			action = menu->addAction(tr("Open Fold&er"));
+//			action->setIcon(QIcon::fromTheme("folder-open"));
+//			action->setShortcut(QKeySequence("Alt+E"));
+//			CONNECT(OpenTorrentFolder);
+//
+//			action = menu->addAction(tr("Start"));
+//			CONNECT(StartTorrent);
+//
+//			action = menu->addAction(tr("start Now"));
+//			CONNECT(StartTorrentNow);
+//
+//			action = menu->addAction(tr("Stop"));
+//			CONNECT(StopTorrent);
+//
+//			action = menu->addAction(tr("Announce"));
+//			CONNECT(AnnounceTorrent);
+//
+//			action = menu->addAction(tr("Remove"));
+//			CONNECT(DeleteTorrent);
+//
+//			action = menu->addAction(tr("Remove and Delete data"));
+//			CONNECT(PurgeTorrent);
+//
+//
+//
+//#undef CONNECT
 //		}
-//
-//		action = new QAction(tr("Table &settings..."), menu);
-//		connect(action, &QAction::triggered, this, &FileTreeView::TableSettings);
-//		menu->addAction(action);
-//		
-//		//: TableView context menu item
-//		action = new QAction(tr("&Resize columns to content"), menu);
-//		connect(action, &QAction::triggered, this, &FileTreeView::ResizeColumnsToContents);
-//		menu->addAction(action);
-//
-//		menu->addSeparator();
-//		action = new QAction(tr("&Table mode"), menu);
-//		connect(action, &QAction::triggered, this, [this] { SetViewMode(TableMode); });
-//		menu->addAction(action);
-//
-//		action = new QAction(tr("&List mode"), menu);
-//		connect(action, &QAction::triggered, this, [this] { SetViewMode(ListMode); });
-//		menu->addAction(action);
-//
-////		if (idx.isValid())
-////		{
-////			QPersistentModelIndex pidx = idx;
-////
-////#define CONNECT(METHOD)                                                                     \
-////			action->setData(pidx);                                                          \
-////			connect(action, &QAction::triggered, this, [this]                               \
-////			{                                                                               \
-////				auto * action = static_cast<QAction *>(QObject::sender());                  \
-////				QModelIndex idx = qvariant_cast<QPersistentModelIndex>(action->data());     \
-////				m_parent->METHOD(idx);                                                      \
-////			})                                                                              \
-////
-////			action = menu->addAction(tr("&Properties"));
-////			action->setIcon(QIcon::fromTheme("document-properties"));
-////			action->setShortcut(QKeySequence("Alt+Enter"));
-////			CONNECT(OpenTorrentLocationSettings);
-////			
-////			action = menu->addAction(tr("Open Fold&er"));
-////			action->setIcon(QIcon::fromTheme("folder-open"));
-////			action->setShortcut(QKeySequence("Alt+E"));
-////			CONNECT(OpenTorrentFolder);
-////
-////			action = menu->addAction(tr("Start"));
-////			CONNECT(StartTorrent);
-////			
-////			action = menu->addAction(tr("start Now"));
-////			CONNECT(StartTorrentNow);
-////			
-////			action = menu->addAction(tr("Stop"));
-////			CONNECT(StopTorrent);
-////
-////			action = menu->addAction(tr("Announce"));
-////			CONNECT(AnnounceTorrent);
-////
-////			action = menu->addAction(tr("Remove"));
-////			CONNECT(DeleteTorrent);
-////
-////			action = menu->addAction(tr("Remove and Delete data"));
-////			CONNECT(PurgeTorrent);
-////
-////
-////
-////#undef CONNECT
-////		}
-//
-//		return menu;
-//	}
-//
-//	void FileTreeView::contextMenuEvent(QContextMenuEvent * ev)
-//	{
-//		ev->accept();
-//		auto pos = ev->globalPos();
-//
-//		auto * viewport = m_itemView->viewport();
-//		auto viewPos = viewport->mapFromGlobal(pos);
-//
-//		// process only menu from QTableView
-//		if (not viewport->contentsRect().contains(viewPos))
-//			return;
-//
-//		auto idx = m_treeView->indexAt(viewPos);
-//		auto * menu = CreateItemMenu(idx);
-//		if (menu) menu->popup(pos);
-//	}
+
+		return menu;
+	}
+
+	void FileTreeView::contextMenuEvent(QContextMenuEvent * ev)
+	{
+		ev->accept();
+		auto pos = ev->globalPos();
+
+		auto * viewport = m_itemView->viewport();
+		auto viewPos = viewport->mapFromGlobal(pos);
+
+		// process only menu from QTableView
+		if (not viewport->contentsRect().contains(viewPos))
+			return;
+
+		auto idx = m_treeView->indexAt(viewPos);
+		auto * menu = CreateItemMenu(idx);
+		if (menu) menu->popup(pos);
+	}
+*/
 
 	QSize FileTreeView::sizeHint() const
 	{
@@ -228,7 +230,7 @@ namespace qtor
 		//	maxSize /= 3;
 		//}
 
-		//// additional size - size of all layout'à
+		//// additional size - size of all layout'Ð°
 		//// minus size of tableView, size of which we calculate ourself.
 		//// QTableView::sizeHint in fact always reutrn dummy size: 256:192
 		//QSize addSz = QWidget::sizeHint() - m_treeView->sizeHint();

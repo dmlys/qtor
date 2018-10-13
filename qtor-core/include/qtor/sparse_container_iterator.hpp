@@ -97,11 +97,11 @@ namespace qtor
 	
 	public:
 		base_sparse_container_transform_iterator(sparse_container_ref cont, index_iterator pos, functor func = {}) noexcept
-			: m_cont(&cont), m_index(pos), m_func(func) {}
+		    : m_index(pos), m_cont(&cont), m_func(func) {}
 
 		// copy constructor from const iterator
 		base_sparse_container_transform_iterator(const base_sparse_container_transform_iterator<functor, index_iterator, true> & it) noexcept
-			: m_cont(it.m_cont), m_index(it.m_index), m_func(it.m_func) {}
+		    : m_index(it.m_index), m_cont(it.m_cont), m_func(it.m_func) {}
 	};
 
 

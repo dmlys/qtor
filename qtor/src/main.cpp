@@ -1,4 +1,4 @@
-#include <array>
+﻿#include <array>
 #include <memory>
 #include <string>
 #include <map>
@@ -25,14 +25,15 @@
 #include <qtor/transmission/data_source.hpp>
 
 #include <qtor/torrent_store.hpp>
+#include <qtor/torrent_file_store.hpp>
 #include <qtor/TorrentsModel.hpp>
 
 #include <qtor/TorrentsView.hqt>
 #include <qtor/MainWindow.hqt>
 #include <qtor/Application.hqt>
-#include <TransmissionRemoteApp.hqt>
+#include "TransmissionRemoteApp.hqt"
 
-#include <ScreenInfo.hpp>
+#include "ScreenInfo.hpp"
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationView.hqt>
 #include <qtor/NotificationPopupLayout.hqt>
@@ -128,7 +129,7 @@ int main(int argc, char * argv[])
 	using namespace std;
 	using namespace qtor;	
 
-	ext::winsock2_stream_init();
+	ext::netlib::socket_stream_init();
 	ext::init_future_library(std::thread::hardware_concurrency());
 
 	QtTools::QtRegisterStdString();
@@ -142,133 +143,133 @@ int main(int argc, char * argv[])
 
 	std::cout << QtTools::ScreenInfo << endl;
 
-	std::vector<torrent_file> paths, paths2;
-	paths.assign({
-		{ QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
-		{ QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100 },
-		{ QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100 },
-		{ QStringLiteral("dir/prox/dir.txt"),     100 * 100, 20 * 100 },
-		{ QStringLiteral("ops.sh"),           100 * 100, 20 * 100 },
-		{ QStringLiteral("westworld.mkv"),    100 * 100, 20 * 100 },
-		{ QStringLiteral("folder/sup/file3.txt"), 100 * 100, 20 * 100 },
-		{ QStringLiteral("folder/sup/inner/file.txt"), 100 * 100, 20 * 100 },
-	});
+//	std::vector<torrent_file> paths, paths2;
+//	paths.assign({
+//	    { QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
+//	    { QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100 },
+//	    { QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100 },
+//	    { QStringLiteral("dir/prox/dir.txt"),     100 * 100, 20 * 100 },
+//	    { QStringLiteral("ops.sh"),           100 * 100, 20 * 100 },
+//	    { QStringLiteral("westworld.mkv"),    100 * 100, 20 * 100 },
+//	    { QStringLiteral("folder/sup/file3.txt"), 100 * 100, 20 * 100 },
+//	    { QStringLiteral("folder/sup/inner/file.txt"), 100 * 100, 20 * 100 },
+//	});
 
-	paths2 = paths;
-	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+//	paths2 = paths;
+//	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
 	
-	//paths.assign({
-	//	{ QStringLiteral("file1.txt") },
-	//	{ QStringLiteral("file2.txt") },
-	//	{ QStringLiteral("file.sft") },
-	//	{ QStringLiteral("file.txt") },
-	//	{ QStringLiteral("ops.sh") },
-	//	{ QStringLiteral("westworld.mkv") },
-	//});
+//	//paths.assign({
+//	//	{ QStringLiteral("file1.txt") },
+//	//	{ QStringLiteral("file2.txt") },
+//	//	{ QStringLiteral("file.sft") },
+//	//	{ QStringLiteral("file.txt") },
+//	//	{ QStringLiteral("ops.sh") },
+//	//	{ QStringLiteral("westworld.mkv") },
+//	//});
 
-	//paths2.assign({
-	//		{QStringLiteral("file1.txt")},
-	//		{QStringLiteral("file.sft")},
-	//		{QStringLiteral("ziggaman.sh")},
-	//		{QStringLiteral("westworld.mkv")},
-	//});
+//	//paths2.assign({
+//	//		{QStringLiteral("file1.txt")},
+//	//		{QStringLiteral("file.sft")},
+//	//		{QStringLiteral("ziggaman.sh")},
+//	//		{QStringLiteral("westworld.mkv")},
+//	//});
 
-	auto store = std::make_shared<torrent_file_store>();
-	auto model = std::make_shared<FileTreeModel>();
-	//auto model = std::make_shared<FileTreeModel>(store);
+//	auto store = std::make_shared<torrent_file_store>();
+//	auto model = std::make_shared<FileTreeModel>();
+//	//auto model = std::make_shared<FileTreeModel>(store);
 	
-	//store->assign_records(paths);
-	//store->assign_records(paths2);
-	//store->assign_records(paths);
+//	//store->assign_records(paths);
+//	//store->assign_records(paths2);
+//	//store->assign_records(paths);
 
-	model->assign(paths);
-	model->upsert(paths2);
-	model->assign(paths);
+//	model->assign(paths);
+//	model->upsert(paths2);
+//	model->assign(paths);
 	
-	//QTableView view;
-	//view.setModel(model.get());
-	FileTreeView view;
-	view.SetModel(model);
-	QtTools::ResizeColumnsToContents(view.GetTreeView());
+//	//QTableView view;
+//	//view.setModel(model.get());
+//	FileTreeView view;
+//	view.SetModel(model);
+//	QtTools::ResizeColumnsToContents(view.GetTreeView());
 
-	//QTimer::singleShot(3s, [&view] {
-		view.showMaximized();
-		view.activateWindow();
-		view.raise();
-	//});
+//	//QTimer::singleShot(3s, [&view] {
+//	    view.showMaximized();
+//		view.activateWindow();
+//		view.raise();
+//	//});
 	
 
 
 
-//#ifdef Q_OS_WIN
-//	// On windows the highlighted colors for inactive widgets are the
-//	// same as non highlighted colors.This is a regression from Qt 4.
-//	// https://bugreports.qt-project.org/browse/QTBUG-41060
-//	auto palette = qapp.palette();
-//	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
-//	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
-//	qapp.setPalette(palette);
-//#endif
-//
+#ifdef Q_OS_WIN
+	// On windows the highlighted colors for inactive widgets are the
+	// same as non highlighted colors.This is a regression from Qt 4.
+	// https://bugreports.qt-project.org/browse/QTBUG-41060
+	auto palette = qapp.palette();
+	palette.setColor(QPalette::Inactive, QPalette::Highlight, palette.color(QPalette::Active, QPalette::Highlight));
+	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
+	qapp.setPalette(palette);
+#endif
+
 //	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 //	source->set_address("bin/data.db"s);
-//
-//	//auto source = std::make_shared<qtor::transmission::data_source>();
-//	//source->set_address("http://melkiy:9091/transmission/rpc"s);
-//	
-//	qtor::TransmissionRemoteApp app {std::move(source)};
-//	qtor::MainWindow mainWindow;
-//	
-//	mainWindow.Init(app);
-//	mainWindow.show();
-//	
-//	QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	//auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
-	//
-	//std::error_code err {10066, ext::system_utf8_category()};
-	//std::string errmsg = ext::FormatError(err);
-	//
-	//using namespace QtTools::NotificationSystem;
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
 
-	//NotificationCenter nsys;
-	//NotificationPopupLayout layout;
-	//NotificationView view;
-	//
-	//auto hovered = [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); };
-	//auto activated = [](auto href) { cout << FromQString(href) << endl; };
+	qtor::TransmissionRemoteApp app {std::move(source)};
+	qtor::MainWindow mainWindow;
 
-	//QObject::connect(&layout, &NotificationPopupLayout::LinkHovered, mainWindow.m_statusbar, hovered);
-	//QObject::connect(&view, &NotificationView::LinkHovered, mainWindow.m_statusbar, hovered);
+	mainWindow.Init(app);
+	mainWindow.show();
 
-	//QObject::connect(&layout, &NotificationPopupLayout::LinkActivated, activated);
-	//QObject::connect(&view, &NotificationView::LinkActivated, activated);
+	QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	//layout.Init(nsys);
-	//layout.SetParent(&mainWindow);
-	////layout.SetCorner(Qt::TopRightCorner);
-	////layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
+//	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
 
-	//view.Init(nsys);
-	//view.SetFilterMode(view.FilterByText | view.FilterByLevel);
-	//view.show();
+//	std::error_code err {EACCES, std::generic_category()};
+//	std::string errmsg = ext::FormatError(err);
 
-	//nsys.AddInfo("Title1", "Text1");
-	//nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	//nsys.AddError("Title4", QtTools::ToQString(errmsg));
-	//nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
-	//nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
-	//nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
-	//nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
+//	using namespace QtTools::NotificationSystem;
 
-	//auto nf = nsys.CreateNotification();
-	//nf->Title("Custom");
-	//nf->Text("Some Text");
-	//nf->setProperty("backgroundColor", QColor("red"));
-	//nf->setProperty("expirationTimeout", 0);
-	//nf->ActivationLink("setings:://tralala");
+//	NotificationCenter nsys;
+//	NotificationPopupLayout layout;
+//	NotificationView view;
 
-	//nsys.AddNotification(std::move(nf));
+//	auto hovered = [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); };
+//	auto activated = [](auto href) { cout << FromQString(href) << endl; };
+
+//	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered, mainWindow.m_statusbar, hovered);
+//	QObject::connect(&view, &NotificationView::LinkHovered, mainWindow.m_statusbar, hovered);
+
+//	QObject::connect(&layout, &NotificationPopupLayout::LinkActivated, activated);
+//	QObject::connect(&view, &NotificationView::LinkActivated, activated);
+
+//	layout.Init(nsys);
+//	layout.SetParent(nullptr);
+//	//layout.SetCorner(Qt::TopRightCorner);
+//	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
+
+//	view.Init(nsys);
+//	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
+//	view.show();
+
+//	nsys.AddInfo("Title1", "Text1");
+//	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+//	nsys.AddError("Title4", QtTools::ToQString(errmsg));
+//	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+//	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+//	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+//	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
+
+//	auto nf = nsys.CreateNotification();
+//	nf->Title("Custom");
+//	nf->Text("Some Text");
+//	nf->setProperty("backgroundColor", QColor("red"));
+//	nf->setProperty("expirationTimeout", 0);
+//	nf->ActivationLink("setings:://tralala");
+
+//	nsys.AddNotification(std::move(nf));
 
 	return qapp.exec();
 }

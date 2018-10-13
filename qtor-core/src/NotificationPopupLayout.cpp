@@ -1,4 +1,5 @@
 #include <tuple>
+#include <ext/config.hpp>
 #include <ext/utility.hpp>
 
 #include <QtCore/QEvent>
@@ -536,7 +537,7 @@ namespace QtTools::NotificationSystem
 		auto evType = event->type();
 		if (evType == QEvent::Resize)
 		{
-			auto * rev = static_cast<QResizeEvent *>(event);
+			//auto * rev = static_cast<QResizeEvent *>(event);
 			ParentResized();
 			return false;
 		}	

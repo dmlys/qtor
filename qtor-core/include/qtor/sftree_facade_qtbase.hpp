@@ -31,6 +31,12 @@
 #include <QtCore/QAbstractItemModel>
 #include <QtTools/ToolsBase.hpp>
 
+#if BOOST_COMP_GNUC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
 
 namespace viewed
 {
@@ -870,7 +876,7 @@ namespace viewed
 		while (ctx.first != ctx.last)
 		{
 			auto && item_ptr = *ctx.first;
-			auto[type, name, newprefix] = analyze(ctx.prefix, *item_ptr);
+			auto [type, name, newprefix] = analyze(ctx.prefix, *item_ptr);
 			if (type == LEAF)
 			{
 				container.insert(std::forward<decltype(item_ptr)>(item_ptr));
@@ -958,7 +964,7 @@ namespace viewed
 			auto it = container.find(get_segment(*item));
 			assert(it != container.end());
 			
-			auto seqit = container.project<by_seq>(it);
+			auto seqit = container.template project<by_seq>(it);
 			auto pos = seqit - seq_view.begin();
 			*ctx.removed_last++ = pos;
 
@@ -993,7 +999,7 @@ namespace viewed
 			auto it = container.find(get_segment(*item));
 			assert(it != container.end());
 
-			auto seqit = container.project<by_seq>(it);
+			auto seqit = container.template project<by_seq>(it);
 			auto pos = seqit - seq_view.begin();
 			*--ctx.changed_first = pos;
 			
@@ -1094,7 +1100,7 @@ namespace viewed
 			{
 				update_page_and_notify(*child_page, newctx);
 
-				auto seqit = container.project<by_seq>(it);
+				auto seqit = container.template project<by_seq>(it);
 				auto pos = seqit - seq_view.begin();
 
 				if (child_page->children.size() == 0)
@@ -1296,3 +1302,7 @@ namespace viewed
 		this->layoutChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
 	}
 }
+
+#if BOOST_COMP_GNUC
+#pragma GCC diagnostic pop
+#endif

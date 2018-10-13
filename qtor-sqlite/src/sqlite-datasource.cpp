@@ -59,7 +59,7 @@ namespace qtor::sqlite
 
 		m_subs.push_back(sub);
 		sub->emit_data();
-		return sub;
+		return {sub};
 	}
 
 	auto sqlite_datasource::get_torrents(torrent_id_list ids)

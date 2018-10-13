@@ -100,7 +100,7 @@ namespace qtor
 	public:
 		torrents_batch_range(const sparse_container_meta & meta, 
 			const names_range & names, const torrents_range & torrents)
-		: m_meta(&meta), m_names(&names), m_torrents(&torrents),
+		: m_names(&names), m_torrents(&torrents), m_meta(&meta),
 		  m_cur(torrents.begin()), m_last(torrents.end())
 		{ }
 	};

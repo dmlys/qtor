@@ -10,11 +10,11 @@ namespace QtTools
 {
 	/// NotificationPopupWidget is used to display notifications to user.
 	/// It's a frameless(Qt::FramelessWindowHint)
-	/// floating translucent separate(but can be a child too) widget with shadow effect.
+	/// floating translucent separate widget(but can be a child too) with shadow effect.
 	/// 
 	/// This class is more of a base, it provides only background, frame and a shadow effect.
 	/// You a expected to add content, overriding paintEvent, sizeHint,
-	/// or simpler adding child widget(s) and setting layout of NotificationPopupWidget.
+	/// or simplier adding child widget(s) and setting layout of NotificationPopupWidget.
 	/// 
 	/// Also on RMB click widget starts move out animation 
 	/// to nearest left or right parent window edge and then auto closes.

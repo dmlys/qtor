@@ -64,7 +64,7 @@ namespace QtTools::NotificationSystem
 	}
 
 	NotificationModel::NotificationModel(std::shared_ptr<NotificationStore> store, QObject * parent /* = nullptr */)
-		: view_type(store.get()), base_type(parent)
+	    : base_type(parent), view_type(store.get())
 	{
 		assert(store);
 
@@ -142,6 +142,7 @@ namespace QtTools::NotificationSystem
 
 		int row = index.row();
 		int column = index.column();
+		Q_UNUSED(column);
 
 		switch (role)
 		{

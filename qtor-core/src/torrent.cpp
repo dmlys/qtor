@@ -40,8 +40,8 @@ namespace qtor
 		}();
 
 	torrent_meta::torrent_meta(QObject * parent /* = nullptr */)
-		: base_type(ms_items),
-		  formatter(parent) {}
+	    : formatter(parent),
+	      base_type(ms_items) {}
 
 
 	/************************************************************************/

@@ -6,10 +6,12 @@ StaticLibrary
 	Depends { name: "cpp" }
 	Depends { name: "extlib" }
     Depends { name: "netlib" }
+	Depends { name: "sqlite3yaw" }
     Depends { name: "QtTools" }
+	Depends { name: "qtor-core" }
 	
-	Depends { name: "Qt"; submodules: ["core", "gui", "widgets"] }
-		
+	Depends { name: "Qt"; submodules: ["core"] }
+
 	cpp.cxxLanguageVersion : "c++17"
 	cpp.defines: project.additionalDefines
 	//cpp.includePaths: project.additionalIncludePaths
@@ -20,10 +22,10 @@ StaticLibrary
 
 	cpp.includePaths : { 
 		var includes = ["include"]
-		
+
 		if (project.additionalIncludePaths)
 			includes = includes.uniqueConcat(project.additionalIncludePaths)
-			
+		
 		return includes
 	}
 	

@@ -15,8 +15,8 @@ namespace QtTools::NotificationSystem
 	}
 
 	SimpleNotification::SimpleNotification(QString title, QString text, Qt::TextFormat textFmt,  QDateTime timestamp)
-		: m_title(std::move(title)), m_text(std::move(text)), m_textFmt(textFmt), m_timestamp(std::move(timestamp)),
-		  m_priority(Normal), m_level(Info), m_priority_inited(0), m_level_inited(0)
+	    : m_timestamp(std::move(timestamp)), m_title(std::move(title)), m_text(std::move(text)), m_textFmt(textFmt),
+	      m_priority(Normal), m_level(Info), m_priority_inited(0), m_level_inited(0)
 	{
 
 	}

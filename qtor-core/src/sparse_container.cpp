@@ -23,10 +23,10 @@ namespace qtor
 		if ('a' <= ch && ch <= 'z')
 			return ch + 'A' - 'a';
 
-		// \U0430 - 'a', \U0410 - 'A', \U044F - 'ÿ'
-		//  L'a'   <= ch && ch <= L'ÿ'
+		// \U0430 - 'a', \U0410 - 'A', \U044F - 'Ñ'
+		//  L'a'   <= ch && ch <= L'Ñ'
 		if (0x0430 <= ch && ch <= 0x044F)
-			return ch + 0x0410 - 0x0430; // ch + L'À' - L'à'
+			return ch + 0x0410 - 0x0430; // ch + L'Ð' - L'Ð°'
 
 		return ch;
 #endif
@@ -173,8 +173,6 @@ namespace qtor
 
 	bool sparse_container_filter::matches(const sparse_container & c) const
 	{
-		bool result = true;
-
 		for (auto idx : m_items)
 		{
 			const auto & val = c.get_item(idx);

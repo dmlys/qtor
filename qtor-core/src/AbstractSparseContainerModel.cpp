@@ -26,7 +26,7 @@ namespace qtor
 
 	QString AbstractSparseContainerModel::FieldName(int section) const
 	{
-		if (section >= m_columns.size())
+		if (section >= qint(m_columns.size()))
 			return QString::null;
 
 		return m_meta->item_name(m_columns[section]);
@@ -35,7 +35,7 @@ namespace qtor
 
 	QString AbstractSparseContainerModel::GetValueShort(int row, int column) const
 	{
-		if (column >= m_columns.size())
+		if (column >= qint(m_columns.size()))
 			return QString::null;
 
 		const auto & cont = GetItem(row);
@@ -44,7 +44,7 @@ namespace qtor
 
 	QString AbstractSparseContainerModel::GetValue(int row, int column) const
 	{
-		if (column >= m_columns.size())
+		if (column >= qint(m_columns.size()))
 			return QString::null;
 
 		const auto & cont = GetItem(row);

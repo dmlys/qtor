@@ -264,14 +264,14 @@ namespace transmission
 	};
 
 #define DECLARE_CONVS(torr_val)                                                                    \
-	string_conv_type string_conv     = {&torr_val};                                                \
-	uint64_conv_type uint64_conv     = {&torr_val};                                                \
-	double_conv_type double_conv     = {&torr_val};                                                \
-	bool_conv_type bool_conv         = {&torr_val};                                                \
-	size_conv_type size_conv         = {&torr_val};                                                \
-	speed_conv_type speed_conv       = {&torr_val};                                                \
-	datetime_conv_type datetime_conv = {&torr_val};                                                \
-	duration_conv_type duration_conv = {&torr_val};                                                \
+	[[maybe_unused]] string_conv_type string_conv     = {&torr_val};                               \
+	[[maybe_unused]] uint64_conv_type uint64_conv     = {&torr_val};                               \
+	[[maybe_unused]] double_conv_type double_conv     = {&torr_val};                               \
+	[[maybe_unused]] bool_conv_type bool_conv         = {&torr_val};                               \
+	[[maybe_unused]] size_conv_type size_conv         = {&torr_val};                               \
+	[[maybe_unused]] speed_conv_type speed_conv       = {&torr_val};                               \
+	[[maybe_unused]] datetime_conv_type datetime_conv = {&torr_val};                               \
+	[[maybe_unused]] duration_conv_type duration_conv = {&torr_val};                               \
 	
 	
 	TYPE_CONV(string);

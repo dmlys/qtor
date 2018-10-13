@@ -36,8 +36,8 @@ namespace transmission
 		void set_gui_queue(QtTools::GuiQueue * queue) override;
 
 	public:
-		virtual auto subscribe_session_stats(session_stat_handler handler)->ext::netlib::subscription_handle override;
-		virtual ext::future<session_stat> get_session_stats() override;
+		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle override { return {}; }
+		virtual ext::future<session_stat> get_session_stats() override { return {}; }
 
 	public:
 		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;

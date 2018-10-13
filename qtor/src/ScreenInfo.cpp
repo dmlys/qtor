@@ -10,7 +10,7 @@
 #include <QtGui/QGuiApplication>
 #include <QtTools/ToolsBase.hpp>
 
-#include <ScreenInfo.hpp>
+#include "ScreenInfo.hpp"
 
 namespace QtTools
 {

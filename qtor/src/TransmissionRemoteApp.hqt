@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <qtor/Application.hqt>
 #include <qtor/transmission/data_source.hpp>
 #include <qtor/sqlite-datasource.hpp>
@@ -27,7 +27,8 @@ namespace qtor
 
 		~TransmissionRemoteApp()
 		{
-			m_source->disconnect();
+			auto res = m_source->disconnect();
+			res.wait();
 		}
 	};
 }

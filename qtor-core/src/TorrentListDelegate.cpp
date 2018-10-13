@@ -1,4 +1,3 @@
-#pragma once
 #include <qtor/TorrentListDelegate.hqt>
 #include <qtor/TorrentsModel.hpp>
 
@@ -221,8 +220,8 @@ namespace qtor
 		if (item.index == index)
 		{
 			auto newTopLeft = option.rect.topLeft();
-			auto diff = option.rect.topLeft() - item.hintTopLeft;
-			item.hintTopLeft = option.rect.topLeft();
+			auto diff = newTopLeft - item.hintTopLeft;
+			item.hintTopLeft = newTopLeft;
 
 			item.titleRect.translate(diff);
 			item.progressRect.translate(diff);
@@ -312,7 +311,6 @@ namespace qtor
 	void TorrentListDelegate::DrawText(QPainter * painter, const LaidoutItem & item) const
 	{
 		const QStyleOptionViewItem & option = *item.option;
-		auto * style = item.option->widget->style();
 
 		const auto status = item.tor->status();
 		const bool paused = status == torrent_status::stopped or status == torrent_status::unknown;
@@ -415,6 +413,8 @@ namespace qtor
 		const bool seeding = status == torrent_status::seeding;
 		const bool downloading = status == torrent_status::downloading;
 		const bool paused = status == torrent_status::stopped;
+
+		EXT_UNUSED(downloading);
 
 		const auto metadata_progress = tor.metadata_progress();
 		const auto requested_progress = tor.requested_progress();

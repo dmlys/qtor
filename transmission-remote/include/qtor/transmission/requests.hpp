@@ -3,6 +3,7 @@
 #include <vector>
 #include <istream>
 
+#include <ext/itoa.hpp>
 #include <ext/type_traits.hpp>
 #include <ext/is_string.hpp>
 #include <ext/range.hpp>
@@ -17,7 +18,7 @@
 namespace qtor {
 namespace transmission
 {
-	struct as_stdstring_t {} const as_stdstring;
+	struct as_stdstring_t {} constexpr as_stdstring;
 
 	template <class Range, std::enable_if_t<ext::is_range_of<Range, QString>::value, int> = 0>
 	inline auto operator |(const Range & range, as_stdstring_t) noexcept

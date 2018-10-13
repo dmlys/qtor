@@ -112,32 +112,34 @@ namespace qtor::sqlite
 
 	}
 
-//	struct conv_type
-//	{
-//		unsigned idx = 0;
-//		sqlite3yaw::statement * stmt;
-//		torrent * torr;
-//
-//#define OPERATOR(Type)                                              \
-//		void operator()(torrent & (torrent::*pmf)(Type val))        \
-//		{                                                           \
-//			Type val;                                               \
-//			sqlite3yaw::get(*stmt, idx++, val);                     \
-//			(torr->*pmf)(std::move(val));                           \
-//		}                                                           \
-//		
-//		OPERATOR(string_type);
-//		OPERATOR(uint64_type);
-//		OPERATOR(double);
-//		OPERATOR(bool);
-//		OPERATOR(datetime_type);
-//		OPERATOR(duration_type);
-//		
-//#undef OPERATOR
-//
-//		conv_type(sqlite3yaw::statement & stmt, torrent & torr)
-//			: stmt(&stmt), torr(&torr) {}
-//	};
+	/*
+	struct conv_type
+	{
+		unsigned idx = 0;
+		sqlite3yaw::statement * stmt;
+		torrent * torr;
+
+#define OPERATOR(Type)                                              \
+		void operator()(torrent & (torrent::*pmf)(Type val))        \
+		{                                                           \
+			Type val;                                               \
+			sqlite3yaw::get(*stmt, idx++, val);                     \
+			(torr->*pmf)(std::move(val));                           \
+		}                                                           \
+
+		OPERATOR(string_type);
+		OPERATOR(uint64_type);
+		OPERATOR(double);
+		OPERATOR(bool);
+		OPERATOR(datetime_type);
+		OPERATOR(duration_type);
+
+#undef OPERATOR
+
+		conv_type(sqlite3yaw::statement & stmt, torrent & torr)
+			: stmt(&stmt), torr(&torr) {}
+	};
+	*/
 
 	static torrent load_torrent(sqlite3yaw::statement & stmt, const column_info & info)
 	{

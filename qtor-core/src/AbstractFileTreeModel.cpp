@@ -20,7 +20,7 @@ namespace qtor
 
 	QString AbstractFileTreeModel::FieldName(int section) const
 	{
-		if (section >= m_columns.size())
+		if (section >= qint(m_columns.size()))
 			return QString::null;
 
 		return m_fmt->item_name(m_columns[section]);
