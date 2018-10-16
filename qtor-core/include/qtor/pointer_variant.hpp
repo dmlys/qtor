@@ -360,10 +360,11 @@ namespace viewed
 	{
 		using namespace pointer_variant_detail;
 		using namespace boost::mp11;
-	
+		
 		using list_of_sequence_lists = mp_product<
 			join_index_constants_t,
 			mp_from_sequence_variants<Variants>...
+			//boost::mp11::mp_from_sequence<std::make_index_sequence<pointer_variant_size_v<ext::remove_cvref_t<Variants>>>>...
 		>;
 
 		const auto dispatch_idx = dispatch_index(vars...);

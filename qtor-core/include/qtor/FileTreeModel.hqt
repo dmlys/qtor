@@ -13,31 +13,31 @@ namespace qtor
 		using path_type = filepath_type;
 		using pathview_type = QStringRef;
 
-		using path_equal_to = std::equal_to<path_type>;
-		using path_less     = std::less<path_type>;
-		using path_hasher   = std::hash<path_type>;
+		using path_equal_to = std::equal_to<>;
+		using path_less     = std::less<>;
+		using path_hasher   = std::hash<pathview_type>;
 
 		struct node_type;
 		using leaf_type = torrent_file;
 
 		struct node_type
 		{
-			filepath_type  name;
+			path_type      name;
 			size_type      total_size;
 			size_type      have_size;
 			int_type       priority;
 			Qt::CheckState wanted;
 		};
 
-		static void set_segment(node_type & node, path_type && path) { node.name = std::move(path); }
+		static void set_segment(node_type & node, const pathview_type & prefix, const pathview_type & path) { node.name = path.toString(); }
 		static path_type get_segment(const path_type & name);
 		static path_type get_segment(const leaf_type & leaf) { return get_segment(leaf.filename); }
 		static path_type get_segment(const node_type & node) { return get_segment(node.name); }
 		static path_type get_path(const leaf_type & leaf)    { return leaf.filename; }
 
-		static bool is_subelement(const pathview_type & prefix, const path_type & name, const torrent_file & item);
-		static auto analyze(const pathview_type & prefix, const leaf_type & item) 
-			-> std::tuple<std::uintptr_t, path_type, pathview_type>;
+		static bool is_subelement(const pathview_type & prefix, const pathview_type & name, const torrent_file & item);
+		static auto analyze(const pathview_type & prefix, const leaf_type & item)
+			-> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
 
 		class column_sorter
 		{

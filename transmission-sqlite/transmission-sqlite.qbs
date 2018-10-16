@@ -3,10 +3,11 @@ import qbs
 CppApplication
 {
 	Depends { name: "cpp" }
-	Depends { name: "Qt"; submodules: ["core", "gui", "widgets"] }
+	Depends { name: "Qt"; submodules: ["core"] }
 
 	Depends { name: "netlib" }
 	Depends { name: "extlib" }
+	Depends { name: "sqlite3yaw" }
 	Depends { name: "QtTools" }
 
 	Depends { name: "qtor-core" }
@@ -21,7 +22,7 @@ CppApplication
 	cpp.driverFlags: project.additionalDriverFlags
 	cpp.libraryPaths: project.additionalLibraryPaths
 
-	cpp.dynamicLibraries: ["yaml-cpp", "z", "stdc++fs", "ssl", "crypto", "sqlite3", "boost_regex", "boost_system", "fmt"]
+	cpp.dynamicLibraries: ["yaml-cpp", "z", "stdc++fs", "ssl", "crypto", "sqlite3", "boost_regex", "boost_system", "boost_program_options", "fmt"]
 
 	files: [
 		"src/*"

@@ -82,7 +82,7 @@ namespace qtor
 	}
 
 	auto torrent_file_tree_traits::analyze(const pathview_type & prefix, const leaf_type & item)
-		-> std::tuple<std::uintptr_t, path_type, pathview_type>
+		-> std::tuple<std::uintptr_t, pathview_type, pathview_type>
 	{
 		const auto & path = item.filename;
 		auto first = path.begin() + prefix.size();
@@ -91,18 +91,19 @@ namespace qtor
 
 		if (it == last)
 		{
-			QString name = QString::null;
-			return std::make_tuple(viewed::LEAF, std::move(name), prefix);
+			pathview_type name; // = QString::null;
+			return std::make_tuple(viewed::LEAF, prefix, std::move(name));
 		}
 		else
 		{
-			QString name = path.mid(prefix.size(), it - first);
+			pathview_type name = path.midRef(prefix.size(), it - first);
 			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
-			return std::make_tuple(viewed::PAGE, std::move(name), path.leftRef(it - path.begin()));
+			pathview_type newprefix = path.leftRef(it - path.begin());
+			return std::make_tuple(viewed::PAGE, std::move(newprefix), std::move(name));
 		}
 	}
 
-	bool torrent_file_tree_traits::is_subelement(const pathview_type & prefix, const path_type & name, const leaf_type & item)
+	bool torrent_file_tree_traits::is_subelement(const pathview_type & prefix, const pathview_type & name, const leaf_type & item)
 	{
 		auto ref = item.filename.midRef(prefix.size(), name.size());
 		return ref == name;
@@ -157,7 +158,7 @@ namespace qtor
 		auto last  = children.end();
 		
 		page.total_size = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_total_size(item); });
-		page.have_size  = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item); });
+		page.have_size  = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item);  });
 	}
 
 	void FileTreeModel::SortBy(int column, Qt::SortOrder order)

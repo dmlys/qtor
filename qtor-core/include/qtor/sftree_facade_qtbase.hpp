@@ -40,17 +40,65 @@
 
 namespace viewed
 {
-	namespace detail
-	{
-		const auto make_ref = [](auto * ptr) { return std::ref(*ptr); };
-	}
-
 	inline namespace sftree_constants
 	{
 		constexpr unsigned PAGE = 0;
 		constexpr unsigned LEAF = 1;
 	}
 
+	/// sftree_facade_qtbase is a facade for building qt tree models.
+	/// It expects source data to be in form of a list and provides hierarchical view on it.
+	/// It implements complex stuff:
+	/// * internal tree structure;
+	/// * sorting/filtering;
+	/// * QAbstractItemModel stuff: index calculation, persistent index management on updates and sorting/filtering;
+	///
+	/// ModelBase - QAbstractItemModel derived base interface/class this facade implements.
+	/// Traits    - traits class describing type and work with this type.
+	///
+	/// Traits should provide next:
+	///   using leaf_type = ...
+	///    leaf, this is original type, sort of value_type. it will be provided to this facade in some sort of list and tree hierarchy will be built.
+	///    it can be simple struct or a more complex class.
+	///
+	///   using node_type = ...
+	///    node, similar to leaf, but can have other nodes/leaf children, can be same leaf, or different type
+	///    (it does not hold children directly, sftree_facade_qtbase takes care of that internally).
+	///    It will be created internally while calculating tree structure.
+	///    sftree_facade_qtbase will provide some methods/hooks to populate/calculate values of this type
+	///
+	///   using path_type = ...
+	///     type representing path, copy-constructable, for example std::string, std::filesystem::path, etc
+	///     each leaf holds path in some way: direct member, accessed via some getter, or even leaf itself is a path.
+	///     path describes hierarchy structure in some, sufficient, way. For example filesystem path: /segment1/segment2/...
+	///
+	///   using pathview_type = ...  path view, it's same to path, as std::string_view same to std::string. can be same as path_type.
+	///
+	///   using path_equal_to   = ... predicate for comparing paths
+	///   using path_less       = ... predicate for comparing paths
+	///   using path_hash       = ... path hasher
+	///
+	///   methods for working with given types:
+	///     void set_segment(node_type & node, path_type && prefix, path_type && segment);
+	///       assigns path segment into node, path is given as prefix + segment.
+	///       In fact node can hold only given segment part, or construct path from both: prefix and segment.
+	///       possible implementation: item.name = segment
+	///
+	///     path_type get_segment(const leaf_type & leaf);
+	///     path_type get_segment(const node_type & node);
+	///       returns/extracts segment from leaf/node, usually something like: return extract_segment(leaf/node.name)
+	///
+	///     path_type get_path(const leaf_type & leaf);
+	///       returns path from leaf, usually something like: return leaf.filepath
+	///
+	///     bool bool is_subelement(const pathview_type & prefix, const path_type & name, const torrent_file & item)
+	///     auto analyze(const pathview_type & prefix, const leaf_type & item) -> std::tuple<std::uintptr_t, pathview_type, path_type>;
+	///                                                                                   PAGE/LEAF      newprefix   segment
+	///
+	///
+	///   using sort_pred_type = ...
+	///   using filter_pred_type = ...
+	///
 	template <class Traits, class ModelBase = QAbstractItemModel>
 	class sftree_facade_qtbase : 
 		public ModelBase,
@@ -190,7 +238,7 @@ namespace viewed
 
 			pathview_type prefix;
 			pathview_type inserted_prefix, updated_prefix, erased_prefix;
-			path_type inserted_name, updated_name, erased_name;
+			pathview_type inserted_name, updated_name, erased_name;
 
 			value_ptr_vector * vptr_array;
 			int_vector * index_array, *inverse_array;
@@ -316,10 +364,10 @@ namespace viewed
 			int_vector::iterator ifirst, int_vector::iterator imiddle, int_vector::iterator ilast,
 			bool resort_old = true);
 		
-		///// sorts m_store's [first; last) with m_sort_pred, stable sort
+		/// sorts m_store's [first; last) with m_sort_pred, stable sort
 		virtual void stable_sort(value_ptr_iterator first, value_ptr_iterator last);
-		///// sorts m_store's [first; last) with m_sort_pred, stable sort
-		///// range [ifirst; ilast) must be permuted the same way as range [first; last)
+		/// sorts m_store's [first; last) with m_sort_pred, stable sort
+		/// range [ifirst; ilast) must be permuted the same way as range [first; last)
 		virtual void stable_sort(value_ptr_iterator first, value_ptr_iterator last,
 		                         int_vector::iterator ifirst, int_vector::iterator ilast);
 
@@ -345,9 +393,9 @@ namespace viewed
 	protected:
 		template <class update_context> static update_context copy_context(const update_context & ctx, pathview_type newprefix);
 
-		template <class update_context> auto process_erased(page_type & page, update_context & ctx)   -> std::tuple<path_type &, pathview_type &>;
-		template <class update_context> auto process_updated(page_type & page, update_context & ctx)  -> std::tuple<path_type &, pathview_type &>;
-		template <class update_context> auto process_inserted(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>;
+		template <class update_context> auto process_erased(page_type & page, update_context & ctx)   -> std::tuple<pathview_type &, pathview_type &>;
+		template <class update_context> auto process_updated(page_type & page, update_context & ctx)  -> std::tuple<pathview_type &, pathview_type &>;
+		template <class update_context> auto process_inserted(page_type & page, update_context & ctx) -> std::tuple<pathview_type &, pathview_type &>;
 		template <class update_context> void rearrange_children_and_notify(page_type & page, update_context & ctx);
 		template <class update_context> void update_page_and_notify(page_type & page, update_context & ctx);
 		
@@ -377,6 +425,11 @@ namespace viewed
 	/************************************************************************/
 	template <class Traits, class ModelBase>
 	const typename sftree_facade_qtbase<Traits, ModelBase>::value_container sftree_facade_qtbase<Traits, ModelBase>::ms_empty_container;
+
+	namespace detail
+	{
+		const auto make_ref = [](auto * ptr) { return std::ref(*ptr); };
+	}
 
 	template <class Traits, class ModelBase>
 	template <class Functor>
@@ -740,8 +793,7 @@ namespace viewed
 			ext::make_zip_iterator(vlast, ivlast),
 			zfpred).get_iterator_tuple();
 
-		auto mark_index = [](int idx) { return viewed::mark_index(idx); };
-		std::transform(ivpp, ivlast, ivpp, mark_index);
+		std::transform(ivpp, ivlast, ivpp, viewed::mark_index);
 
 		int upassed_new = vpp - vfirst;
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, detail::make_ref));
@@ -876,7 +928,7 @@ namespace viewed
 		while (ctx.first != ctx.last)
 		{
 			auto && item_ptr = *ctx.first;
-			auto [type, name, newprefix] = analyze(ctx.prefix, *item_ptr);
+			auto [type, newprefix, name] = analyze(ctx.prefix, *item_ptr);
 			if (type == LEAF)
 			{
 				container.insert(std::forward<decltype(item_ptr)>(item_ptr));
@@ -884,16 +936,17 @@ namespace viewed
 			}
 			else // PAGE
 			{
-				auto page_ptr = std::make_unique<page_type>();
-				page_ptr->parent = &page;
-				traits_type::set_segment(*page_ptr, path_type(name));
-
 				auto newctx = ctx;
 				newctx.prefix = std::move(newprefix);
 				newctx.first = ctx.first;
 
 				auto issub = [this, &prefix = ctx.prefix, &name](const auto * item) { return this->is_subelement(prefix, name, *item); };
 				newctx.last = std::find_if_not(ctx.first, ctx.last, issub);
+
+				auto page_ptr = std::make_unique<page_type>();
+				page_ptr->parent = &page;
+				traits_type::set_segment(*page_ptr, std::move(ctx.prefix), std::move(name));
+
 				reset_page(*page_ptr, newctx);
 
 				container.insert(std::move(page_ptr));
@@ -944,7 +997,7 @@ namespace viewed
 
 	template <class Traits, class ModelBase>
 	template <class update_context>
-	auto sftree_facade_qtbase<Traits, ModelBase>::process_erased(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>
+	auto sftree_facade_qtbase<Traits, ModelBase>::process_erased(page_type & page, update_context & ctx) -> std::tuple<pathview_type &, pathview_type &>
 	{
 		auto & container = page.children;
 		auto & seq_view  = container.template get<by_seq>();
@@ -958,7 +1011,7 @@ namespace viewed
 		{
 			auto && item = *ctx.erased_first;
 			std::uintptr_t type;
-			std::tie(type, ctx.erased_name, ctx.erased_prefix) = analyze(ctx.prefix, *item);
+			std::tie(type, ctx.erased_prefix, ctx.erased_name) = analyze(ctx.prefix, *item);
 			if (type == PAGE) return std::tie(ctx.erased_name, ctx.erased_prefix);
 
 			auto it = container.find(get_segment(*item));
@@ -972,14 +1025,14 @@ namespace viewed
 			// container.erase(it);
 		}
 
-		ctx.erased_name = path_type();
+		ctx.erased_name = pathview_type();
 		ctx.erased_prefix = pathview_type();
 		return std::tie(ctx.erased_name, ctx.erased_prefix);
 	}
 
 	template <class Traits, class ModelBase>
 	template <class update_context>
-	auto sftree_facade_qtbase<Traits, ModelBase>::process_updated(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>
+	auto sftree_facade_qtbase<Traits, ModelBase>::process_updated(page_type & page, update_context & ctx) -> std::tuple<pathview_type &, pathview_type &>
 	{
 		auto & container = page.children;
 		auto & seq_view  = container.template get<by_seq>();
@@ -993,7 +1046,7 @@ namespace viewed
 		{
 			auto && item = *ctx.updated_first;
 			std::uintptr_t type;
-			std::tie(type, ctx.updated_name, ctx.updated_prefix) = analyze(ctx.prefix, *item);
+			std::tie(type, ctx.updated_prefix, ctx.updated_name) = analyze(ctx.prefix, *item);
 			if (type == PAGE) return std::tie(ctx.updated_name, ctx.updated_prefix);
 
 			auto it = container.find(get_segment(*item));
@@ -1007,14 +1060,14 @@ namespace viewed
 			val = std::forward<decltype(item)>(item);
 		}
 
-		ctx.updated_name = path_type();
+		ctx.updated_name = pathview_type();
 		ctx.updated_prefix = pathview_type();
 		return std::tie(ctx.updated_name, ctx.updated_prefix);
 	}
 
 	template <class Traits, class ModelBase>
 	template <class update_context>
-	auto sftree_facade_qtbase<Traits, ModelBase>::process_inserted(page_type & page, update_context & ctx) -> std::tuple<path_type &, pathview_type &>
+	auto sftree_facade_qtbase<Traits, ModelBase>::process_inserted(page_type & page, update_context & ctx) -> std::tuple<pathview_type &, pathview_type &>
 	{
 		auto & container = page.children;
 		//auto & seq_view  = container.template get<by_seq>();
@@ -1028,7 +1081,7 @@ namespace viewed
 		{
 			auto && item = *ctx.inserted_first;
 			std::uintptr_t type;
-			std::tie(type, ctx.inserted_name, ctx.inserted_prefix) = analyze(ctx.prefix, *item);
+			std::tie(type, ctx.inserted_prefix, ctx.inserted_name) = analyze(ctx.prefix, *item);
 			if (type == PAGE) return std::tie(ctx.inserted_name, ctx.inserted_prefix);
 
 			bool inserted;
@@ -1036,7 +1089,7 @@ namespace viewed
 			assert(inserted); (void)inserted;	
 		}
 
-		ctx.inserted_name = path_type();
+		ctx.inserted_name = pathview_type();
 		ctx.inserted_prefix = pathview_type();
 		return std::tie(ctx.inserted_name, ctx.inserted_prefix);
 	}
@@ -1090,7 +1143,7 @@ namespace viewed
 				auto child = std::make_unique<page_type>();
 				child_page = child.get();
 
-				traits_type::set_segment(*child_page, std::move(name));
+				traits_type::set_segment(*child_page, std::move(prefix), std::move(name));
 				child_page->parent = &page;
 				std::tie(it, inserted) = container.insert(std::move(child));
 			}			

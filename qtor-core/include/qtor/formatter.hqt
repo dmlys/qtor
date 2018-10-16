@@ -110,6 +110,9 @@ namespace qtor
 		public virtual formatter
 	{
 	public:
+		using formatter::format_item;
+
+	public:
 		virtual QString item_name(index_type key) const = 0;
 		virtual QString format_item(const sparse_container & cont, index_type key) const = 0;
 		virtual QString format_item_short(const sparse_container & cont, index_type key) const = 0;

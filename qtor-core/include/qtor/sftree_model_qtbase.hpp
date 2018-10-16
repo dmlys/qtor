@@ -22,16 +22,16 @@ namespace viewed
 
 	public:
 		template <class Iterator>
-		std::enable_if_t<ext::is_iterator_v<Iterator>> assign(Iterator first, Iterator last);
+		auto assign(Iterator first, Iterator last) -> std::enable_if_t<ext::is_iterator_v<Iterator>>;
 
 		template <class Iterator>
-		std::enable_if_t<ext::is_iterator_v<Iterator>> upsert(Iterator first, Iterator last);
+		auto upsert(Iterator first, Iterator last) -> std::enable_if_t<ext::is_iterator_v<Iterator>>;
 
 		template <class Range>
-		std::enable_if_t<ext::is_range_v<ext::remove_cvref_t<Range>>> assign(Range && range);
+		auto assign(Range && range) -> std::enable_if_t<ext::is_range_v<ext::remove_cvref_t<Range>>>;
 
 		template <class Range>
-		std::enable_if_t<ext::is_range_v<ext::remove_cvref_t<Range>>> upsert(Range && range);
+		auto upsert(Range && range) -> std::enable_if_t<ext::is_range_v<ext::remove_cvref_t<Range>>>;
 		
 		void clear();
 

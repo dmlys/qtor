@@ -96,7 +96,7 @@ int main(int argc, char ** argv)
 	}
 
 	ext::init_future_library();
-	ext::socket_stream_init();
+	ext::netlib::socket_stream_init();
 	auto torrents = load_torrents();
 	save_torrents(std::move(torrents));
 
