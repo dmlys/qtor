@@ -1,4 +1,4 @@
-#include <qtor/FileTreeModel.hqt>
+﻿#include <qtor/FileTreeModel.hqt>
 
 namespace qtor
 {
@@ -75,40 +75,38 @@ namespace qtor
 		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
 
-	filepath_type torrent_file_tree_traits::get_segment(const filepath_type & filepath)
+	filepath_type torrent_file_tree_traits::get_name(const filepath_type & filepath)
 	{
 		int pos = filepath.lastIndexOf('/') + 1;
 		return filepath.mid(pos);
 	}
 
-	auto torrent_file_tree_traits::analyze(const pathview_type & prefix, const leaf_type & leaf)
+	auto torrent_file_tree_traits::analyze(const pathview_type & path, const pathview_type & filename)
 		-> std::tuple<std::uintptr_t, pathview_type, pathview_type>
 	{
-		const auto & path = leaf.filename;
-		auto first = path.begin() + prefix.size();
-		auto last = path.end();
+		auto first = filename.begin() + path.size();
+		auto last = filename.end();
 		auto it = std::find(first, last, '/');
 
 		if (it == last)
 		{
-			pathview_type name = path.midRef(prefix.size()); // = QString::null;
-			return std::make_tuple(viewed::LEAF, prefix, std::move(name));
+			pathview_type name = filename.mid(path.size()); // = QString::null;
+			return std::make_tuple(viewed::LEAF, path, std::move(name));
 		}
 		else
 		{
-			pathview_type name = path.midRef(prefix.size(), it - first);
+			pathview_type name = filename.mid(path.size(), it - first);
 			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
-			pathview_type newprefix = path.leftRef(it - path.begin());
-			return std::make_tuple(viewed::PAGE, std::move(newprefix), std::move(name));
+			pathview_type newpath = filename.left(it - filename.begin());
+			return std::make_tuple(viewed::PAGE, std::move(newpath), std::move(name));
 		}
 	}
 
-	bool torrent_file_tree_traits::is_child(const pathview_type & prefix, const pathview_type & name, const leaf_type & leaf)
+	bool torrent_file_tree_traits::is_child(const pathview_type & path, const pathview_type & name, const pathview_type & leaf_path)
 	{
-		auto ref = leaf.filename.midRef(prefix.size(), name.size());
+		auto ref = leaf_path.mid(path.size(), name.size());
 		return ref == name;
 	}
-
 
 
 	QVariant FileTreeModel::GetItem(const QModelIndex & idx) const
@@ -123,7 +121,7 @@ namespace qtor
 
 		switch (type)
 		{
-			case torrent_file::FileName:  return m_fmt->format_string(get_segment(val));
+		    case torrent_file::FileName:  return m_fmt->format_string(get_name(val));
 			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
 			case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
 			case torrent_file::Index:     return QStringLiteral("<null>");
@@ -140,7 +138,7 @@ namespace qtor
 
 		switch (type)
 		{
-			case torrent_file::FileName:  return m_fmt->format_short_string(get_segment(val));
+		    case torrent_file::FileName:  return m_fmt->format_short_string(get_name(val));
 			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
 			case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
 			case torrent_file::Index:     return QStringLiteral("<null>");

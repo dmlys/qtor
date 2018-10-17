@@ -65,8 +65,9 @@ namespace viewed
 	///
 	/// Traits should provide next:
 	///   using leaf_type = ...
-	///    leaf, this is original type, sort of value_type. it will be provided to this facade in some sort of list and tree hierarchy will be built.
-	///    it can be simple struct or a more complex class.
+	///    leaf, this is original type, sort of value_type.
+	///    It will be provided to this facade in some sort of list and tree hierarchy will be built from it.
+	///    It can be simple struct or a more complex class.
 	///
 	///   using node_type = ...
 	///    node, similar to leaf, but can have other nodes/leaf children, can be same leaf, or different type
@@ -91,26 +92,27 @@ namespace viewed
 	///
 	///
 	///   methods for working with given types:
-	///     void set_segment(node_type & node, path_type && prefix, path_type && segment);
-	///       assigns path segment into node, path is given as prefix + segment.
-	///       In fact node can hold only given segment part, or construct path from both: prefix and segment.
-	///       possible implementation: item.name = segment
+	///     void set_name(node_type & node, path_type && path, path_type && name);
+	///       assigns path and name to node, path is already contains name, no concatenation is needed.
+	///       In fact node can hold only given name part, or whole path if desired.
+	///       possible implementation: item.name = name
 	///
-	///     path_type get_segment(const leaf_type & leaf);
-	///     path_type get_segment(const node_type & node);
-	///       returns/extracts segment from leaf/node, usually something like: return extract_segment(leaf/node.name)
+	///     path_type get_name(const leaf_type & leaf);
+	///     path_type get_name(const node_type & node);
+	///       returns/extracts name from leaf/node, usually something like: return extract_name(leaf/node.name)
 	///
 	///     path_type get_path(const leaf_type & leaf);
-	///       returns path from leaf, usually something like: return leaf.filepath
+	///       returns whole path from leaf, usually something like: return leaf.filepath
 	///
-	///     bool is_child(const pathview_type & prefix, const pathview_type & node_name, const leaf_type & leaf);
-	///       returns if leaf is child of node with given node_name and prefix
+	///     bool is_child(const pathview_type & path, const pathview_type & node_name, const pathview_type & leaf_path);
+	///       returns if leaf is child of node with given node_name and path.
+	///       Note path is same as returned from analyze from previous step and does not include name name.
 	///
-	///                                                                                         PAGE/LEAF      newprefix    leaf/node name
-	///     auto analyze(const pathview_type & prefix, const leaf_type & leaf) -> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
-	///       analyses given leaf under given prefix, returns if it's LEAF/PAGE
-	///       if it's PAGE - also returns node name and newprefix(old prefix + node name)
-	///       if it's LEAF - returns leaf name, value of newprefix is undefined
+	///                                                                                                PAGE/LEAF       newpath     leaf/node name
+	///     auto analyze(const pathview_type & path, const pathview_type & leaf_path) -> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
+	///       analyses given leaf_path under given path, returns if it's LEAF/PAGE
+	///       if it's PAGE - also returns node name and newpath(old path + node name)
+	///       if it's LEAF - returns leaf name, value of newpath is undefined
 	///
 	///
 	///   using sort_pred_type = ...
@@ -163,17 +165,17 @@ namespace viewed
 		using value_ptr_vector   = std::vector<const value_ptr *>;
 		using value_ptr_iterator = typename value_ptr_vector::iterator;
 
-		struct get_segment_type
+		struct get_name_type
 		{
 			using result_type = path_type;
-			result_type operator()(const path_type & path) const { return traits_type::get_segment(path); }
-			result_type operator()(const leaf_type & leaf) const { return traits_type::get_segment(leaf); }
-			result_type operator()(const page_type & page) const { return traits_type::get_segment(static_cast<const node_type &>(page)); }
+			result_type operator()(const path_type & path) const { return traits_type::get_name(path); }
+			result_type operator()(const leaf_type & leaf) const { return traits_type::get_name(leaf); }
+			result_type operator()(const page_type & page) const { return traits_type::get_name(static_cast<const node_type &>(page)); }
 			result_type operator()(const value_ptr & val)  const { return viewed::visit(*this, val); }
 
 			// important, viewed::visit(*this, val) depends on them, otherwise infinite recursion would occur
-			result_type operator()(const leaf_type * leaf) const { return traits_type::get_segment(*leaf); }
-			result_type operator()(const page_type * page) const { return traits_type::get_segment(*page); }
+			result_type operator()(const leaf_type * leaf) const { return traits_type::get_name(*leaf); }
+			result_type operator()(const page_type * page) const { return traits_type::get_name(*page); }
 		};
 
 		struct segment_group_pred_type
@@ -186,7 +188,7 @@ namespace viewed
 		using value_container = boost::multi_index_container<
 			value_ptr,
 			boost::multi_index::indexed_by<
-				boost::multi_index::hashed_unique<get_segment_type, path_hash_type, path_equal_to_type>,
+		        boost::multi_index::hashed_unique<get_name_type, path_hash_type, path_equal_to_type>,
 				boost::multi_index::random_access<>
 			>
 		>;
@@ -278,8 +280,8 @@ namespace viewed
 			std::ptrdiff_t inserted_diff, updated_diff, erased_diff;
 			std::size_t inserted_count, updated_count, erased_count;
 
-			pathview_type prefix;
-			pathview_type inserted_prefix, updated_prefix, erased_prefix;
+			pathview_type path;
+			pathview_type inserted_path, updated_path, erased_path;
 			pathview_type inserted_name, updated_name, erased_name;
 
 			value_ptr_vector * vptr_array;
@@ -291,7 +293,7 @@ namespace viewed
 		struct reset_context_template
 		{
 			RandomAccessIterator first, last;
-			pathview_type prefix;
+			pathview_type path;
 			value_ptr_vector * vptr_array;
 		};
 
@@ -342,7 +344,7 @@ namespace viewed
 		static constexpr path_less_type path_less {};
 		static constexpr path_hash_type path_hash {};
 
-		static constexpr get_segment_type        get_segment {};
+		static constexpr get_name_type           get_name {};
 		static constexpr get_children_type       get_children {};
 		static constexpr get_children_count_type get_children_count {};
 		static constexpr segment_group_pred_type segment_group_pred {};
@@ -377,9 +379,13 @@ namespace viewed
 		QModelIndex create_index(int row, int column, page_type * ptr) const;
 
 	public:
-		int rowCount(const QModelIndex & parent) const override;
-		QModelIndex parent(const QModelIndex & index) const override;
-		QModelIndex index(int row, int column, const QModelIndex & parent) const override;
+		virtual int rowCount(const QModelIndex & parent) const override;
+		virtual QModelIndex parent(const QModelIndex & index) const override;
+		virtual QModelIndex index(int row, int column, const QModelIndex & parent) const override;
+
+	public:
+		/// find element by given path, if no such element is found - invalid index returned
+		virtual QModelIndex find_element(const pathview_type & path) const;
 
 	protected:
 		/// recalculates page on some changes, updates/inserts/erases,
@@ -446,8 +452,8 @@ namespace viewed
 		virtual void refilter_full_and_notify(page_type & page, refilter_context & ctx);
 
 	protected:
-		/// helper method for copying update_context with newprefix
-		template <class update_context> static update_context copy_context(const update_context & ctx, pathview_type newprefix);
+		/// helper method for copying update_context with newpath
+		template <class update_context> static update_context copy_context(const update_context & ctx, pathview_type newpath);
 
 		template <class update_context> auto process_erased(page_type & page, update_context & ctx)   -> std::tuple<pathview_type &, pathview_type &>;
 		template <class update_context> auto process_updated(page_type & page, update_context & ctx)  -> std::tuple<pathview_type &, pathview_type &>;
@@ -564,7 +570,7 @@ namespace viewed
 		auto & children = parent_page->children;
 		auto & seq_view = children.template get<by_seq>();
 
-		auto code_it = children.find(get_segment(page));
+		auto code_it = children.find(get_name(page));
 		auto seq_it  = children.template project<by_seq>(code_it);
 
 		int row = qint(seq_it - seq_view.begin());
@@ -591,6 +597,38 @@ namespace viewed
 			assert(element.index() == PAGE);
 			auto * page = static_cast<page_type *>(element.pointer());
 			return create_index(row, column, page);
+		}
+	}
+
+	template <class Traits, class ModelBase>
+	QModelIndex sftree_facade_qtbase<Traits, ModelBase>::find_element(const pathview_type & path) const
+	{
+		std::uintptr_t type;
+		const page_type * cur_page = &m_root;
+		pathview_type curpath = ms_empty_path;
+		pathview_type name;
+
+		for (;;)
+		{
+			std::tie(type, curpath, name) = analyze(curpath, path);
+
+			auto & children = cur_page->children;
+			auto & seq_view = children.template get<by_seq>();
+
+			auto code_it = children.find(name);
+			if (code_it == children.end()) return QModelIndex();
+
+			if (type == PAGE)
+			{
+				cur_page = static_cast<const page_type *>(code_it->pointer());
+				continue;
+			}
+			else
+			{
+				auto seq_it  = children.template project<by_seq>(code_it);
+				int row = qint(seq_it - seq_view.begin());
+				return create_index(row, 0, ext::unconst(cur_page));
+			}
 		}
 	}
 
@@ -656,8 +694,6 @@ namespace viewed
 			int val = *it;
 			inverse[viewed::unmark_index(val) - offset] = not viewed::marked_index(val) ? i : -1;
 		}
-
-		//std::copy(buffer.begin(), buffer.end(), first);
 	}
 
 	/************************************************************************/
@@ -669,7 +705,7 @@ namespace viewed
 	{
 		if (not viewed::active(m_sort_pred)) return;
 
-		auto sorter = value_ptr_sorter_type(m_sort_pred);
+		auto sorter = value_ptr_sorter_type(std::cref(m_sort_pred));
 		auto comp = viewed::make_indirect_fun(std::move(sorter));
 
 		if (resort_old) varalgo::stable_sort(first, middle, comp);
@@ -688,7 +724,7 @@ namespace viewed
 		assert(last - first == ilast - ifirst);
 		assert(middle - first == imiddle - ifirst);
 
-		auto sorter = value_ptr_sorter_type(m_sort_pred);
+		auto sorter = value_ptr_sorter_type(std::cref(m_sort_pred));
 		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(std::move(sorter)));
 
 		auto zfirst  = ext::make_zip_iterator(first, ifirst);
@@ -705,7 +741,7 @@ namespace viewed
 	{
 		if (not viewed::active(m_sort_pred)) return;
 
-		auto sorter = value_ptr_sorter_type(m_sort_pred);
+		auto sorter = value_ptr_sorter_type(std::cref(m_sort_pred));
 		auto comp = viewed::make_indirect_fun(std::move(sorter));
 		varalgo::stable_sort(first, last, comp);
 	}
@@ -717,7 +753,7 @@ namespace viewed
 	{
 		if (not viewed::active(m_sort_pred)) return;
 
-		auto sorter = value_ptr_sorter_type(m_sort_pred);
+		auto sorter = value_ptr_sorter_type(std::cref(m_sort_pred));
 		auto comp = viewed::make_get_functor<0>(viewed::make_indirect_fun(std::move(sorter)));
 
 		auto zfirst = ext::make_zip_iterator(first, ifirst);
@@ -828,6 +864,10 @@ namespace viewed
 		auto seq_ptr_view = seq_view | ext::outdirected;
 		constexpr int offset = 0;
 
+		// implementation is similar to refilter_full_and_notify,
+		// but more simple - only visible area should filtered, and no sorting should be done
+		// refilter_full_and_notify - for more description
+
 		value_ptr_vector & valptr_vector = *ctx.vptr_array;
 		int_vector & index_array = *ctx.index_array;
 		int_vector & inverse_array = *ctx.inverse_array;
@@ -902,6 +942,22 @@ namespace viewed
 		int_vector & index_array = *ctx.index_array;
 		int_vector & inverse_array = *ctx.inverse_array;
 
+		// We must rearrange children according to sorting/filtering criteria.
+		// Note when working with visible area - order of visible elements should not changed - we want stability.
+		// Also Qt persistent indexes should be recalculated.
+		//
+		// Because children are stored in boost::multi_index_container we must copy pointer to elements into separate vector,
+		// rearrange them, and than call boost::multi_index_container::rearrange
+		//
+		// layout of elements at start:
+		//
+		// |vfirst                     |vlast                      |valptr_vector.end()
+		// ---------------------------------------------------------
+		// |    visible elements       |      shadow elements      |
+		// ---------------------------------------------------------
+		// |valptr_vector.begin()      |sfirst                     |slast
+		//
+
 		valptr_vector.assign(seq_ptr_view.begin(), seq_ptr_view.end());
 		index_array.resize(seq_ptr_view.size());
 
@@ -914,44 +970,60 @@ namespace viewed
 		auto sfirst = vlast;
 		auto slast  = valptr_vector.end();
 
+		// elements index array - it will be permutated with elements array, later it will be used for recalculating qt indexes
 		auto ivfirst = index_array.begin();
 		auto ivlast  = ivfirst + page.nvisible;
 		auto isfirst = ivlast;
 		auto islast  = index_array.end();
-
 		std::iota(ivfirst, islast, offset);
 
 		if (not viewed::active(m_filter_pred))
 		{
+			// if there is now filter - just merge shadow area with visible
 			nvisible_new = slast - vfirst;
 			merge_newdata(vfirst, vlast, slast, ivfirst, ivlast, islast, false);
 		}
 		else
 		{
-			auto[vpp, ivpp] = std::stable_partition(
+			// partition visible area against filter predicate
+			auto [vpp, ivpp] = std::stable_partition(
 				ext::make_zip_iterator(vfirst, ivfirst),
 				ext::make_zip_iterator(vlast, ivlast),
 				zfpred).get_iterator_tuple();
 
-			auto[spp, ispp] = std::partition(
+			// partition shadow area against filter predicate
+			auto [spp, ispp] = std::partition(
 				ext::make_zip_iterator(sfirst, isfirst),
 				ext::make_zip_iterator(slast, islast),
 				zfpred).get_iterator_tuple();
 
+			// mark indexes if elements that do not pass filtering as removed, to outside world they are removed
 			auto mark_index = [](int idx) { return viewed::mark_index(idx); };
 			std::transform(ivpp, ivlast, ivpp, mark_index);
 			std::transform(ispp, islast, ispp, mark_index);
 
+			// current layout of elements:
+			// P - passes filter, X - not passes filter
+			// |vfirst                 |vlast
+			// -------------------------------------------------
+			// |P|P|P|P|P|P|X|X|X|X|X|X|P|P|P|P|P|X|X|X|X|X|X|X|
+			// -------------------------------------------------
+			// |           |           |sfirst   |             |slast
+			//             |vpp                  |spp
+
+			// rotate [sfirst; spp) at the the at of visible area, that passes filter
 			vlast  = std::rotate(vpp, sfirst, spp);
 			ivlast = std::rotate(ivpp, isfirst, ispp);
-			
 			nvisible_new = vlast - vfirst;
+			// merge new elements from shadow area
 			merge_newdata(vfirst, vpp, vlast, ivfirst, ivpp, ivlast, false);
 		}
 
+		// rearranging is over -> set order it boost::multi_index_container
 		seq_view.rearrange(boost::make_transform_iterator(vfirst, detail::make_ref));
 		page.nvisible = nvisible_new;
 
+		// recalculate qt persistent indexes and notify any clients
 		inverse_index_array(inverse_array, index_array.begin(), index_array.end(), offset);
 		change_indexes(page, ctx.model_index_first, ctx.model_index_last,
 					   inverse_array.begin(), inverse_array.end(), offset);
@@ -988,26 +1060,30 @@ namespace viewed
 
 		while (ctx.first != ctx.last)
 		{
+			// with current path analyze each element:
 			auto && item_ptr = *ctx.first;
-			auto [type, newprefix, name] = analyze(ctx.prefix, *item_ptr);
+			auto [type, newpath, name] = analyze(ctx.path, this->get_path(*item_ptr));
 			if (type == LEAF)
 			{
+				// if it's leaf: add to children
 				container.insert(std::forward<decltype(item_ptr)>(item_ptr));
 				++ctx.first;
 			}
 			else // PAGE
 			{
+				// it's page: prepare new context - for extracted page
 				auto newctx = ctx;
-				newctx.prefix = std::move(newprefix);
+				newctx.path = std::move(newpath);
 				newctx.first = ctx.first;
 
-				auto is_child = [this, &prefix = ctx.prefix, &name](const auto * item) { return this->is_child(prefix, name, *item); };
+				// extract node sub-range
+				auto is_child = [this, &path = ctx.path, &name](const auto * item) { return this->is_child(path, name, this->get_path(*item)); };
 				newctx.last = std::find_if_not(ctx.first, ctx.last, is_child);
-
+				// create new page
 				auto page_ptr = std::make_unique<page_type>();
 				page_ptr->parent = &page;
-				traits_type::set_segment(*page_ptr, std::move(ctx.prefix), std::move(name));
-
+				traits_type::set_name(*page_ptr, std::move(ctx.path), std::move(name));
+				// process child node recursively
 				reset_page(*page_ptr, newctx);
 
 				container.insert(std::move(page_ptr));
@@ -1015,13 +1091,24 @@ namespace viewed
 			}
 		}
 
+		// rearrange children according to filtering/sorting criteria
 		page.nvisible = container.size();
 		value_ptr_vector & refs = *ctx.vptr_array;
 		refs.assign(seq_ptr_view.begin(), seq_ptr_view.end());
 
+		auto filter = value_ptr_filter_type(std::cref(m_filter_pred));
+		auto fpred  = viewed::make_indirect_fun(std::move(filter));
+
 		auto refs_first = refs.begin();
 		auto refs_last  = refs.end();
-		stable_sort(refs_first, refs_last);
+
+		// apply filtering
+		auto refs_pp = viewed::active(fpred)
+		    ? std::partition(refs_first, refs_last, fpred)
+		    : refs_last;
+
+		// apply sorting
+		stable_sort(refs_first, refs_pp);
 
 		seq_view.rearrange(boost::make_transform_iterator(refs_first, detail::make_ref));
 	}
@@ -1031,7 +1118,7 @@ namespace viewed
 	/************************************************************************/
 	template <class Traits, class ModelBase>
 	template <class update_context>
-	auto sftree_facade_qtbase<Traits, ModelBase>::copy_context(const update_context & ctx, pathview_type newprefix) -> update_context
+	auto sftree_facade_qtbase<Traits, ModelBase>::copy_context(const update_context & ctx, pathview_type newpath) -> update_context
 	{
 		update_context newctx;
 		newctx.inserted_first = ctx.inserted_first;
@@ -1044,7 +1131,7 @@ namespace viewed
 		newctx.changed_first = newctx.changed_last = ctx.changed_first;
 		newctx.removed_last = newctx.removed_first = ctx.removed_last;
 
-		newctx.prefix = std::move(newprefix);
+		newctx.path = std::move(newpath);
 
 		newctx.vptr_array = ctx.vptr_array;
 		newctx.index_array = ctx.index_array;
@@ -1064,16 +1151,16 @@ namespace viewed
 		auto & seq_view  = container.template get<by_seq>();
 		auto & code_view = container.template get<by_code>();
 
-		// consumed nothing from previous step, return same name/prefix
+		// consumed nothing from previous step, return same name/path
 		if (ctx.erased_diff == 0)
-			return std::tie(ctx.erased_name, ctx.erased_prefix);
+			return std::tie(ctx.erased_name, ctx.erased_path);
 
 		for (; ctx.erased_first != ctx.erased_last; ++ctx.erased_first)
 		{
 			auto && item = *ctx.erased_first;
 			std::uintptr_t type;
-			std::tie(type, ctx.erased_prefix, ctx.erased_name) = analyze(ctx.prefix, *item);
-			if (type == PAGE) return std::tie(ctx.erased_name, ctx.erased_prefix);
+			std::tie(type, ctx.erased_path, ctx.erased_name) = analyze(ctx.path, this->get_path(*item));
+			if (type == PAGE) return std::tie(ctx.erased_name, ctx.erased_path);
 
 			auto it = container.find(ctx.erased_name);
 			assert(it != container.end());
@@ -1087,8 +1174,8 @@ namespace viewed
 		}
 
 		ctx.erased_name = pathview_type();
-		ctx.erased_prefix = pathview_type();
-		return std::tie(ctx.erased_name, ctx.erased_prefix);
+		ctx.erased_path = pathview_type();
+		return std::tie(ctx.erased_name, ctx.erased_path);
 	}
 
 	template <class Traits, class ModelBase>
@@ -1099,16 +1186,16 @@ namespace viewed
 		auto & seq_view  = container.template get<by_seq>();
 		auto & code_view = container.template get<by_code>();
 
-		// consumed nothing from previous step, return same name/prefix
+		// consumed nothing from previous step, return same name/path
 		if (ctx.updated_diff == 0)
-			return std::tie(ctx.updated_name, ctx.updated_prefix);
+			return std::tie(ctx.updated_name, ctx.updated_path);
 
 		for (; ctx.updated_first != ctx.updated_last; ++ctx.updated_first)
 		{
 			auto && item = *ctx.updated_first;
 			std::uintptr_t type;
-			std::tie(type, ctx.updated_prefix, ctx.updated_name) = analyze(ctx.prefix, *item);
-			if (type == PAGE) return std::tie(ctx.updated_name, ctx.updated_prefix);
+			std::tie(type, ctx.updated_path, ctx.updated_name) = analyze(ctx.path, this->get_path(*item));
+			if (type == PAGE) return std::tie(ctx.updated_name, ctx.updated_path);
 
 			auto it = container.find(ctx.updated_name);
 			assert(it != container.end());
@@ -1122,8 +1209,8 @@ namespace viewed
 		}
 
 		ctx.updated_name = pathview_type();
-		ctx.updated_prefix = pathview_type();
-		return std::tie(ctx.updated_name, ctx.updated_prefix);
+		ctx.updated_path = pathview_type();
+		return std::tie(ctx.updated_name, ctx.updated_path);
 	}
 
 	template <class Traits, class ModelBase>
@@ -1135,16 +1222,16 @@ namespace viewed
 		auto & code_view = container.template get<by_code>();
 		EXT_UNUSED(seq_view, code_view);
 		
-		// consumed nothing from previous step, return same name/prefix
+		// consumed nothing from previous step, return same name/path
 		if (ctx.inserted_diff == 0)
-			return std::tie(ctx.inserted_name, ctx.inserted_prefix);
+			return std::tie(ctx.inserted_name, ctx.inserted_path);
 
 		for (; ctx.inserted_first != ctx.inserted_last; ++ctx.inserted_first)
 		{
 			auto && item = *ctx.inserted_first;
 			std::uintptr_t type;
-			std::tie(type, ctx.inserted_prefix, ctx.inserted_name) = analyze(ctx.prefix, *item);
-			if (type == PAGE) return std::tie(ctx.inserted_name, ctx.inserted_prefix);
+			std::tie(type, ctx.inserted_path, ctx.inserted_name) = analyze(ctx.path, this->get_path(*item));
+			if (type == PAGE) return std::tie(ctx.inserted_name, ctx.inserted_path);
 
 			bool inserted;
 			std::tie(std::ignore, inserted) = container.insert(std::forward<decltype(item)>(item));
@@ -1152,15 +1239,15 @@ namespace viewed
 		}
 
 		ctx.inserted_name = pathview_type();
-		ctx.inserted_prefix = pathview_type();
-		return std::tie(ctx.inserted_name, ctx.inserted_prefix);
+		ctx.inserted_path = pathview_type();
+		return std::tie(ctx.inserted_name, ctx.inserted_path);
 	}
 
 	template <class Traits, class ModelBase>
 	template <class update_context>
 	void sftree_facade_qtbase<Traits, ModelBase>::update_page_and_notify(page_type & page, update_context & ctx)
 	{
-		const auto & prefix = ctx.prefix;
+		const auto & path = ctx.path;
 		auto & container = page.children;
 		auto & seq_view  = container.template get<by_seq>();
 		auto & code_view = container.template get<by_code>();
@@ -1172,7 +1259,7 @@ namespace viewed
 
 		for (;;)
 		{
-			// step 1: with current prefix analyze each element from groups:
+			// step 1: with current path analyze each element from groups:
 			// * if it's leaf - we process it: add to children, remember it's index into updated/removed ones. removal is done later
 			// * if it's page - we break out.
 			// those method update context with their process: inserted_first, updated_first, erased_first, etc
@@ -1181,15 +1268,15 @@ namespace viewed
 			process_erased(page, ctx);
 
 			// step 2: At this point only pages are at front of ranges
-			//  find lowest according to their path name, extract 3 sub-ranges according to that name from all 3 groups, and recursively process them
-			auto newprefix = std::max({ctx.erased_prefix, ctx.updated_prefix, ctx.inserted_prefix}, path_less);
+			//  find max according to their path name, extract 3 sub-ranges according to that name from all 3 groups, and recursively process them
+			auto newpath = std::max({ctx.erased_path, ctx.updated_path, ctx.inserted_path}, path_less);
 			auto name = std::max({ctx.erased_name, ctx.updated_name, ctx.inserted_name}, path_less);
 			// if name is empty - we actually processed all elements
 			if (path_equal_to(name, ms_empty_path)) break;
 			// prepare new context - for extracted page
-			auto newctx = copy_context(ctx, std::move(newprefix));
+			auto newctx = copy_context(ctx, std::move(newpath));
 			// extract sub-ranges, also update iterators in current context, those elements will be processed in recursive call
-			auto is_child = [this, &prefix, &name](auto && item) { return this->is_child(prefix, name, *item); };
+			auto is_child = [this, &path, &name](auto && item) { return this->is_child(path, name, this->get_path(*item)); };
 			ctx.inserted_first = std::find_if_not(ctx.inserted_first, ctx.inserted_last, is_child);
 			ctx.updated_first  = std::find_if_not(ctx.updated_first,  ctx.updated_last,  is_child);
 			ctx.erased_first   = std::find_if_not(ctx.erased_first,   ctx.erased_last,   is_child);
@@ -1218,7 +1305,7 @@ namespace viewed
 				child_page = child.get();
 
 				child_page->parent = &page;
-				traits_type::set_segment(*child_page, std::move(prefix), std::move(name));
+				traits_type::set_name(*child_page, std::move(path), std::move(name));
 				std::tie(it, inserted) = container.insert(std::move(child));
 			}			
 
@@ -1273,10 +1360,10 @@ namespace viewed
 		// And Qt persistent indexes should be recalculated.
 		// Removal of elements from boost::multi_index_container is O(n) operation, where n is distance from position to end of sequence,
 		// so we better move those at back, and than remove them all at once - that way removal will be O(1)
-
+		//
 		// Because children are stored in boost::multi_index_container we must copy pointer to elements into separate vector,
 		// rearrange them, and than call boost::multi_index_container::rearrange
-
+		//
 		// layout of elements at start:
 		//
 		// |vfirst                     |vlast                      |nfirst              |nlast
@@ -1376,7 +1463,7 @@ namespace viewed
 			// |                           |sfirst                     |slast
 
 			// now remove X elements from [vfirst; vlast) - those are removed elements and should be completely removed
-			vlast  = std::remove_if(vfirst, vlast, [](auto ptr) { return unmark_pointer(ptr) == nullptr; });
+			vlast  = std::remove(vfirst, vlast, nullptr);
 			// and remove X elements from [sfirst; slast) but in reverse direction, gathering them near new elements
 			sfirst = std::remove(std::make_reverse_iterator(slast), std::make_reverse_iterator(sfirst), nullptr).base();
 
@@ -1413,7 +1500,7 @@ namespace viewed
 
 			// rotate [spp, npp) at the beginning of shadow area
 			// and in fact merge those with visible area
-			std::rotate(sfirst, spp, nlast);
+			std::rotate(sfirst, spp, npp);
 			nlast = std::move(sfirst, nlast, vlast);
 		}
 

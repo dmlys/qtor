@@ -149,7 +149,7 @@ int main(int argc, char * argv[])
 		{ QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
 	    { QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100 },
 	    { QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100 },
-	    { QStringLiteral("dir/prox/dir.txt"),     100 * 100, 20 * 100 },
+	    { QStringLiteral("dir/prox/dir.txt"), 100 * 100, 20 * 100 },
 	    { QStringLiteral("ops.sh"),           100 * 100, 20 * 100 },
 	    { QStringLiteral("westworld.mkv"),    100 * 100, 20 * 100 },
 	    { QStringLiteral("folder/sup/file3.txt"), 100 * 100, 20 * 100 },
@@ -187,12 +187,19 @@ int main(int argc, char * argv[])
 	model->upsert(paths2);
 	model->assign(paths);
 	
+	auto idx1 = model->find_element("dir");
+	auto idx2 = model->find_element("dir/prox");
+	auto idx3 = model->find_element("dir/prox/dir.txt");
+
 	//QTableView view;
 	//view.setModel(model.get());
 	FileTreeView view;
 	view.SetModel(model);
 	QtTools::ResizeColumnsToContents(view.GetTreeView());
 
+	view.GetTreeView()->expand(idx1);
+	view.GetTreeView()->expand(idx2);
+	view.GetTreeView()->selectionModel()->select(idx3, QItemSelectionModel::Select);
 	//QTimer::singleShot(3s, [&view] {
 	    view.showMaximized();
 		view.activateWindow();
