@@ -113,7 +113,7 @@ namespace viewed
 
 		this->beginResetModel();
 
-		this->m_root.upassed = 0;
+		this->m_root.nvisible = 0;
 		this->m_root.children.clear();
 
 		typename base_type::value_ptr_vector valptr_array;
@@ -165,7 +165,7 @@ namespace viewed
 	{
 		this->beginResetModel();
 		this->m_root.children.clear();
-		this->m_root.upassed = 0;
+		this->m_root.nvisible = 0;
 		this->endResetModel();
 	}
 

@@ -13,9 +13,9 @@ namespace qtor
 		using path_type = filepath_type;
 		using pathview_type = QStringRef;
 
-		using path_equal_to = std::equal_to<>;
-		using path_less     = std::less<>;
-		using path_hasher   = std::hash<pathview_type>;
+		using path_equal_to_type = std::equal_to<>;
+		using path_less_type     = std::less<>;
+		using path_hash_type     = std::hash<path_type>;
 
 		struct node_type;
 		using leaf_type = torrent_file;
@@ -35,7 +35,7 @@ namespace qtor
 		static path_type get_segment(const node_type & node) { return get_segment(node.name); }
 		static path_type get_path(const leaf_type & leaf)    { return leaf.filename; }
 
-		static bool is_subelement(const pathview_type & prefix, const pathview_type & name, const torrent_file & item);
+		static bool is_child(const pathview_type & prefix, const pathview_type & name, const leaf_type & leaf);
 		static auto analyze(const pathview_type & prefix, const leaf_type & item)
 			-> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
 

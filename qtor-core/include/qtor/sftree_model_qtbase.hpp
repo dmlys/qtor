@@ -9,12 +9,16 @@ namespace viewed
 		using self_type = sftree_model_qtbase;
 		using base_type = sftree_facade_qtbase<Traits, ModelBase>;
 
-	protected:
+	public:
 		using typename base_type::leaf_type;
-		using typename base_type::page_type;
+		using typename base_type::node_type;
 		using typename base_type::value_ptr;
 
 	protected:
+		using typename base_type::page_type;
+
+	protected:
+		using base_type::get_path;
 		using base_type::segment_group_pred;
 
 	protected:
@@ -56,7 +60,7 @@ namespace viewed
 	{
 		this->beginResetModel();
 		this->m_root.children.clear();
-		this->m_root.upassed = 0;
+		this->m_root.nvisible = 0;
 		this->endResetModel();
 	}
 
@@ -115,6 +119,9 @@ namespace viewed
 
 		std::sort(erased_first, erased_last, viewed::make_indirect_fun(segment_group_pred));
 		std::sort(el_first, el_last, viewed::make_indirect_fun(segment_group_pred));
+
+		auto leaf_equal = [](auto && l1, auto && l2) { return base_type::path_equal_to(get_path(*l1), get_path(*l2)); };
+		el_last = std::unique(el_first, el_last, leaf_equal);
 		
 		auto pp = std::stable_partition(el_first, el_last, pred);
 		erased_last = std::remove_if(erased_first, erased_last, viewed::marked_pointer);

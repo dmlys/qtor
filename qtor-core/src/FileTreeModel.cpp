@@ -81,17 +81,17 @@ namespace qtor
 		return filepath.mid(pos);
 	}
 
-	auto torrent_file_tree_traits::analyze(const pathview_type & prefix, const leaf_type & item)
+	auto torrent_file_tree_traits::analyze(const pathview_type & prefix, const leaf_type & leaf)
 		-> std::tuple<std::uintptr_t, pathview_type, pathview_type>
 	{
-		const auto & path = item.filename;
+		const auto & path = leaf.filename;
 		auto first = path.begin() + prefix.size();
 		auto last = path.end();
 		auto it = std::find(first, last, '/');
 
 		if (it == last)
 		{
-			pathview_type name; // = QString::null;
+			pathview_type name = path.midRef(prefix.size()); // = QString::null;
 			return std::make_tuple(viewed::LEAF, prefix, std::move(name));
 		}
 		else
@@ -103,9 +103,9 @@ namespace qtor
 		}
 	}
 
-	bool torrent_file_tree_traits::is_subelement(const pathview_type & prefix, const pathview_type & name, const leaf_type & item)
+	bool torrent_file_tree_traits::is_child(const pathview_type & prefix, const pathview_type & name, const leaf_type & leaf)
 	{
-		auto ref = item.filename.midRef(prefix.size(), name.size());
+		auto ref = leaf.filename.midRef(prefix.size(), name.size());
 		return ref == name;
 	}
 

@@ -17,6 +17,7 @@
 #include <ext/itoa.hpp>
 
 #include <ext/Errors.hpp>
+#include <ext/range/pretty_printers.hpp>
 
 #include <ext/library_logger/logger.hpp>
 #include <ext/library_logger/logging_macros.hpp>
@@ -145,6 +146,7 @@ int main(int argc, char * argv[])
 	std::vector<torrent_file> paths, paths2;
 	paths.assign({
 	    { QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
+		{ QStringLiteral("folder/file1.txt"), 100 * 100, 20 * 100 },
 	    { QStringLiteral("folder/file2.txt"), 100 * 100, 20 * 100 },
 	    { QStringLiteral("dir/file.sft"),     100 * 100, 20 * 100 },
 	    { QStringLiteral("dir/prox/dir.txt"),     100 * 100, 20 * 100 },
