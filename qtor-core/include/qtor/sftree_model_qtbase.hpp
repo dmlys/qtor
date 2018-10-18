@@ -110,15 +110,17 @@ namespace viewed
 
 			// not (*it < ptr.get())
 			// not (ptr.get() < *it) => *it === ptr
-			auto it = std::lower_bound(erased_first, erased_last, ptr.get(), pred);              
+			auto it = std::lower_bound(erased_first, erased_last, ptr.get(), pred);
 			if (it == erased_last or pred(ptr.get(), viewed::unmark_pointer(*it))) return false;
 
 			*it = viewed::mark_pointer(*it);
 			return true;
 		};
 
-		std::sort(erased_first, erased_last, viewed::make_indirect_fun(segment_group_pred));
-		std::sort(el_first, el_last, viewed::make_indirect_fun(segment_group_pred));
+		this->group_by_segments(erased_first, erased_last);
+		this->group_by_segments(el_first, el_last);
+		//std::sort(erased_first, erased_last, viewed::make_indirect_fun(segment_group_pred));
+		//std::sort(el_first, el_last, viewed::make_indirect_fun(segment_group_pred));
 
 		auto leaf_equal = [](auto && l1, auto && l2) { return base_type::path_equal_to(get_path(*l1), get_path(*l2)); };
 		el_last = std::unique(el_first, el_last, leaf_equal);
@@ -165,12 +167,14 @@ namespace viewed
 
 			// not (*it < ptr.get())
 			// not (ptr.get() < *it) => *it === ptr
-			auto it = std::lower_bound(ex_first, ex_last, ptr.get(), pred);              
+			auto it = std::lower_bound(ex_first, ex_last, ptr.get(), pred);
 			return it != ex_last and not pred(ptr.get(), *it);
 		};
 
-		std::sort(ex_first, ex_last, viewed::make_indirect_fun(segment_group_pred));
-		std::sort(el_first, el_last, viewed::make_indirect_fun(segment_group_pred));
+		this->group_by_segments(ex_first, ex_last);
+		this->group_by_segments(el_first, el_last);
+		//std::sort(ex_first, ex_last, viewed::make_indirect_fun(segment_group_pred));
+		//std::sort(el_first, el_last, viewed::make_indirect_fun(segment_group_pred));
 		auto pp = std::stable_partition(el_first, el_last, pred);
 
 		// [el_first, pp) - updated, [pp, el_last) - inserted

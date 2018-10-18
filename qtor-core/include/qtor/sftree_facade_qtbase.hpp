@@ -182,13 +182,21 @@ namespace viewed
 		{
 			// arguments - swapped, intended, sort in descending order
 			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return path_less(traits_type::get_path(l2),  traits_type::get_path(l1));  }
-			bool operator()(const leaf_type * l1, const leaf_type * l2) const noexcept { return path_less(traits_type::get_path(*l2), traits_type::get_path(*l1)); }
+			//bool operator()(const leaf_type * l1, const leaf_type * l2) const noexcept { return path_less(traits_type::get_path(*l2), traits_type::get_path(*l1)); }
+
+			template <class Pointer1, class Pointer2>
+			std::enable_if_t<
+				     std::is_same_v<leaf_type, ext::remove_cvref_t<decltype(*std::declval<Pointer1>())>>
+				 and std::is_same_v<leaf_type, ext::remove_cvref_t<decltype(*std::declval<Pointer2>())>>
+				, bool
+			>
+			operator()(Pointer1 && p1, Pointer2 && p2) const noexcept { return path_less(traits_type::get_path(*p2), traits_type::get_path(*p1)); }
 		};
 
 		using value_container = boost::multi_index_container<
 			value_ptr,
 			boost::multi_index::indexed_by<
-		        boost::multi_index::hashed_unique<get_name_type, path_hash_type, path_equal_to_type>,
+				boost::multi_index::hashed_unique<get_name_type, path_hash_type, path_equal_to_type>,
 				boost::multi_index::random_access<>
 			>
 		>;
@@ -395,7 +403,7 @@ namespace viewed
 	protected:
 		/// emits qt signal this->dataChanged about changed rows. Changred rows are defined by [first; last)
 		/// default implantation just calls this->dataChanged(index(row, 0), inex(row, this->columnCount)
-		virtual void emit_changed(int_vector::const_iterator first, int_vector::const_iterator last);
+		virtual void emit_changed(QModelIndex parent, int_vector::const_iterator first, int_vector::const_iterator last);
 		/// changes persistent indexes via this->changePersistentIndex.
 		/// [first; last) - range where range[oldIdx - offset] => newIdx.
 		/// if newIdx < 0 - index should be removed(changed on invalid, qt supports it)
@@ -636,11 +644,11 @@ namespace viewed
 	/*                     qt emit helpers                                  */
 	/************************************************************************/
 	template <class Traits, class ModelBase>
-	void sftree_facade_qtbase<Traits, ModelBase>::emit_changed(int_vector::const_iterator first, int_vector::const_iterator last)
+	void sftree_facade_qtbase<Traits, ModelBase>::emit_changed(QModelIndex parent, int_vector::const_iterator first, int_vector::const_iterator last)
 	{
 		if (first == last) return;
 
-		int ncols = this->columnCount(model_helper::invalid_index);
+		int ncols = this->columnCount(parent);
 		for (; first != last; ++first)
 		{
 			// lower index on top, higher on bottom
@@ -653,8 +661,8 @@ namespace viewed
 
 			--first;
 
-			auto top_left = this->index(top, 0, model_helper::invalid_index);
-			auto bottom_right = this->index(bottom, ncols - 1, model_helper::invalid_index);
+			auto top_left = this->index(top, 0, parent);
+			auto bottom_right = this->index(bottom, ncols - 1, parent);
 			this->dataChanged(top_left, bottom_right, model_helper::all_roles);
 		}
 	}

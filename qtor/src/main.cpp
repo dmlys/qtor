@@ -45,6 +45,7 @@
 #include <QtGui/QAbstractTextDocumentLayout>
 #include <QtGui/QTextCursor>
 #include <QtTools/ItemViewUtils.hpp>
+#include <QtTools/ListModel.hqt>
 
 //class http_method
 //{
