@@ -424,7 +424,7 @@ namespace QtTools::NotificationSystem
 		}
 
 
-		// hcur/lcur, hgeom/lgeom - high/log.
+		// hcur/lcur, hgeom/lgeom - high/low.
 		// When relayouting widgets, some of them can be already closed,
 		// and following ones should be slided up to down(logically, corner can invert those meanings).
 		// So we have 2 current points:

@@ -11,7 +11,7 @@
 
 namespace QtTools::NotificationSystem
 {
-	/// QtTools::NotificationSystem holds Simple Notification system, more or less.
+	/// QtTools::NotificationSystem namespace holds Simple Notification system, more or less.
 	/// Notification - notification interface, it's a simple interface, 
 	///                it does not responsible for drawing/showing/etc itself.
 	///                
