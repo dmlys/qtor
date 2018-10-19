@@ -18,11 +18,16 @@ namespace QtTools::NotificationSystem
 		using base_type = QtTools::NotificationPopupWidget;
 
 	protected:
-		NotificationCenter * m_center = nullptr;
+		NotificationPopupLayout * m_layout = nullptr;
 
 	Q_SIGNALS:
 		void LinkHovered(QString href);
 		void LinkActivated(QString href);
+
+	public:
+		void SetNotificationPopupLayout(NotificationPopupLayout * layout) { m_layout = layout; }
+		auto GetNotificationPopupLayout() { return m_layout; }
+		auto GetNotificationCenter()      { return m_layout->GetNotificationCenter(); }
 
 	public:
 		using base_type::base_type;

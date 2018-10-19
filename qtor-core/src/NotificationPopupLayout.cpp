@@ -40,7 +40,12 @@ namespace QtTools::NotificationSystem
 	{
 		delete slideAnimation.data();
 		delete moveOutAnimation.data();
-		delete popup.data();
+
+		if (auto * popup = this->popup.data())
+		{
+			popup->disconnect(popup->GetNotificationPopupLayout());
+			delete popup;
+		}
 	}
 
 	NotificationPopupLayout::~NotificationPopupLayout() = default;
@@ -124,6 +129,7 @@ namespace QtTools::NotificationSystem
 		popup->adjustSize();
 
 		popup->installEventFilter(this);
+		popup->SetNotificationPopupLayout(this);
 
 		connect(popup, &QObject::destroyed, this, &NotificationPopupLayout::NotificationPopupClosed);
 		connect(popup, &AbstractNotificationPopupWidget::LinkActivated, this, &NotificationPopupLayout::LinkActivated);
@@ -315,6 +321,7 @@ namespace QtTools::NotificationSystem
 		popup->adjustSize();
 
 		popup->installEventFilter(ext::unconst(this));
+		popup->SetNotificationPopupLayout(ext::unconst(this));
 
 		connect(popup, &QObject::destroyed, this, &NotificationPopupLayout::NotificationPopupClosed);
 		connect(popup, &AbstractNotificationPopupWidget::LinkActivated, this, &NotificationPopupLayout::LinkActivated);

@@ -220,6 +220,7 @@ namespace QtTools::NotificationSystem
 	{
 		using namespace QtTools::Delegates::TextLayout;
 
+		item.option = &option;
 		if (item.index == option.index)
 		{
 			auto newTopLeft = option.rect.topLeft();
@@ -234,7 +235,9 @@ namespace QtTools::NotificationSystem
 			return;
 		}
 
-		item.option = &option;
+		item.hintTopLeft = option.rect.topLeft();
+		item.index = option.index;
+
 		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
 		if (model) item.searchStr = model->GetFilter();
 
@@ -244,7 +247,6 @@ namespace QtTools::NotificationSystem
 		//const auto rect = option.rect - margins;
 		//const auto topLeft = rect.topLeft();
 
-		item.hintTopLeft = option.rect.topLeft();
 		item.timestamp = locale.toString(notification.Timestamp(), QLocale::ShortFormat);
 		item.title = notification.Title();
 		item.text = notification.Text();
@@ -266,7 +268,7 @@ namespace QtTools::NotificationSystem
 		if (m_oldViewWidth != widgetWidth and std::exchange(m_oldViewWidth, widgetWidth))
 			m_curMaxWidth = 0;
 
-		// if width is bigger than current - replace it, and it it wasn't 0 - emit signal
+		// if width is bigger than current - replace it, and if it wasn't 0 - emit signal
 		if (width > m_curMaxWidth and std::exchange(m_curMaxWidth, width))
 			Q_EMIT ext::unconst(this)->sizeHintChanged({});
 		
