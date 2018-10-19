@@ -178,7 +178,7 @@ namespace viewed
 			result_type operator()(const page_type * page) const { return traits_type::get_name(*page); }
 		};
 
-		struct segment_group_pred_type
+		struct path_group_pred_type
 		{
 			// arguments - swapped, intended, sort in descending order
 			bool operator()(const leaf_type & l1, const leaf_type & l2) const noexcept { return path_less(traits_type::get_path(l2),  traits_type::get_path(l1));  }
@@ -276,7 +276,7 @@ namespace viewed
 		{
 			// those members are intensely used by update_page_and_notify, rearrange_children_and_notify, process_erased, process_updated, process_inserted methods
 
-			// all should be groped by group_by_segments
+			// all should be groped by group_by_paths
 			ErasedRandomAccessIterator erased_first, erased_last;
 			UpdatedRandomAccessIterator updated_first, updated_last;
 			InsertedRandomAccessIterator inserted_first, inserted_last;
@@ -355,7 +355,7 @@ namespace viewed
 		static constexpr get_name_type           get_name {};
 		static constexpr get_children_type       get_children {};
 		static constexpr get_children_count_type get_children_count {};
-		static constexpr segment_group_pred_type segment_group_pred {};
+		static constexpr path_group_pred_type path_group_pred {};
 
 	protected:
 		static const pathview_type     ms_empty_path;
@@ -374,7 +374,7 @@ namespace viewed
 		static void for_each_child_page(page_type & page, Functor && func);
 
 		template <class RandomAccessIterator>
-		static void group_by_segments(RandomAccessIterator first, RandomAccessIterator last);
+		static void group_by_paths(RandomAccessIterator first, RandomAccessIterator last);
 
 	protected:
 		// core QAbstractItemModel functionality implementation
@@ -522,9 +522,9 @@ namespace viewed
 
 	template <class Traits, class ModelBase>
 	template <class RandomAccessIterator>
-	void sftree_facade_qtbase<Traits, ModelBase>::group_by_segments(RandomAccessIterator first, RandomAccessIterator last)
+	void sftree_facade_qtbase<Traits, ModelBase>::group_by_paths(RandomAccessIterator first, RandomAccessIterator last)
 	{
-		std::sort(first, last, segment_group_pred);
+		std::sort(first, last, path_group_pred);
 	}
 
 	/************************************************************************/
@@ -1586,10 +1586,9 @@ namespace viewed
 		ctx.removed_first = ctx.removed_last = affected_indexes.begin();
 		ctx.changed_first = ctx.changed_last = affected_indexes.end();
 
-		auto pred = viewed::make_indirect_fun(segment_group_pred);
-		assert(std::is_sorted(ctx.erased_first, ctx.erased_last, pred));
-		assert(std::is_sorted(ctx.updated_first, ctx.updated_last, pred));
-		assert(std::is_sorted(ctx.inserted_first, ctx.inserted_last, pred));
+		assert(std::is_sorted(ctx.erased_first, ctx.erased_last, path_group_pred));
+		assert(std::is_sorted(ctx.updated_first, ctx.updated_last, path_group_pred));
+		assert(std::is_sorted(ctx.inserted_first, ctx.inserted_last, path_group_pred));
 		
 		this->layoutAboutToBeChanged(model_helper::empty_model_list, model_helper::NoLayoutChangeHint);
 		

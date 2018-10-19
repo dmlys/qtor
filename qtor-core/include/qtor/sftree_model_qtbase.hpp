@@ -19,7 +19,7 @@ namespace viewed
 
 	protected:
 		using base_type::get_path;
-		using base_type::segment_group_pred;
+		using base_type::path_group_pred;
 
 	protected:
 		void fill_children_leafs(const page_type & page, std::vector<const leaf_type *> & elements);
@@ -103,10 +103,17 @@ namespace viewed
 		auto erased_first = existing.begin();
 		auto erased_last = existing.end();		
 
+		this->group_by_paths(erased_first, erased_last);
+		this->group_by_paths(el_first, el_last);
+
+		auto leaf_equal = [](auto && l1, auto && l2) { return base_type::path_equal_to(get_path(*l1), get_path(*l2)); };
+		el_last = std::unique(el_first, el_last, leaf_equal);
+
+
 		auto pred = [erased_first, erased_last](auto & ptr)
 		{
 			// e1 - from [erased_first, erased-last), e2 - from ptr
-			auto pred = [](auto * e1, auto * e2) { return segment_group_pred(viewed::unmark_pointer(e1), e2); };
+			auto pred = [](auto * e1, auto * e2) { return path_group_pred(viewed::unmark_pointer(e1), e2); };
 
 			// not (*it < ptr.get())
 			// not (ptr.get() < *it) => *it === ptr
@@ -116,21 +123,13 @@ namespace viewed
 			*it = viewed::mark_pointer(*it);
 			return true;
 		};
-
-		this->group_by_segments(erased_first, erased_last);
-		this->group_by_segments(el_first, el_last);
-		//std::sort(erased_first, erased_last, viewed::make_indirect_fun(segment_group_pred));
-		//std::sort(el_first, el_last, viewed::make_indirect_fun(segment_group_pred));
-
-		auto leaf_equal = [](auto && l1, auto && l2) { return base_type::path_equal_to(get_path(*l1), get_path(*l2)); };
-		el_last = std::unique(el_first, el_last, leaf_equal);
 		
 		auto pp = std::stable_partition(el_first, el_last, pred);
 		erased_last = std::remove_if(erased_first, erased_last, viewed::marked_pointer);
 
 		// [el_first, pp) - updated, [pp, el_last) - inserted		
-		auto updated = boost::make_iterator_range(el_first, pp) | ext::moved;
-		auto inserted = boost::make_iterator_range(pp, el_last) | ext::moved;
+		auto updated  = boost::make_iterator_range(el_first, pp) | ext::moved;
+		auto inserted = boost::make_iterator_range(pp, el_last)  | ext::moved;
 
 		return this->update_data_and_notify(
 			erased_first, erased_last,
@@ -160,10 +159,17 @@ namespace viewed
 		auto ex_first = existing.begin();
 		auto ex_last = existing.end();
 
+		this->group_by_paths(ex_first, ex_last);
+		this->group_by_paths(el_first, el_last);
+
+		auto leaf_equal = [](auto && l1, auto && l2) { return base_type::path_equal_to(get_path(*l1), get_path(*l2)); };
+		el_last = std::unique(el_first, el_last, leaf_equal);
+
+
 		auto pred = [ex_first, ex_last](auto & ptr)
 		{
 			// e1 - from [erased_first, erased-last), e2 - from ptr
-			auto pred = [](auto * e1, auto * e2) { return segment_group_pred(e1, e2); };
+			auto pred = [](auto * e1, auto * e2) { return path_group_pred(e1, e2); };
 
 			// not (*it < ptr.get())
 			// not (ptr.get() < *it) => *it === ptr
@@ -171,15 +177,11 @@ namespace viewed
 			return it != ex_last and not pred(ptr.get(), *it);
 		};
 
-		this->group_by_segments(ex_first, ex_last);
-		this->group_by_segments(el_first, el_last);
-		//std::sort(ex_first, ex_last, viewed::make_indirect_fun(segment_group_pred));
-		//std::sort(el_first, el_last, viewed::make_indirect_fun(segment_group_pred));
 		auto pp = std::stable_partition(el_first, el_last, pred);
 
 		// [el_first, pp) - updated, [pp, el_last) - inserted
-		auto updated = boost::make_iterator_range(el_first, pp) | ext::moved;
-		auto inserted = boost::make_iterator_range(pp, el_last) | ext::moved;
+		auto updated  = boost::make_iterator_range(el_first, pp) | ext::moved;
+		auto inserted = boost::make_iterator_range(pp, el_last)  | ext::moved;
 
 		return this->update_data_and_notify(
 			ex_first, ex_first, // no erases

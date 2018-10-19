@@ -121,7 +121,7 @@ namespace viewed
 
 		auto first = elements.begin();
 		auto last = elements.end();
-		this->group_by_segments(first, last);
+		this->group_by_paths(first, last);
 
 		ctx.vptr_array = &valptr_array;
 		ctx.first = first;
@@ -143,9 +143,9 @@ namespace viewed
 		auto inserted_first = inserted.begin();
 		auto inserted_last = inserted.end();
 
-		base_type::group_by_segments(erased_first, erased_last);
-		base_type::group_by_segments(updated_first, updated_last);
-		base_type::group_by_segments(inserted_first, inserted_last);
+		base_type::group_by_paths(erased_first, erased_last);
+		base_type::group_by_paths(updated_first, updated_last);
+		base_type::group_by_paths(inserted_first, inserted_last);
 
 		return base_type::update_data_and_notify(
 			erased_first, erased_last,
