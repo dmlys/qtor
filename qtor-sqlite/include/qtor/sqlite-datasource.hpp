@@ -38,6 +38,16 @@ namespace qtor::sqlite
 	protected:
 		void emit_subs();
 
+	public:
+		void set_address(std::string addr) override;
+		void set_timeout(std::chrono::steady_clock::duration timeout) override {}
+		void set_logger(ext::library_logger::logger * logger) override {}
+		void set_gui_queue(QtTools::GuiQueue * queue) override {}
+
+	public:
+		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle override { return {}; }
+		virtual ext::future<session_stat> get_session_stats() override { return {}; }
+
 	protected:
 		void do_connect_request(unique_lock lk) override;
 		void do_disconnect_request(unique_lock lk) override;
@@ -62,10 +72,9 @@ namespace qtor::sqlite
 		virtual ext::future<void> remove_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
 		virtual ext::future<void> purge_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
 
-		void set_address(std::string addr) override;
-		void set_timeout(std::chrono::steady_clock::duration timeout) override {}
-		void set_logger(ext::library_logger::logger * logger) override {}
-		void set_gui_queue(QtTools::GuiQueue * queue) override {}
+	public:
+		virtual ext::future<torrent_file_list> get_torrent_files(torrent_id_type id) override { return ext::make_ready_future<torrent_file_list>({}); }
+		virtual ext::future<torrent_peer_list> get_torrent_peers(torrent_id_type id) override { return ext::make_ready_future<torrent_peer_list>({}); }
 
 	public:
 		sqlite_datasource();

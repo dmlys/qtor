@@ -82,6 +82,7 @@ namespace qtor::sqlite
 	sqlite_datasource::~sqlite_datasource()
 	{		
 		delete static_cast<sqlite3yaw::session *>(m_ses);
+		m_ses = nullptr;
 	}
 
 	void sqlite_datasource::subscription::do_close_request(unique_lock lk)
