@@ -1,4 +1,4 @@
-#include <QtGui/QPainter>
+﻿#include <QtGui/QPainter>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QTextLayout>
 #include <QtGui/QTextDocument>
@@ -82,15 +82,14 @@ namespace QtTools::NotificationSystem
 		const QFontMetrics titleFm {item.titleFont, device};
 		const QFontMetrics timestampFm {item.timestampFont, device};
 
-		// title size is drawn in left top corner, no more than 2 lines, with 40 average chars as width
+		// timestamp is drawn in right top corner
 		const QSize timestampSz = {timestampFm.width(item.timestamp), titleFm.height()};
 		const auto titleSpacer = 2 * titleFm.averageCharWidth();
 
 		const auto formats = FormatSearchText(item.title, item.searchStr, ms_searchFormat);
 		const auto textopt = PrepareTextOption(option);
 
-		// title size is drawn in left top corner, 
-		// no more than 2 lines, with 40 average chars as width
+		// title is drawn in left top corner, no more than 2 lines, with 40 average chars as width
 		const QSize pixsz = item.pixmap.size();
 		const qreal height = 2 * titleFm.height();
 		const qreal width = std::max(40 * titleFm.averageCharWidth(), rectWidth - timestampSz.width() - titleSpacer);
@@ -283,22 +282,20 @@ namespace QtTools::NotificationSystem
 		const QStyleOptionViewItem & option = *item.option;
 		const bool selected = option.state & QStyle::State_Selected;
 		const auto margins = TextMargins(option);
-		const auto rect = FocusFrameSubrect(option) - margins;
+		const auto rect = option.rect - margins;
 
 		const auto cg = ColorGroup(option);
 		const auto cr = selected ? QPalette::HighlightedText : QPalette::Text;
+		const auto color = option.palette.color(cg, cr);
+		painter->setPen(color);
 
 		painter->drawPixmap(item.pixmapRect, item.pixmap);
 
-		auto timestampRect = item.timestampRect;
-		timestampRect.moveRight(rect.right());
-
-		painter->setPen(option.palette.color(cg, cr));
-		
-		auto titleopt = option;
-		titleopt.font = item.titleFont;
+		painter->setFont(item.titleFont);
 		TextLayout::DrawLayout(painter, item.titleRect.topLeft(), *item.titleLayoutPtr);
 
+		auto timestampRect = item.timestampRect;
+		timestampRect.moveRight(rect.right());
 		painter->setFont(item.timestampFont);
 		painter->drawText(timestampRect, item.timestamp);
 

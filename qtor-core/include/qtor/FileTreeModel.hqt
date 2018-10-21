@@ -3,8 +3,8 @@
 #include <qtor/torrent.hpp>
 #include <qtor/torrent_file_store.hpp>
 #include <qtor/AbstractFileTreeModel.hqt>
-#include <qtor/sftree_view_qtbase.hpp>
-#include <qtor/sftree_model_qtbase.hpp>
+#include <viewed/sftree_view_qtbase.hpp>
+#include <viewed/sftree_model_qtbase.hpp>
 
 namespace qtor
 {
@@ -35,8 +35,8 @@ namespace qtor
 		static path_type get_name(const node_type & node) { return get_name(node.name); }
 		static path_type get_path(const leaf_type & leaf) { return leaf.filename; }
 
-		static bool is_child(const pathview_type & path, const pathview_type & name, const pathview_type & leaf_path);
-		static auto analyze(const pathview_type & path, const pathview_type & leaf_path)
+		bool is_child(const pathview_type & path, const pathview_type & name, const pathview_type & leaf_path) const;
+		auto analyze(const pathview_type & path, const pathview_type & leaf_path) const
 		    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
 
 		// fix for QString to QStringRef conversion
