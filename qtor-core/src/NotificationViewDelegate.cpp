@@ -107,7 +107,7 @@ namespace QtTools::NotificationSystem
 		for (;;)
 		{
 			auto line = layout->createLine();
-			if (!line.isValid()) break;
+			if (not line.isValid()) break;
 
 			qreal posx = cury < pixsz.height() ? pixsz.width() + ms_Spacing : 0;
 			line.setPosition({posx, cury});
@@ -129,7 +129,7 @@ namespace QtTools::NotificationSystem
 		};
 
 		layout->endLayout();
-		bool needsElide = elideIndex != layout->lineCount();
+		const bool needsElide = elideIndex != layout->lineCount();
 
 		if (needsElide)
 		{
@@ -153,7 +153,7 @@ namespace QtTools::NotificationSystem
 			for (;;)
 			{
 				auto line = layout->createLine();
-				if (!line.isValid()) break;
+				if (not line.isValid()) break;
 
 				qreal posx = cury < pixsz.height() ? pixsz.width() + ms_Spacing : 0;
 				line.setPosition({posx, cury});
@@ -174,7 +174,9 @@ namespace QtTools::NotificationSystem
 		item.pixmapRect = {topLeft, pixsz};
 		item.titleRect = {topLeft, titleSz};
 		item.timestampRect = QRect {
-			{item.titleRect.right() + titleSpacer, topLeft.y()},
+			// item.titleRect.right() could be used, nut it have problems, see qdoc for it: historical reasons.
+			// Btw QRectF does not have that problem
+			{item.titleRect.left() + item.titleRect.width() + titleSpacer, topLeft.y()},
 			timestampSz
 		};
 	}
@@ -237,6 +239,10 @@ namespace QtTools::NotificationSystem
 		item.hintTopLeft = option.rect.topLeft();
 		item.index = option.index;
 
+		const auto widgetWidth = option.widget->width();
+		if (m_oldViewWidth != widgetWidth and std::exchange(m_oldViewWidth, widgetWidth))
+			m_curMaxWidth = 0;
+
 		auto * model = dynamic_cast<const AbstractNotificationModel *>(option.index.model());
 		if (model) item.searchStr = model->GetFilter();
 
@@ -262,15 +268,11 @@ namespace QtTools::NotificationSystem
 
 		item.totalRect = item.pixmapRect | item.timestampRect | item.titleRect | item.textRect;
 		const auto width = item.totalRect.width();
-		const auto widgetWidth = option.widget->width();
-
-		if (m_oldViewWidth != widgetWidth and std::exchange(m_oldViewWidth, widgetWidth))
-			m_curMaxWidth = 0;
 
 		// if width is bigger than current - replace it, and if it wasn't 0 - emit signal
 		if (width > m_curMaxWidth and std::exchange(m_curMaxWidth, width))
 			Q_EMIT ext::unconst(this)->sizeHintChanged({});
-		
+
 		item.totalRect += margins;
 		return;
 	}

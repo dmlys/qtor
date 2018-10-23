@@ -55,9 +55,9 @@ namespace QtTools::NotificationSystem
 		m_text->setText(text);
 
 		QHBoxLayout * titleLayout = new QHBoxLayout;
-		titleLayout->addWidget(m_title, 1);
+		titleLayout->addWidget(m_title, 1); // add stretch, title label should dominate timestamp label
 		titleLayout->addSpacing(20);
-		titleLayout->addWidget(m_timestamp, 0, Qt::AlignRight);
+		titleLayout->addWidget(m_timestamp, 0, Qt::AlignRight | Qt::AlignTop);
 
 		QBoxLayout * layout = new QVBoxLayout;
 		layout->setSpacing(0);

@@ -3,9 +3,8 @@ import qbs.Environment
 
 Project
 {
-	//property pathList additionalIncludePaths: []
-	//property pathList additionalLibraryPaths: []
-	//property stringList additionalDefines: []
+	//property pathList additionalIncludePaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.11.2/include"] : []
+	//property pathList additionalLibraryPaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.11.2/lib"]     : []
 	property stringList additionalDriverFlags: ["-pthread"]
 	
 	property stringList additionalDefines:
@@ -28,10 +27,11 @@ Project
 		else if (qbs.toolchain.contains("gcc") || qbs.toolchain.contains("clang"))
 		{
 			//flags.push("-Wsuggest-override")
-			flags.push("-Wno-unused-parameter")
+			flags.push("-Wno-extra");
+			//flags.push("-Wno-unused-parameter")
+			flags.push("-Wno-unused-local-typedefs")
 			flags.push("-Wno-unused-function")
 			flags.push("-Wno-implicit-fallthrough")
-            flags.push("-Wno-unused-local-typedefs")
 			//flags.push("-Wno-sign-compare")
 		}
 
