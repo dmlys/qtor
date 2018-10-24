@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QBoxLayout>
+#include <QtTools/PlainLabel.hqt>
 
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationPopupLayout.hqt>
 #include <qtor/NotificationPopupWidget.hqt>
-#include <qtor/PlainLabel.hqt>
 
 namespace QtTools::NotificationSystem
 {
