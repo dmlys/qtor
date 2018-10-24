@@ -6,6 +6,7 @@
 #include <qtor/NotificationSystem.hqt>
 #include <qtor/NotificationPopupLayout.hqt>
 #include <qtor/NotificationPopupWidget.hqt>
+#include <qtor/PlainLabel.hqt>
 
 namespace QtTools::NotificationSystem
 {
@@ -42,8 +43,10 @@ namespace QtTools::NotificationSystem
 	public:
 		QPointer<const Notification> m_notification;
 
-		QLabel * m_title;
-		QLabel * m_timestamp;
+		//QLabel * m_title;
+		//QLabel * m_timestamp;
+		PlainLabel * m_title;
+		PlainLabel * m_timestamp;
 		QLabel * m_text;
 
 	public:

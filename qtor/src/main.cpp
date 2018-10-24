@@ -123,7 +123,7 @@
 
 #include <qtor/FileTreeModel.hqt>
 #include <qtor/FileTreeView.hqt>
-#include <qtor/SimpleLabel.hqt>
+
 
 int main(int argc, char * argv[])
 {
@@ -141,26 +141,6 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(qtor_core_resource);
 
 	QApplication qapp {argc, argv};
-
-	QtTools::SimpleLabel label;
-	//QLabel label;
-	label.setText("test");
-	label.setAlignment(Qt::AlignLeft | Qt::AlignTop);
-	label.showMaximized();
-
-	return qapp.exec();
-
-//	QLabel label;
-
-//	QString long_title = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
-//	//long_title += long_title;
-//	//long_title += long_title;
-//	label.setWordWrap(true);
-//	label.setText(long_title);
-//	auto sz = label.sizeHint();
-
-//	label.show();
-//	return qapp.exec();
 
 //	std::vector<torrent_file> paths, paths2;
 //	paths.assign({
@@ -277,7 +257,7 @@ int main(int argc, char * argv[])
 
 	layout.Init(nsys);
 	layout.SetParent(&mainWindow);
-	//layout.SetCorner(Qt::TopRightCorner);
+	layout.SetCorner(Qt::TopRightCorner);
 	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
 	view.Init(nsys);
@@ -285,22 +265,22 @@ int main(int argc, char * argv[])
 	view.show();
 	//view.showMaximized();
 
-	//nsys.AddInfo("Title1", "Text1");
-	//nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	//nsys.AddError("Title4", QtTools::ToQString(errmsg));
-	//nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
-	//nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
-	//nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title1", "Text1");
+	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+	nsys.AddError("Title4", QtTools::ToQString(errmsg));
+	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
 	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
 
-	//auto nf = nsys.CreateNotification();
-	//nf->Title("Custom");
-	//nf->Text("Some Text");
-	//nf->setProperty("backgroundColor", QColor("red"));
-	//nf->setProperty("expirationTimeout", 0);
-	//nf->ActivationLink("setings:://tralala");
-	//
-	//nsys.AddNotification(std::move(nf));
+	auto nf = nsys.CreateNotification();
+	nf->Title("Custom");
+	nf->Text("Some Text");
+	nf->setProperty("backgroundColor", QColor("red"));
+	nf->setProperty("expirationTimeout", 0);
+	nf->ActivationLink("setings:://tralala");
+
+	nsys.AddNotification(std::move(nf));
 
 	auto res = qapp.exec();
 	qapp.closeAllWindows();

@@ -24,14 +24,15 @@ namespace QtTools::NotificationSystem
 		SetShadowColor(Qt::black);
 
 
-		m_title =     new QLabel(this);
-		m_timestamp = new QLabel(this);
+		m_title =     new PlainLabel(this);
+		m_timestamp = new PlainLabel(this);
 		m_text =      new QLabel(this);
 
 		// word wrapping actually turns heightForWidth support on,
 		// if an item on layout supports hasHeightForWidth - layout has it too
 		// if widget controlling layout has heightForWidth - widget has it too
 		m_title->setWordWrap(true);
+		m_title->setLineLimit(2);
 		//m_timestamp->setWordWrap(true);
 		m_text->setWordWrap(true);
 

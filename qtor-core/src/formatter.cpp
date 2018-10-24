@@ -60,7 +60,7 @@ namespace qtor
 		double v = 1.0 * val / ms_weights[w];
 
 		unsigned precision = w == none ? 0 
-			: v < 100 ? 2 : 1;
+		                               : v < 100 ? 2 : 1;
 
 		return tr(fmt).arg(m_locale.toString(v, 'f', precision));
 	}
