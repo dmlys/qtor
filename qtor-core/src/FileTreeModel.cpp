@@ -109,21 +109,23 @@ namespace qtor
 	}
 
 
-	QVariant FileTreeModel::GetItem(const QModelIndex & idx) const
+	template <class sftree_base>
+	QVariant FileTreeModelImpl<sftree_base>::GetItem(const QModelIndex & idx) const
 	{
 		return GetValueShort(idx);
 	}
 
-	QString FileTreeModel::GetValue(const QModelIndex & idx) const
+	template <class sftree_base>
+	QString FileTreeModelImpl<sftree_base>::GetValue(const QModelIndex & idx) const
 	{
-		auto & val = get_element_ptr(idx);
-		auto type = m_columns[idx.column()];
+		auto & val = this->get_element_ptr(idx);
+		auto type = this->m_columns[idx.column()];
 
 		switch (type)
 		{
-		    case torrent_file::FileName:  return m_fmt->format_string(get_name(val));
-			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
-			case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
+		    case torrent_file::FileName:  return this->m_fmt->format_string(get_name(val));
+		    case torrent_file::TotalSize: return this->m_fmt->format_size(get_total_size(val));
+		    case torrent_file::HaveSize:  return this->m_fmt->format_size(get_have_size(val));
 			case torrent_file::Index:     return QStringLiteral("<null>");
 			case torrent_file::Priority:  return QStringLiteral("<null>");
 			case torrent_file::Wanted:    return QStringLiteral("<null>");
@@ -131,16 +133,17 @@ namespace qtor
 		}
 	}
 
-	QString FileTreeModel::GetValueShort(const QModelIndex & idx) const
+	template <class sftree_base>
+	QString FileTreeModelImpl<sftree_base>::GetValueShort(const QModelIndex & idx) const
 	{
-		auto & val = get_element_ptr(idx);
-		auto type = m_columns[idx.column()];
+		auto & val = this->get_element_ptr(idx);
+		auto type = this->m_columns[idx.column()];
 
 		switch (type)
 		{
-		    case torrent_file::FileName:  return m_fmt->format_short_string(get_name(val));
-			case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
-			case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
+		    case torrent_file::FileName:  return this->m_fmt->format_short_string(get_name(val));
+		    case torrent_file::TotalSize: return this->m_fmt->format_size(get_total_size(val));
+		    case torrent_file::HaveSize:  return this->m_fmt->format_size(get_have_size(val));
 			case torrent_file::Index:     return QStringLiteral("<null>");
 			case torrent_file::Priority:  return QStringLiteral("<null>");
 			case torrent_file::Wanted:    return QStringLiteral("<null>");
@@ -148,10 +151,11 @@ namespace qtor
 		}
 	}
 
-	void FileTreeModel::recalculate_page(page_type & page)
+	template <class sftree_base>
+	void FileTreeModelImpl<sftree_base>::recalculate_page(page_type & page)
 	{
 		constexpr size_type zero = 0;
-		auto & children = page.children.get<by_seq>();
+		auto & children = page.children.template get<view_type::by_seq>();
 		auto first = children.begin();
 		auto last  = children.end();
 		
@@ -159,32 +163,43 @@ namespace qtor
 		page.have_size  = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item);  });
 	}
 
-	void FileTreeModel::SortBy(int column, Qt::SortOrder order)
+	template <class sftree_base>
+	void FileTreeModelImpl<sftree_base>::SortBy(int column, Qt::SortOrder order)
 	{
-		sort_by(column, order);
+		this->sort_by(column, order);
 	}
 
-	void FileTreeModel::FilterBy(QString expr)
+	template <class sftree_base>
+	void FileTreeModelImpl<sftree_base>::FilterBy(QString expr)
 	{
-		filter_by(expr);
+		this->filter_by(expr);
 	}
-
-	//FileTreeModel::FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)
-	//	: base_type(std::move(store), parent)
-	//{
-	//	init();
-	//	InitColumns();
-	//	m_fmt = new formatter(this);
-	//}
 
 	FileTreeModel::FileTreeModel(QObject * parent /* = nullptr */)
 		: base_type(parent)
 	{
 		m_fmt = new torrent_file_meta(this);
 		SetColumns({
-			torrent_file::FileName,
-			torrent_file::TotalSize,
-			torrent_file::HaveSize
+		    torrent_file::FileName,
+		    torrent_file::TotalSize,
+		    torrent_file::HaveSize
 		});
 	}
+
+	FileTreeViewModel::FileTreeViewModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)
+	    : base_type(std::move(store), parent)
+	{
+		m_fmt = new torrent_file_meta(this);
+		SetColumns({
+		    torrent_file::FileName,
+		    torrent_file::TotalSize,
+		    torrent_file::HaveSize
+		});
+
+		init();
+	}
+
+	// explicit class instantiation
+	template class FileTreeModelImpl<SFTreeFileTreeModel>;
+	template class FileTreeModelImpl<SFTreeFileTreeView>;
 }

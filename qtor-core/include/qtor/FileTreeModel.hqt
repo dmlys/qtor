@@ -92,14 +92,18 @@ namespace qtor
 	};
 
 
-	class FileTreeModel : public viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>
-	//class FileTreeModel : public viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>
+	template <class sftree_base>
+	class FileTreeModelImpl : public sftree_base
 	{
-		using self_type = FileTreeModel;
-		using base_type = viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
-		using view_type = viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
-		//using base_type = viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>;
-		//using view_type = viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>;
+		using self_type = FileTreeModelImpl;
+		using base_type = sftree_base;
+		using view_type = sftree_base;
+
+	public:
+		using typename view_type::leaf_type;
+		using typename view_type::node_type;
+		using typename view_type::page_type;
+		using typename view_type::value_ptr;
 
 	protected:
 		struct get_total_size_type
@@ -124,12 +128,10 @@ namespace qtor
 		};
 
 	protected:
-		//using view_type::get_segment;
+		using view_type::get_name;
 		static constexpr get_total_size_type     get_total_size {};
 		static constexpr get_have_size_type      get_have_size {};
 		static constexpr get_wanted_type         get_wanted {};
-		static constexpr get_children_type       get_children {};
-		static constexpr get_children_count_type get_children_count {};
 
 	protected:
 		void recalculate_page(page_type & page) override;
@@ -143,13 +145,38 @@ namespace qtor
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
 		//virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 		//virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-		
-		virtual QVariant GetItem(const QModelIndex & idx)  const override;
-		virtual QString  GetValue(const QModelIndex & idx)  const override;
+
+		virtual QVariant GetItem(const QModelIndex & idx) const override;
+		virtual QString  GetValue(const QModelIndex & idx) const override;
 		virtual QString  GetValueShort(const QModelIndex & idx) const override;
 
 	public:
-		//FileTreeModel(std::shared_ptr<torrent_file_store> store, QObject * parent = nullptr);
-		FileTreeModel(QObject * parent = nullptr);
+		using base_type::base_type;
+	};
+
+
+	using SFTreeFileTreeModel = viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
+	using SFTreeFileTreeView  = viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>;
+
+	// instantiated in FileTreeModel.cpp
+	extern template class FileTreeModelImpl<SFTreeFileTreeModel>;
+	extern template class FileTreeModelImpl<SFTreeFileTreeView>;
+
+
+	class FileTreeModel : public FileTreeModelImpl<SFTreeFileTreeModel>
+	{
+		using base_type = FileTreeModelImpl<SFTreeFileTreeModel>;
+
+	public:
+		FileTreeModel(QObject * parnet = nullptr);
+	};
+
+
+	class FileTreeViewModel : public FileTreeModelImpl<SFTreeFileTreeView>
+	{
+		using base_type = FileTreeModelImpl<SFTreeFileTreeView>;
+
+	public:
+		FileTreeViewModel(std::shared_ptr<container_type> m_owner, QObject * parent = nullptr);
 	};
 }

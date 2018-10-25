@@ -123,7 +123,7 @@
 
 #include <qtor/FileTreeModel.hqt>
 #include <qtor/FileTreeView.hqt>
-
+#include <QtTools/PlainLabel.hqt>
 
 int main(int argc, char * argv[])
 {
