@@ -91,19 +91,11 @@ namespace qtor
 		using filter_pred_type = filepath_filter;
 	};
 
-
-	template <class sftree_base>
-	class FileTreeModelImpl : public sftree_base
+	class FileTreeModelImpl : public viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>
 	{
 		using self_type = FileTreeModelImpl;
-		using base_type = sftree_base;
-		using view_type = sftree_base;
-
-	public:
-		using typename view_type::leaf_type;
-		using typename view_type::node_type;
-		using typename view_type::page_type;
-		using typename view_type::value_ptr;
+		using base_type = viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
+		using view_type = viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
 
 	protected:
 		struct get_total_size_type
@@ -128,7 +120,6 @@ namespace qtor
 		};
 
 	protected:
-		using view_type::get_name;
 		static constexpr get_total_size_type     get_total_size {};
 		static constexpr get_have_size_type      get_have_size {};
 		static constexpr get_wanted_type         get_wanted {};
@@ -155,26 +146,19 @@ namespace qtor
 	};
 
 
-	using SFTreeFileTreeModel = viewed::sftree_model_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
-	using SFTreeFileTreeView  = viewed::sftree_view_qtbase<torrent_file_tree_traits, torrent_file_store, AbstractFileTreeModel>;
-
-	// instantiated in FileTreeModel.cpp
-	extern template class FileTreeModelImpl<SFTreeFileTreeModel>;
-	extern template class FileTreeModelImpl<SFTreeFileTreeView>;
-
-
-	class FileTreeModel : public FileTreeModelImpl<SFTreeFileTreeModel>
+	class FileTreeModel : public viewed::sftree_model_qtbase<FileTreeModelImpl>
 	{
-		using base_type = FileTreeModelImpl<SFTreeFileTreeModel>;
+		using base_type = viewed::sftree_model_qtbase<FileTreeModelImpl>;
 
 	public:
 		FileTreeModel(QObject * parnet = nullptr);
 	};
 
 
-	class FileTreeViewModel : public FileTreeModelImpl<SFTreeFileTreeView>
+	class FileTreeViewModel : public viewed::sftree_view_qtbase<torrent_file_store, FileTreeModelImpl>
 	{
-		using base_type = FileTreeModelImpl<SFTreeFileTreeView>;
+		using base_type = viewed::sftree_view_qtbase<torrent_file_store, FileTreeModelImpl>;
+		using container_type = base_type::container_type;
 
 	public:
 		FileTreeViewModel(std::shared_ptr<container_type> m_owner, QObject * parent = nullptr);

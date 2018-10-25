@@ -25,7 +25,7 @@ namespace qtor
 
 	protected:
 		std::vector<unsigned> m_columns;
-		const torrent_file_meta * m_fmt;
+		const torrent_file_meta * m_fmt = new torrent_file_meta(this);
 
 		QString m_filterStr;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
