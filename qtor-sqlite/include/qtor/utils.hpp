@@ -22,17 +22,17 @@ namespace qtor
 	class to_sparse_variant
 	{
 	public:
-		using any_type = sparse_container::any_type;
+		using any_type   = sparse_container::any_type;
 		using index_type = sparse_container::index_type;
 
 	private:
-		const sparse_container_meta * m_meta;
+		const model_meta * m_meta;
 
 	public:
 		sparse_variant operator()(const any_type & val, index_type index) const;
 
 	public:
-		to_sparse_variant(const sparse_container_meta & meta) 
+		to_sparse_variant(const model_meta & meta)
 			: m_meta(&meta) {}
 	};
 
@@ -48,7 +48,7 @@ namespace qtor
 		sparse_container::index_type
 	>;
 
-	inline auto make_sparse_container_variant_range(const sparse_container_meta & meta, const sparse_container & cont)
+	inline auto make_sparse_container_variant_range(const model_meta & meta, const sparse_container & cont)
 	{
 		to_sparse_variant func {meta};
 		auto first = static_cast<sparse_container::index_type>(0);
@@ -89,7 +89,7 @@ namespace qtor
 	private:
 		const names_range * m_names;
 		const torrents_range * m_torrents;
-		const sparse_container_meta * m_meta;
+		const model_meta * m_meta;
 		mutable torrents_iterator m_cur, m_last;
 	
 	public:
@@ -98,15 +98,14 @@ namespace qtor
 		reference front() const { return ext::combine(*m_names, make_sparse_container_variant_range(*m_meta, *m_cur)); }
 	
 	public:
-		torrents_batch_range(const sparse_container_meta & meta, 
-			const names_range & names, const torrents_range & torrents)
+		torrents_batch_range(const model_meta & meta, const names_range & names, const torrents_range & torrents)
 		: m_names(&names), m_torrents(&torrents), m_meta(&meta),
 		  m_cur(torrents.begin()), m_last(torrents.end())
 		{ }
 	};
 	
 	template <class NamesRange, class TorrentsRange>
-	auto make_batch_range(const sparse_container_meta & meta, const NamesRange & names, const TorrentsRange & torrents)
+	auto make_batch_range(const model_meta & meta, const NamesRange & names, const TorrentsRange & torrents)
 	{
 		return torrents_batch_range<NamesRange, TorrentsRange>(meta, names, torrents);
 	}

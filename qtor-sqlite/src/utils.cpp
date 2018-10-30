@@ -4,7 +4,7 @@ namespace qtor
 {
 	sparse_variant to_sparse_variant::operator()(const any_type & val, index_type index) const
 	{
-		using meta = sparse_container_meta;
+		using meta = model_meta;
 		auto type = m_meta->item_type(index);
 		switch (type)
 		{
