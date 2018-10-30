@@ -1,8 +1,11 @@
 #pragma once
 #include <bitset>
 #include <tuple>
+#include <vector>
 #include <unordered_map>
 #include <qtor/types.hpp>
+#include <qtor/model_meta.hpp>
+#include <qtor/formatter.hqt>
 #include <viewed/refilter_type.hpp>
 
 namespace qtor
@@ -44,36 +47,59 @@ namespace qtor
 	/************************************************************************/
 	/*                    sparse_container_meta                             */
 	/************************************************************************/
-	class sparse_container_meta
+	class sparse_container_meta : public virtual model_meta
 	{
 	public:
-		using index_type = unsigned;
-		using any_type = any;
-
-	public:
-		// currently supported types,
-		// it's not enum to allow user custom extension
-		static constexpr unsigned Uint64   = 0;
-		static constexpr unsigned Int64    = 1;
-		static constexpr unsigned Bool     = 2;
-		static constexpr unsigned Double   = 3;
-		static constexpr unsigned String   = 4;
-
-		static constexpr unsigned Speed    = 5;
-		static constexpr unsigned Size     = 6;
-		static constexpr unsigned DateTime = 7;
-		static constexpr unsigned Duration = 8;
-		static constexpr unsigned Percent  = 9;
-		static constexpr unsigned Ratio    = 10;
-
-		static constexpr unsigned Unknown = -1;
-
-	public:
-		virtual index_type items_count() const noexcept = 0;
-		virtual unsigned item_type(index_type key) const noexcept = 0;
+		virtual QString format_item(const sparse_container & cont, index_type key) const = 0;
+		virtual QString format_item_short(const sparse_container & cont, index_type key) const = 0;
 
 	public:
 		virtual ~sparse_container_meta() = default;
+	};
+
+	class simple_sparse_container_meta : public virtual sparse_container_meta, public virtual formatter
+	{
+		using base_type = sparse_container_meta;
+		using self_type = simple_sparse_container_meta;
+
+	public:
+		using formatter_type = qtor::formatter;
+		using format_method  = QString(formatter_type::*)(const any_type &) const;
+
+		struct item
+		{
+			unsigned      type;
+			string_type   name;
+			format_method method;
+		};
+
+		using item_map     = std::unordered_map<index_type, item>;
+		using item_map_ptr = std::shared_ptr<const item_map>;
+
+	protected:
+		item_map_ptr m_items;
+
+	public:
+		using base_type::format_item;
+		using formatter_type::format_item;
+
+	public:
+		virtual  index_type item_count()              const noexcept override;
+		virtual    unsigned item_type(index_type key) const noexcept override;
+		virtual string_type item_name(index_type key) const override;
+
+		virtual QString format_item(const sparse_container & cont, index_type key) const override;
+		virtual QString format_item_short(const sparse_container & cont, index_type key) const override;
+
+	protected:
+		simple_sparse_container_meta(QObject * parent = nullptr)
+			: formatter_type(parent) {}
+
+	public:
+		simple_sparse_container_meta(item_map_ptr items)
+			: m_items(std::move(items)) {}
+
+		virtual ~simple_sparse_container_meta() = default;
 	};
 
 

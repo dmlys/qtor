@@ -17,22 +17,13 @@ namespace qtor
 		using path_less_type     = std::less<>;
 		using path_hash_type     = std::hash<path_type>;
 
-		struct node_type;
 		using leaf_type = torrent_file;
+		using node_type = torrent_dir;
 
-		struct node_type
-		{
-			path_type      name;
-			size_type      total_size;
-			size_type      have_size;
-			int_type       priority;
-			Qt::CheckState wanted;
-		};
-
-		static void set_name(node_type & node, const pathview_type & path, const pathview_type & name) { node.name = name; }
+		static void set_name(node_type & node, const pathview_type & path, const pathview_type & name) { node.filename = name; }
 		static path_type get_name(const path_type & name);
 		static path_type get_name(const leaf_type & leaf) { return get_name(leaf.filename); }
-		static path_type get_name(const node_type & node) { return get_name(node.name); }
+		static path_type get_name(const node_type & node) { return get_name(node.filename); }
 		static path_type get_path(const leaf_type & leaf) { return leaf.filename; }
 
 		bool is_child(const pathview_type & path, const pathview_type & name, const pathview_type & leaf_path) const;
@@ -78,13 +69,13 @@ namespace qtor
 		public:
 			viewed::refilter_type set_expr(QString expr);
 
-			bool always_matches() const { return m_filterStr.isEmpty(); }
-			bool matches(const filepath_type & name) const;
+			bool always_matches() const noexcept { return m_filterStr.isEmpty(); }
+			bool matches(const filepath_type & name) const noexcept;
 
 			inline bool operator()(const filepath_type & name) const noexcept { return matches(name); }
 			inline bool operator()(const leaf_type & l) const noexcept { return matches(get_name(l)); }
 			inline bool operator()(const node_type & p) const noexcept { return matches(get_name(p)); }
-			inline explicit operator bool() const { return not always_matches(); }
+			inline explicit operator bool() const noexcept { return not always_matches(); }
 		};
 
 		using sort_pred_type = column_sorter;
@@ -125,21 +116,18 @@ namespace qtor
 		static constexpr get_wanted_type         get_wanted {};
 
 	protected:
-		void recalculate_page(page_type & page) override;
+		virtual void recalculate_page(page_type & page) override;
 
 	protected:
 		virtual void SortBy(int column, Qt::SortOrder order) override;
 		virtual void FilterBy(QString expr) override;
 
 	public:
-		using base_type::path_group_pred;
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
 		//virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 		//virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-		virtual QVariant GetItem(const QModelIndex & idx) const override;
-		virtual QString  GetValue(const QModelIndex & idx) const override;
-		virtual QString  GetValueShort(const QModelIndex & idx) const override;
+		virtual torrent_file_entity GetItem(const QModelIndex & idx) const override;
 
 	public:
 		using base_type::base_type;

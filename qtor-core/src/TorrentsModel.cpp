@@ -57,7 +57,10 @@ namespace qtor
 		m_recstore->view_addref();
 
 		m_filter_pred.set_items({torrent::Name});
-		m_meta = new torrent_meta(this);
+		auto * meta = new torrent_meta(this);
+		m_meta = meta;
+		m_fmt  = meta;
+
 		SetColumns({
 			//torrent::Id,
 			torrent::Name,

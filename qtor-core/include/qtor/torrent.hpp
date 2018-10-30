@@ -43,7 +43,7 @@ namespace qtor
 	/************************************************************************/
 	/*                   torrent_file                                       */
 	/************************************************************************/
-	struct torrent_file
+	struct torrent_file_enum
 	{
 		enum : unsigned
 		{
@@ -58,7 +58,10 @@ namespace qtor
 			LastField = Wanted,
 			FiledCount = LastField + 1,
 		};
+	};
 
+	struct torrent_file : torrent_file_enum
+	{
 		filepath_type filename;
 		size_type     total_size;
 		size_type     have_size;
@@ -66,6 +69,25 @@ namespace qtor
 		int_type      priority;
 		bool          wanted;
 	};
+
+	struct torrent_dir : torrent_file_enum
+	{
+		filepath_type filename;
+		size_type     total_size;
+		size_type     have_size;
+		int_type      index;
+		int_type      priority;
+		Qt::CheckState wanted;
+	};
+
+
+	using torrent_file_entity =	variant
+	<
+		const torrent_file *,
+		const torrent_dir *
+	>;
+
+
 
 	struct torrent_file_id_hasher
 	{
@@ -96,18 +118,25 @@ namespace qtor
 	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
 
 
-	class torrent_file_meta : public virtual formatter
+	class torrent_file_meta :
+		public virtual model_meta,
+		public virtual formatter
 	{
 	public:
-		using index_type = unsigned;
-
 		using formatter::format_item;
-	public:		
-		//virtual index_type items_count() const noexcept;
-		//virtual unsigned item_type(index_type type) const noexcept;
-		virtual  QString item_name(index_type type) const;
-		virtual  QString format_item(const torrent_file & val, index_type type) const;
-		virtual  QString format_item_short(const torrent_file & val, index_type type) const;
+
+	public:
+		virtual  index_type item_count()               const noexcept;
+		virtual    unsigned item_type(index_type type) const noexcept;
+		virtual string_type item_name(index_type type) const;
+
+		virtual  QString format_item(const torrent_file & val, index_type index) const;
+		virtual  QString format_item(const torrent_dir & val, index_type index) const;
+		virtual  QString format_item_short(const torrent_file & val, index_type index) const;
+		virtual  QString format_item_short(const torrent_dir & val, index_type index) const;
+
+		QString format_item(const torrent_file_entity & val, index_type index) const;
+		QString format_item_short(const torrent_file_entity & val, index_type index) const;
 
 	public:
 		torrent_file_meta(QObject * parent = nullptr);

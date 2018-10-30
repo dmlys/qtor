@@ -17,15 +17,8 @@ namespace qtor
 		using base_type = QAbstractItemModel;
 
 	protected:
-		struct meta_item
-		{
-			QString fieldName;
-			int columnSizeHint;
-		};
-
-	protected:
 		std::vector<unsigned> m_columns;
-		const torrent_file_meta * m_fmt = new torrent_file_meta(this);
+		const torrent_file_meta * m_meta = new torrent_file_meta(this);
 
 		QString m_filterStr;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
@@ -39,14 +32,16 @@ namespace qtor
 		virtual void SortBy(int column, Qt::SortOrder order) = 0;
 
 	public:
-		const formatter * GetFormatter() const noexcept { return m_fmt; }
+		const model_meta * GetMeta() const noexcept { return m_meta; }
+		const formatter * GetFormatter() const noexcept { return m_meta; }
+
+		virtual auto GetItem(const QModelIndex & idx) const -> torrent_file_entity = 0;
 
 		virtual int FindColumn(unsigned id) const;
 		virtual QString FieldName(int section) const;
 
-		virtual QVariant GetItem(const QModelIndex & idx) const = 0;
-		virtual QString GetValue(const QModelIndex & idx) const = 0;
-		virtual QString GetValueShort(const QModelIndex & idx) const = 0;
+		virtual QString GetValue(const QModelIndex & idx) const;
+		virtual QString GetValueShort(const QModelIndex & idx) const;
 
 		void SetFilter(QString expr);
 		auto GetFilter() const noexcept { return m_filterStr; }

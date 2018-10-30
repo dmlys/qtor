@@ -2,15 +2,11 @@
 #include <cstddef>
 #include <memory>
 #include <array>
-#include <vector>
-#include <unordered_map>
 #include <qtor/types.hpp>
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QLocale>
-
-#include <qtor/sparse_container.hpp>
 
 namespace qtor
 {
@@ -100,65 +96,5 @@ namespace qtor
 
 	public:
 		virtual ~formatter() = default;
-	};
-
-
-
-
-	class sparse_container_model_meta : 
-		public virtual sparse_container_meta,
-		public virtual formatter
-	{
-	public:
-		using formatter::format_item;
-
-	public:
-		virtual QString item_name(index_type key) const = 0;
-		virtual QString format_item(const sparse_container & cont, index_type key) const = 0;
-		virtual QString format_item_short(const sparse_container & cont, index_type key) const = 0;
-
-	public:
-		~sparse_container_model_meta() = default;
-	};
-
-
-	class simple_sparse_container_meta : public virtual sparse_container_model_meta
-	{
-		using base_type = sparse_container_model_meta;
-		using self_type = simple_sparse_container_meta;
-
-	public:
-		using formatter_type = qtor::formatter;
-		using format_method  = QString(formatter_type::*)(const any_type &) const;
-
-		struct item
-		{
-			unsigned type;
-			QString name;
-			format_method method;
-		};
-
-		using item_map     = std::unordered_map<index_type, item>;
-		using item_map_ptr = std::shared_ptr<const item_map>;
-
-	protected:
-		item_map_ptr m_items;
-
-	public:
-		virtual index_type items_count() const noexcept override;
-		virtual unsigned item_type(index_type key) const noexcept override;
-		virtual  QString item_name(index_type key) const override;
-		virtual  QString format_item(const sparse_container & cont, index_type key) const override;
-		virtual  QString format_item_short(const sparse_container & cont, index_type key) const override;
-
-	protected:
-		simple_sparse_container_meta(QObject * parent = nullptr)
-			: formatter_type(parent) {}
-
-	public:
-		simple_sparse_container_meta(item_map_ptr items)
-			: m_items(std::move(items)) {}
-
-		virtual ~simple_sparse_container_meta() = default;
 	};
 }

@@ -57,7 +57,7 @@ namespace qtor
 			bad_any_cast() : std::bad_cast() {}
 
 		public:
-			virtual const char * what() const noexcept override { return "bad_aby_cast"; }
+			virtual const char * what() const noexcept override { return "bad_any_cast"; }
 		};
 
 		template <class ValueType>

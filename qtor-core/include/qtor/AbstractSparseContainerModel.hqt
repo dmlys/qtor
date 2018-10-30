@@ -15,7 +15,8 @@ namespace qtor
 
 	protected:
 		std::vector<unsigned> m_columns;
-		const sparse_container_model_meta * m_meta = nullptr;
+		const sparse_container_meta * m_meta = nullptr;
+		const formatter * m_fmt = nullptr;
 
 		QString m_filterStr;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
@@ -30,6 +31,7 @@ namespace qtor
 
 	public:
 		auto GetMeta() const noexcept { return m_meta; }
+		auto GetFormatter() const noexcept { return m_fmt; }
 
 		virtual int FindColumn(unsigned id) const;
 		virtual QString FieldName(int section) const;

@@ -47,28 +47,28 @@ namespace qtor
 	/************************************************************************/
 	/*                  torrent_file_meta                                   */
 	/************************************************************************/
-	//auto torrent_file_meta::items_count() const -> index_type
-	//{
-	//	return torrent_file::FiledCount;
-	//}
+	auto torrent_file_meta::item_count() const noexcept -> index_type
+	{
+		return torrent_file::FiledCount;
+	}
 
-	//unsigned torrent_file_meta::item_type(index_type type) const
-	//{
-	//	switch (type)
-	//	{
-	//		case torrent_file::FileName:  return sparse_container_meta::String;
-	//		case torrent_file::TotalSize: return sparse_container_meta::Size;
-	//		case torrent_file::HaveSize:  return sparse_container_meta::Size;
-	//		case torrent_file::Index:     return sparse_container_meta::Int64;
-	//		case torrent_file::Priority:  return sparse_container_meta::Int64;
-	//		case torrent_file::Wanted:    return sparse_container_meta::Bool;
-	//	
-	//		default:
-	//			EXT_UNREACHABLE();
-	//	}
-	//}
+	unsigned torrent_file_meta::item_type(index_type type) const noexcept
+	{
+		switch (type)
+		{
+			case torrent_file::FileName:  return sparse_container_meta::String;
+			case torrent_file::TotalSize: return sparse_container_meta::Size;
+			case torrent_file::HaveSize:  return sparse_container_meta::Size;
+			case torrent_file::Index:     return sparse_container_meta::Int64;
+			case torrent_file::Priority:  return sparse_container_meta::Int64;
+			case torrent_file::Wanted:    return sparse_container_meta::Bool;
 
-	QString torrent_file_meta::item_name(index_type item) const
+			default:
+				EXT_UNREACHABLE();
+		}
+	}
+
+	string_type torrent_file_meta::item_name(index_type item) const
 	{
 		switch (item)
 		{
@@ -82,6 +82,18 @@ namespace qtor
 			default:
 				EXT_UNREACHABLE();
 		}
+	}
+
+	QString torrent_file_meta::format_item(const torrent_file_entity & val, index_type index) const
+	{
+		auto visitor = [this, index](auto * ptr) -> QString { return this->format_item(*ptr, index); };
+		return visit(visitor, val);
+	}
+
+	QString torrent_file_meta::format_item_short(const torrent_file_entity & val, index_type index) const
+	{
+		auto visitor = [this, index](auto * ptr) -> QString { return this->format_item_short(*ptr, index); };
+		return visit(visitor, val);
 	}
 
 	QString torrent_file_meta::format_item(const torrent_file & val, index_type item) const
@@ -100,7 +112,39 @@ namespace qtor
 		}
 	}
 
+	QString torrent_file_meta::format_item(const torrent_dir & val, index_type item) const
+	{
+		switch (item)
+		{
+			case torrent_file::FileName:  return format_string(val.filename);
+			case torrent_file::TotalSize: return format_size(val.total_size);
+			case torrent_file::HaveSize:  return format_size(val.have_size);
+			case torrent_file::Index:     return format_int64(val.index);
+			case torrent_file::Priority:  return format_int64(val.priority);
+			case torrent_file::Wanted:    return format_bool(val.wanted);
+
+			default:
+				EXT_UNREACHABLE();
+		}
+	}
+
 	QString torrent_file_meta::format_item_short(const torrent_file & val, index_type item) const
+	{
+		switch (item)
+		{
+			case torrent_file::FileName:  return format_short_string(val.filename);
+			case torrent_file::TotalSize: return format_size(val.total_size);
+			case torrent_file::HaveSize:  return format_size(val.have_size);
+			case torrent_file::Index:     return format_int64(val.index);
+			case torrent_file::Priority:  return format_int64(val.priority);
+			case torrent_file::Wanted:    return format_bool(val.wanted);
+
+			default:
+				EXT_UNREACHABLE();
+		}
+	}
+
+	QString torrent_file_meta::format_item_short(const torrent_dir & val, index_type item) const
 	{
 		switch (item)
 		{

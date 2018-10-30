@@ -25,7 +25,7 @@ namespace qtor
 
 		    case torrent_file::FileName:
 			    m_leaf_compare = COMPARE(leaf_type, path_type, filename);
-				m_node_compare = COMPARE(node_type, path_type, name);
+				m_node_compare = COMPARE(node_type, path_type, filename);
 			    break;
 
 		    case torrent_file::TotalSize:
@@ -70,7 +70,7 @@ namespace qtor
 		}
 	}
 
-	bool torrent_file_tree_traits::filepath_filter::matches(const QString & rec) const
+	bool torrent_file_tree_traits::filepath_filter::matches(const QString & rec) const noexcept
 	{
 		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
@@ -109,43 +109,12 @@ namespace qtor
 	}
 
 
-	QVariant FileTreeModelImpl::GetItem(const QModelIndex & idx) const
+	torrent_file_entity FileTreeModelImpl::GetItem(const QModelIndex & idx) const
 	{
-		return GetValueShort(idx);
-	}
+		const auto & val = get_element_ptr(idx);
 
-	QString FileTreeModelImpl::GetValue(const QModelIndex & idx) const
-	{
-		auto & val = get_element_ptr(idx);
-		auto type = m_columns[idx.column()];
-
-		switch (type)
-		{
-		    case torrent_file::FileName:  return m_fmt->format_string(get_name(val));
-		    case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
-		    case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
-		    case torrent_file::Index:     return QStringLiteral("<null>");
-		    case torrent_file::Priority:  return QStringLiteral("<null>");
-		    case torrent_file::Wanted:    return QStringLiteral("<null>");
-		    default:                      return QStringLiteral("<null>");
-		}
-	}
-
-	QString FileTreeModelImpl::GetValueShort(const QModelIndex & idx) const
-	{
-		auto & val = get_element_ptr(idx);
-		auto type = m_columns[idx.column()];
-
-		switch (type)
-		{
-		    case torrent_file::FileName:  return m_fmt->format_short_string(get_name(val));
-		    case torrent_file::TotalSize: return m_fmt->format_size(get_total_size(val));
-		    case torrent_file::HaveSize:  return m_fmt->format_size(get_have_size(val));
-		    case torrent_file::Index:     return QStringLiteral("<null>");
-		    case torrent_file::Priority:  return QStringLiteral("<null>");
-		    case torrent_file::Wanted:    return QStringLiteral("<null>");
-		    default:                      return QStringLiteral("<null>");
-		}
+		auto visitor = [](auto * ptr) { return torrent_file_entity(ptr); };
+		return viewed::visit(visitor, val);
 	}
 
 	void FileTreeModelImpl::recalculate_page(page_type & page)

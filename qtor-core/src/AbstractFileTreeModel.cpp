@@ -16,14 +16,30 @@ namespace qtor
 		auto it = std::find(first, last, id);
 
 		return it == last ? -1 : it - first;
-	}
+	}	
 
 	QString AbstractFileTreeModel::FieldName(int section) const
 	{
 		if (section >= qint(m_columns.size()))
 			return QString::null;
 
-		return m_fmt->item_name(m_columns[section]);
+		return m_meta->item_name(m_columns[section]);
+	}
+
+	QString AbstractFileTreeModel::GetValue(const QModelIndex & idx) const
+	{
+		if (idx.isValid()) return QString();
+
+		auto val = GetItem(idx);
+		return m_meta->format_item(val, idx.column());
+	}
+
+	QString AbstractFileTreeModel::GetValueShort(const QModelIndex & idx) const
+	{
+		if (idx.isValid()) return QString();
+
+		auto val = GetItem(idx);
+		return m_meta->format_item_short(val, idx.column());
 	}
 
 	int AbstractFileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
@@ -70,7 +86,7 @@ namespace qtor
 		{
 			case Qt::DisplayRole:
 			case Qt::ToolTipRole:
-				return GetItem(index);
+				return GetValueShort(index);
 
 			//case Qt::SizeHintRole:
 			//	return QSize {ColumnSizeHint(index.column()), -1};
