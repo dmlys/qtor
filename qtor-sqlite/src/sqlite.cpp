@@ -8,51 +8,73 @@
 namespace qtor::sqlite
 {
 	const std::string torrents_table_name = "torrents";
-	const torrent_meta & torrents_meta()
+	const std::string torrent_files_table_name = "torrent_files";
+
+	const model_meta & torrents_meta()
 	{
 		static const qtor::torrent_meta meta;
 		return meta;
 	}
 
+	const model_meta & torrent_files_meta()
+	{
+		static const qtor::torrent_file_meta meta;
+		return meta;
+	}
+
+	static column_info column_info_from_meta(const model_meta & meta)
+	{
+		auto field_count = meta.item_count();
+		column_info info(field_count);
+
+		for (model_meta::index_type i = 0; i < field_count; ++i)
+		{
+			auto & val = info[i];
+			auto name = meta.item_name(i);
+			auto type = meta.item_type(i);
+
+			val = std::make_tuple(i, type, FromQString(name));
+		}
+
+		return info;
+	}
+
 	const column_info & torrents_column_info()
 	{
 		static const column_info info = []
-		{
-			column_info info;
+		{		
 			auto & meta = torrents_meta();
-
-			torrent::index_type first = torrent::FirstField;
-			torrent::index_type last = torrent::LastField;
-			info.resize(last - first);
-
-			for (; first != last; ++first)
-			{
-				auto & val = info[first];
-				auto name = meta.item_name(first);
-				auto type = meta.item_type(first);
-				val = std::make_tuple(first, type, FromQString(name));
-			}
-
-			return info;
+			return column_info_from_meta(meta);
 		}();
 
 		return info;
-	};
+	}
+
+	const column_info & torrent_files_column_info()
+	{
+		static const column_info info = []
+		{
+			const model_meta & meta = torrent_files_meta();
+			return column_info_from_meta(meta);
+		}();
+
+		return info;
+	}
 
 
 	static const char * get_type(unsigned type)
 	{
 		switch (type)
 		{
-			case sparse_container_meta::Speed:
-			case sparse_container_meta::Size:
-			case sparse_container_meta::Uint64: return "INT";
-			case sparse_container_meta::Double: return "REAL";
-			case sparse_container_meta::String: return "TEXT";
+			case model_meta::Speed:
+			case model_meta::Size:
+			case model_meta::Uint64: return "INT";
+			case model_meta::Double: return "REAL";
+			case model_meta::String: return "TEXT";
 
-			case sparse_container_meta::DateTime:
-			case sparse_container_meta::Duration:
-			case sparse_container_meta::Unknown:
+			case model_meta::DateTime:
+			case model_meta::Duration:
+			case model_meta::Unknown:
 			default:
 				return "TEXT";
 		}
@@ -99,6 +121,20 @@ namespace qtor::sqlite
 
 		ses.exec_ex(cmd);
 	}
+
+	void create_torrent_files_table(sqlite3yaw::session & ses)
+	{
+		return create_table(ses, torrent_files_table_name, torrent_files_column_info());
+	}
+
+	void drop_torrent_files_table(sqlite3yaw::session & ses)
+	{
+		std::string cmd = "drop table ";
+		sqlite3yaw::escape_sql_name(torrent_files_table_name);
+
+		ses.exec_ex(cmd);
+	}
+
 
 	void save_torrents(sqlite3yaw::session & ses, const torrent_list & torrents)
 	{
@@ -154,31 +190,31 @@ namespace qtor::sqlite
 
 			switch (type)
 			{
-				case sparse_container_meta::Uint64:
-				case sparse_container_meta::Speed:
-				case sparse_container_meta::Size:
+				case model_meta::Uint64:
+				case model_meta::Speed:
+				case model_meta::Size:
 					torr.set_item(key, sqlite3yaw::get<optional<uint64_type>>(stmt, i));
 					break;
 
-				case sparse_container_meta::Bool:
+				case model_meta::Bool:
 					torr.set_item(key, sqlite3yaw::get<optional<bool>>(stmt, i));
 					break;
 
-				case sparse_container_meta::Double:
-				case sparse_container_meta::Percent:
-				case sparse_container_meta::Ratio:
+				case model_meta::Double:
+				case model_meta::Percent:
+				case model_meta::Ratio:
 					torr.set_item(key, sqlite3yaw::get<optional<double>>(stmt, i));
 					break;
 
-				case sparse_container_meta::String:
+				case model_meta::String:
 					torr.set_item(key, sqlite3yaw::get<optional<string_type>>(stmt, i));
 					break;
 
-				case sparse_container_meta::DateTime:
+				case model_meta::DateTime:
 					torr.set_item(key, sqlite3yaw::get<optional<datetime_type>>(stmt, i));
 					break;
 
-				case sparse_container_meta::Duration:
+				case model_meta::Duration:
 					torr.set_item(key, sqlite3yaw::get<optional<duration_type>>(stmt, i));
 					break;
 

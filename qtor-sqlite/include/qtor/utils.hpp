@@ -52,7 +52,7 @@ namespace qtor
 	{
 		to_sparse_variant func {meta};
 		auto first = static_cast<sparse_container::index_type>(0);
-		auto last = static_cast<sparse_container::index_type>(meta.items_count());
+		auto last = static_cast<sparse_container::index_type>(meta.item_count());
 
 		return boost::make_iterator_range(
 			sparse_container_variant_iterator(cont, first, func),

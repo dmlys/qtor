@@ -8,7 +8,6 @@
 #include <ext/range/combine.hpp>
 #include <ext/range/input_range_facade.hpp>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
 #include <qtor/sqlite.hpp>
