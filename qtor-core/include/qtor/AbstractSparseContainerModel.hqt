@@ -1,7 +1,7 @@
 #pragma once
 #include <QtCore/QAbstractTableModel>
 #include <qtor/sparse_container.hpp>
-#include <qtor/formatter.hqt>
+#include <qtor/formatter.hpp>
 
 namespace qtor
 {
@@ -15,8 +15,8 @@ namespace qtor
 
 	protected:
 		std::vector<unsigned> m_columns;
-		const sparse_container_meta * m_meta = nullptr;
-		const formatter * m_fmt = nullptr;
+		std::shared_ptr<model_meta> m_meta = nullptr;
+		std::shared_ptr<formatter> m_fmt = nullptr;
 
 		QString m_filterStr;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
@@ -30,13 +30,13 @@ namespace qtor
 		virtual void SortBy(int column, Qt::SortOrder order) = 0;
 
 	public:
-		auto GetMeta() const noexcept { return m_meta; }
-		auto GetFormatter() const noexcept { return m_fmt; }
+		const auto & GetMeta() const noexcept { return m_meta; }
+		const auto & GetFormatter() const noexcept { return m_fmt; }
 
 		virtual int FindColumn(unsigned id) const;
 		virtual QString FieldName(int section) const;
-		virtual QString GetValue(int row, int column) const;
-		virtual QString GetValueShort(int row, int column) const;
+		virtual QString GetString(int row, int column) const;
+		virtual QString GetStringShort(int row, int column) const;
 
 		virtual const sparse_container           & GetItem(int row) const = 0;
 		virtual const sparse_container::any_type & GetItem(int row, int column) const;
@@ -63,8 +63,8 @@ namespace qtor
 		{ return idx.isValid() ? GetItem(idx.row(), idx.column()) : sparse_container::ms_empty; }
 
 		QString FieldName(const QModelIndex & idx) const { return idx.isValid() ? FieldName(idx.row()) : QString::null; }
-		QString GetValue(const QModelIndex & idx) const { return idx.isValid() ? GetValue(idx.row(), idx.column()) : QString::null; }
-		QString GetValueShort(const QModelIndex & idx) const { return idx.isValid() ? GetValueShort(idx.row(), idx.column()) : QString::null; }
+		QString GetString(const QModelIndex & idx) const { return idx.isValid() ? GetString(idx.row(), idx.column()) : QString::null; }
+		QString GetStringShort(const QModelIndex & idx) const { return idx.isValid() ? GetStringShort(idx.row(), idx.column()) : QString::null; }
 
 	Q_SIGNALS:
 		void SortingChanged(int column, Qt::SortOrder order);

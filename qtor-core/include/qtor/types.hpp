@@ -60,6 +60,12 @@ namespace qtor
 			virtual const char * what() const noexcept override { return "bad_any_cast"; }
 		};
 
+		template <class Type>
+		inline any make_any(Type && val)
+		{
+			return QVariant::fromValue(std::forward<Type>(val));
+		}
+
 		template <class ValueType>
 		ValueType * any_cast(QVariant * val)
 		{

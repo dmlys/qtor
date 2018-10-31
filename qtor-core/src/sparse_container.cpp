@@ -218,31 +218,4 @@ namespace qtor
 
 		return it->second.name;
 	}
-
-	QString simple_sparse_container_meta::format_item(const sparse_container & cont, index_type key) const
-	{
-		auto it = m_items->find(key);
-		if (it == m_items->end())
-			return this->format_nullopt();
-
-		auto method = it->second.method;
-		const auto & val = cont.get_item(key);
-		return (this->*method)(val);
-	}
-
-	QString simple_sparse_container_meta::format_item_short(const sparse_container & cont, index_type key) const
-	{
-		auto it = m_items->find(key);
-		if (it == m_items->end())
-			return this->format_nullopt();
-
-		auto method = it->second.method;
-		const auto & val = cont.get_item(key);
-
-		decltype(method) short_string = &formatter_type::format_short_string;
-		if (method == short_string)
-			return (this->*short_string)(cont.get_item(key));
-
-		return (this->*method)(val);
-	}
 }

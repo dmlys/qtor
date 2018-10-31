@@ -1,0 +1,29 @@
+#pragma once
+#include <QtTools/Delegates/StyledDelegate.hpp>
+#include <qtor/formatter.hpp>
+#include <qtor/model_meta.hpp>
+
+namespace qtor
+{
+	class FormattedDelegate : public QtTools::Delegates::StyledDelegate
+	{
+		Q_OBJECT;
+
+	private:
+		using base_type = QtTools::Delegates::StyledDelegate;
+
+	protected:
+		mutable qtor::formatter  * m_fmt   = nullptr;
+		mutable qtor::model_meta * m_meta  = nullptr;
+		mutable const QAbstractItemModel * m_model = nullptr;
+		mutable QModelIndex m_cur_idx;
+
+	protected:
+		virtual void InitStyle(QStyleOptionViewItem & option, const QModelIndex & index) const override;
+		virtual QString displayText(const QVariant & value, const QLocale & locale) const override;
+
+	public:
+		// bring constructors
+		using base_type::base_type;
+	};
+}

@@ -3,7 +3,7 @@
 #include <QtWidgets/QAbstractItemDelegate>
 
 #include <qtor/torrent.hpp>
-#include <qtor/formatter.hqt>
+#include <qtor/formatter.hpp>
 
 
 namespace qtor

@@ -3,16 +3,18 @@
 #include <memory>
 #include <array>
 #include <qtor/types.hpp>
+#include <qtor/model_meta.hpp>
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QLocale>
+#include <QtCore/QCoreApplication>
 
 namespace qtor
 {
-	class formatter : public QObject
+	class formatter
 	{
-		Q_OBJECT;
+		Q_DECLARE_TR_FUNCTIONS("formatter")
 
 	public:
 		// weights
@@ -36,7 +38,7 @@ namespace qtor
 	public:
 		virtual auto weigh(double val) const noexcept -> weight;
 		virtual auto weigh(double val, weight w) const noexcept -> double;
-		virtual QString format_item(uint64_type val, const char *strings[5]) const;
+		virtual QString format_uint_item(uint64_type val, const char *strings[5]) const;
 
 	public:
 		// more specialized formatters
@@ -57,6 +59,12 @@ namespace qtor
 		virtual QString format_percent(double val) const;
 		virtual QString format_bool(bool val) const;
 		virtual QString format_nullopt() const;
+		virtual QString format_unsupported() const;
+
+	public:
+		/// type is same as defined in model_meta
+		virtual QString format_item(const any & val, unsigned type) const;
+		virtual QString format_item_short(const any & val, unsigned type) const;
 
 	public:
 #define QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(NAME, TYPE)                              \
@@ -79,6 +87,7 @@ namespace qtor
 		
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_bool, bool);
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_uint64, uint64_type);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_int64, int64_type);
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_double, double);
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_string, string_type);
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_short_string, string_type);
@@ -92,9 +101,8 @@ namespace qtor
 #undef QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD
 
 	public:
-		using QObject::QObject;
-
-	public:
 		virtual ~formatter() = default;
 	};
 }
+
+Q_DECLARE_METATYPE(qtor::formatter *);

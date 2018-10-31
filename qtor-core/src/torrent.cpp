@@ -10,7 +10,6 @@ namespace qtor
 		(*types)[torrent::ID] = item {                        \
 			type_map[BOOST_PP_STRINGIZE(TYPE)],               \
 			QString(BOOST_PP_STRINGIZE(ID)),                  \
-			&formatter_type::format_##TYPE,                   \
 		};                                                    \
 
 	const torrent_meta::item_map_ptr torrent_meta::ms_items =
@@ -39,9 +38,11 @@ namespace qtor
 			return types;
 		}();
 
-	torrent_meta::torrent_meta(QObject * parent /* = nullptr */)
-	    : formatter(parent),
-	      base_type(ms_items) {}
+	torrent_meta::torrent_meta()
+	    : base_type(ms_items)
+	{
+
+	}
 
 
 	/************************************************************************/
@@ -56,12 +57,12 @@ namespace qtor
 	{
 		switch (type)
 		{
-			case torrent_file::FileName:  return sparse_container_meta::String;
-			case torrent_file::TotalSize: return sparse_container_meta::Size;
-			case torrent_file::HaveSize:  return sparse_container_meta::Size;
-			case torrent_file::Index:     return sparse_container_meta::Int64;
-			case torrent_file::Priority:  return sparse_container_meta::Int64;
-			case torrent_file::Wanted:    return sparse_container_meta::Bool;
+			case torrent_file::FileName:  return model_meta::String;
+			case torrent_file::TotalSize: return model_meta::Size;
+			case torrent_file::HaveSize:  return model_meta::Size;
+			case torrent_file::Index:     return model_meta::Int64;
+			case torrent_file::Priority:  return model_meta::Int64;
+			case torrent_file::Wanted:    return model_meta::Bool;
 
 			default:
 				EXT_UNREACHABLE();
@@ -84,85 +85,39 @@ namespace qtor
 		}
 	}
 
-	QString torrent_file_meta::format_item(const torrent_file_entity & val, index_type index) const
+	auto torrent_file_meta::get_item(const torrent_file & item, int index) const -> any_type
 	{
-		auto visitor = [this, index](auto * ptr) -> QString { return this->format_item(*ptr, index); };
-		return visit(visitor, val);
-	}
-
-	QString torrent_file_meta::format_item_short(const torrent_file_entity & val, index_type index) const
-	{
-		auto visitor = [this, index](auto * ptr) -> QString { return this->format_item_short(*ptr, index); };
-		return visit(visitor, val);
-	}
-
-	QString torrent_file_meta::format_item(const torrent_file & val, index_type item) const
-	{
-		switch (item)
+		switch (index)
 		{
-			case torrent_file::FileName:  return format_string(val.filename);
-			case torrent_file::TotalSize: return format_size(val.total_size);
-			case torrent_file::HaveSize:  return format_size(val.have_size);
-			case torrent_file::Index:     return format_int64(val.index);
-			case torrent_file::Priority:  return format_int64(val.priority);
-			case torrent_file::Wanted:    return format_bool(val.wanted);
+			case torrent_file::FileName:  return make_any(item.filename);
+			case torrent_file::TotalSize: return make_any(item.total_size);
+			case torrent_file::HaveSize:  return make_any(item.have_size);
+			case torrent_file::Index:     return make_any(item.index);
+			case torrent_file::Priority:  return make_any(item.priority);
+			case torrent_file::Wanted:    return make_any(item.wanted);
 
-			default:
-				EXT_UNREACHABLE();
+			default: return any_type();
 		}
 	}
 
-	QString torrent_file_meta::format_item(const torrent_dir & val, index_type item) const
+	auto torrent_file_meta::get_item(const torrent_dir & item, int index) const -> any_type
 	{
-		switch (item)
+		switch (index)
 		{
-			case torrent_file::FileName:  return format_string(val.filename);
-			case torrent_file::TotalSize: return format_size(val.total_size);
-			case torrent_file::HaveSize:  return format_size(val.have_size);
-			case torrent_file::Index:     return format_int64(val.index);
-			case torrent_file::Priority:  return format_int64(val.priority);
-			case torrent_file::Wanted:    return format_bool(val.wanted);
+			case torrent_file::FileName:  return make_any(item.filename);
+			case torrent_file::TotalSize: return make_any(item.total_size);
+			case torrent_file::HaveSize:  return make_any(item.have_size);
+			case torrent_file::Index:     return make_any(item.index);
+			case torrent_file::Priority:  return make_any(item.priority);
+			case torrent_file::Wanted:    return make_any(item.wanted);
 
-			default:
-				EXT_UNREACHABLE();
+			default: return any_type();
 		}
 	}
 
-	QString torrent_file_meta::format_item_short(const torrent_file & val, index_type item) const
+	auto torrent_file_meta::get_item(const torrent_file_entity & item, int index) const -> any_type
 	{
-		switch (item)
-		{
-			case torrent_file::FileName:  return format_short_string(val.filename);
-			case torrent_file::TotalSize: return format_size(val.total_size);
-			case torrent_file::HaveSize:  return format_size(val.have_size);
-			case torrent_file::Index:     return format_int64(val.index);
-			case torrent_file::Priority:  return format_int64(val.priority);
-			case torrent_file::Wanted:    return format_bool(val.wanted);
-
-			default:
-				EXT_UNREACHABLE();
-		}
-	}
-
-	QString torrent_file_meta::format_item_short(const torrent_dir & val, index_type item) const
-	{
-		switch (item)
-		{
-			case torrent_file::FileName:  return format_short_string(val.filename);
-			case torrent_file::TotalSize: return format_size(val.total_size);
-			case torrent_file::HaveSize:  return format_size(val.have_size);
-			case torrent_file::Index:     return format_int64(val.index);
-			case torrent_file::Priority:  return format_int64(val.priority);
-			case torrent_file::Wanted:    return format_bool(val.wanted);
-
-			default:
-				EXT_UNREACHABLE();
-		}
-	}
-
-	torrent_file_meta::torrent_file_meta(QObject * parent /* = nullptr */)
-		: formatter(parent)
-	{
-
+		auto visitor = [this, index](auto * ptr) { return get_item(*ptr, index); };
+		return std::visit(visitor, item);
 	}
 }

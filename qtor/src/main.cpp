@@ -143,71 +143,71 @@ int main(int argc, char * argv[])
 
 	QApplication qapp {argc, argv};
 
-//	std::vector<torrent_file> paths, paths2;
-//	paths.assign({
-//	    { QStringLiteral("folder/file1.txt"), 11 * 1000, 2 * 1000 },
-//	    { QStringLiteral("folder/file1.txt"), 12 * 1000, 3 * 1000 },
-//	    { QStringLiteral("folder/file2.txt"), 13 * 1000, 4 * 1000 },
-//	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
-//	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
-//	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
-//	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
-//	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
-//	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
-//	});
+	std::vector<torrent_file> paths, paths2;
+	paths.assign({
+	    { QStringLiteral("folder/file1.txt"), 11 * 1000, 2 * 1000 },
+	    { QStringLiteral("folder/file1.txt"), 12 * 1000, 3 * 1000 },
+	    { QStringLiteral("folder/file2.txt"), 13 * 1000, 4 * 1000 },
+	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
+	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
+	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
+	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
+	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
+	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
+	});
 
-//	paths2 = paths;
-//	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+	paths2 = paths;
+	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
 	
-//	//paths.assign({
-//	//	{ QStringLiteral("file1.txt") },
-//	//	{ QStringLiteral("file2.txt") },
-//	//	{ QStringLiteral("file.sft") },
-//	//	{ QStringLiteral("file.txt") },
-//	//	{ QStringLiteral("ops.sh") },
-//	//	{ QStringLiteral("westworld.mkv") },
-//	//});
+	//paths.assign({
+	//	{ QStringLiteral("file1.txt") },
+	//	{ QStringLiteral("file2.txt") },
+	//	{ QStringLiteral("file.sft") },
+	//	{ QStringLiteral("file.txt") },
+	//	{ QStringLiteral("ops.sh") },
+	//	{ QStringLiteral("westworld.mkv") },
+	//});
 
-//	//paths2.assign({
-//	//		{QStringLiteral("file1.txt")},
-//	//		{QStringLiteral("file.sft")},
-//	//		{QStringLiteral("ziggaman.sh")},
-//	//		{QStringLiteral("westworld.mkv")},
-//	//});
+	//paths2.assign({
+	//		{QStringLiteral("file1.txt")},
+	//		{QStringLiteral("file.sft")},
+	//		{QStringLiteral("ziggaman.sh")},
+	//		{QStringLiteral("westworld.mkv")},
+	//});
 
-//	auto store = std::make_shared<torrent_file_store>();
-//	auto model = std::make_shared<FileTreeModel>();
-//	//auto model = std::make_shared<FileTreeModel>(store);
+	auto store = std::make_shared<torrent_file_store>();
+	auto model = std::make_shared<FileTreeModel>();
+	//auto model = std::make_shared<FileTreeModel>(store);
 	
-////	//store->assign_records(paths);
-////	//store->assign_records(paths2);
-////	//store->assign_records(paths);
+//	//store->assign_records(paths);
+//	//store->assign_records(paths2);
+//	//store->assign_records(paths);
 
-//	model->assign(paths);
-//	model->upsert(paths2);
-//	model->assign(paths);
+	model->assign(paths);
+	model->upsert(paths2);
+	model->assign(paths);
 	
-//	auto idx0 = model->find_element("dir1");
-//	Q_ASSERT(not idx0.isValid());
-//	auto idx1 = model->find_element("dir");
-//	auto idx2 = model->find_element("dir/prox");
-//	auto idx3 = model->find_element("dir/prox/dir.txt");
+	auto idx0 = model->find_element("dir1");
+	Q_ASSERT(not idx0.isValid());
+	auto idx1 = model->find_element("dir");
+	auto idx2 = model->find_element("dir/prox");
+	auto idx3 = model->find_element("dir/prox/dir.txt");
 
-//	//QTableView view;
-//	//view.setModel(model.get());
-//	FileTreeView view;
-//	view.SetModel(model);
-//	QtTools::ResizeColumnsToContents(view.GetTreeView());
+	//QTableView view;
+	//view.setModel(model.get());
+	FileTreeView view;
+	view.SetModel(model);
+	QtTools::ResizeColumnsToContents(view.GetTreeView());
 
-//	view.GetTreeView()->expand(idx1);
-//	view.GetTreeView()->expand(idx2);
-//	view.GetTreeView()->selectionModel()->select(idx3, QItemSelectionModel::Select);
-//	//view.GetTreeView()->setRootIndex(idx1);
-//	//QTimer::singleShot(3s, [&view] {
-//	    view.showMaximized();
-//		    view.activateWindow();
-//		view.raise();
-//	//});
+	view.GetTreeView()->expand(idx1);
+	view.GetTreeView()->expand(idx2);
+	view.GetTreeView()->selectionModel()->select(idx3, QItemSelectionModel::Select);
+	//view.GetTreeView()->setRootIndex(idx1);
+	//QTimer::singleShot(3s, [&view] {
+	    view.showMaximized();
+		    view.activateWindow();
+		view.raise();
+	//});
 	
 
 
@@ -222,66 +222,66 @@ int main(int argc, char * argv[])
 	qapp.setPalette(palette);
 #endif
 
-	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	source->set_address("bin/data.db"s);
+//	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+//	source->set_address("bin/data.db"s);
 
-//	auto source = std::make_shared<qtor::transmission::data_source>();
-//	source->set_address("http://melkiy:9091/transmission/rpc"s);
+////	auto source = std::make_shared<qtor::transmission::data_source>();
+////	source->set_address("http://melkiy:9091/transmission/rpc"s);
 
-	qtor::TransmissionRemoteApp app {std::move(source)};
-	qtor::MainWindow mainWindow;
+//	qtor::TransmissionRemoteApp app {std::move(source)};
+//	qtor::MainWindow mainWindow;
 
-	mainWindow.Init(app);
-	mainWindow.show();
+//	mainWindow.Init(app);
+//	mainWindow.show();
 
-	QTimer::singleShot(100, [&app] { app.Connect(); });
+//	QTimer::singleShot(100, [&app] { app.Connect(); });
 
-	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
+//	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
 
-	std::error_code err {EACCES, std::generic_category()};
-	std::string errmsg = ext::FormatError(err);
+//	std::error_code err {EACCES, std::generic_category()};
+//	std::string errmsg = ext::FormatError(err);
 
-	using namespace QtTools::NotificationSystem;
+//	using namespace QtTools::NotificationSystem;
 
-	NotificationCenter nsys;
-	NotificationPopupLayout layout;
-	NotificationView view;
+//	NotificationCenter nsys;
+//	NotificationPopupLayout layout;
+//	NotificationView view;
 
-	auto hovered = [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); };
-	auto activated = [](auto href) { cout << FromQString(href) << endl; };
+//	auto hovered = [bar = mainWindow.m_statusbar](auto href) { bar->showMessage(href); };
+//	auto activated = [](auto href) { cout << FromQString(href) << endl; };
 
-	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered, mainWindow.m_statusbar, hovered);
-	QObject::connect(&view, &NotificationView::LinkHovered, mainWindow.m_statusbar, hovered);
+//	QObject::connect(&layout, &NotificationPopupLayout::LinkHovered, mainWindow.m_statusbar, hovered);
+//	QObject::connect(&view, &NotificationView::LinkHovered, mainWindow.m_statusbar, hovered);
 
-	QObject::connect(&layout, &NotificationPopupLayout::LinkActivated, activated);
-	QObject::connect(&view, &NotificationView::LinkActivated, activated);
+//	QObject::connect(&layout, &NotificationPopupLayout::LinkActivated, activated);
+//	QObject::connect(&view, &NotificationView::LinkActivated, activated);
 
-	layout.Init(nsys);
-	layout.SetParent(&mainWindow);
-	layout.SetCorner(Qt::TopRightCorner);
-	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
+//	layout.Init(nsys);
+//	layout.SetParent(&mainWindow);
+//	layout.SetCorner(Qt::TopRightCorner);
+//	//layout.SetExpirationTimeouts(600ms, 400ms, 200ms);
 
-	view.Init(nsys);
-	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
-	view.show();
-	//view.showMaximized();
+//	view.Init(nsys);
+//	view.SetFilterMode(view.FilterByText | view.FilterByLevel);
+//	view.show();
+//	//view.showMaximized();
 
-	nsys.AddInfo("Title1", "Text1");
-	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
-	nsys.AddError("Title4", QtTools::ToQString(errmsg));
-	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
-	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
-	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
+//	nsys.AddInfo("Title1", "Text1");
+//	nsys.AddInfo("Title2", "<a href = \"setings:://tralala\">Text2</a>");
+//	nsys.AddError("Title4", QtTools::ToQString(errmsg));
+//	nsys.AddWarning("Title5", QtTools::ToQString(errmsg));
+//	nsys.AddInfo("Title6", QtTools::ToQString(errmsg));
+//	nsys.AddInfo("Title7", QtTools::ToQString(errmsg));
+//	nsys.AddInfo(longTitle, QtTools::ToQString(errmsg));
 
-	auto nf = nsys.CreateNotification();
-	nf->Title("Custom");
-	nf->Text("Some Text");
-	nf->setProperty("backgroundColor", QColor("red"));
-	nf->setProperty("expirationTimeout", 0);
-	nf->ActivationLink("setings:://tralala");
+//	auto nf = nsys.CreateNotification();
+//	nf->Title("Custom");
+//	nf->Text("Some Text");
+//	nf->setProperty("backgroundColor", QColor("red"));
+//	nf->setProperty("expirationTimeout", 0);
+//	nf->ActivationLink("setings:://tralala");
 
-	nsys.AddNotification(std::move(nf));
+//	nsys.AddNotification(std::move(nf));
 
 	auto res = qapp.exec();
 	qapp.closeAllWindows();

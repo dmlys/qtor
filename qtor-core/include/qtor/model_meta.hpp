@@ -36,3 +36,5 @@ namespace qtor
 		virtual ~model_meta() = default;
 	};
 }
+
+Q_DECLARE_METATYPE(qtor::model_meta *);

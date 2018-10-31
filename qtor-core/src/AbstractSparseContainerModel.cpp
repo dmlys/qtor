@@ -16,7 +16,7 @@ namespace qtor
 		-> const sparse_container::any_type & 
 	{
 		auto & item = GetItem(row);
-		return item.get_item(column);
+		return item.get_item(m_columns[column]);
 	}
 
 	int AbstractSparseContainerModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
@@ -33,22 +33,26 @@ namespace qtor
 	}
 
 
-	QString AbstractSparseContainerModel::GetValueShort(int row, int column) const
+	QString AbstractSparseContainerModel::GetStringShort(int row, int column) const
 	{
 		if (column >= qint(m_columns.size()))
 			return QString::null;
 
+		column = m_columns[column];
 		const auto & cont = GetItem(row);
-		return m_meta->format_item_short(cont, m_columns[column]);
+		const auto & val = cont.get_item(column);
+		return m_fmt->format_item_short(val, column);
 	}
 
-	QString AbstractSparseContainerModel::GetValue(int row, int column) const
+	QString AbstractSparseContainerModel::GetString(int row, int column) const
 	{
 		if (column >= qint(m_columns.size()))
 			return QString::null;
 
+		column = m_columns[column];
 		const auto & cont = GetItem(row);
-		return m_meta->format_item(cont, m_columns[column]);
+		const auto & val = cont.get_item(column);
+		return m_fmt->format_item(val, column);
 	}
 
 	QVariant AbstractSparseContainerModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const
@@ -63,10 +67,10 @@ namespace qtor
 		{
 			case Qt::DisplayRole:
 			case Qt::ToolTipRole:
-				return GetValueShort(row, column);
+				return GetStringShort(row, column);
 
-				//case TorrentRole: return QVariant::fromValue(GetTorrent(row));
-			default:          return {};
+			case Qt::UserRole: return GetItem(index);
+			default:           return {};
 		}
 	}
 

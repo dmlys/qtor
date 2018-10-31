@@ -109,7 +109,7 @@ namespace qtor
 	}
 
 
-	torrent_file_entity FileTreeModelImpl::GetItem(const QModelIndex & idx) const
+	torrent_file_entity FileTreeModelImpl::GetEntity(const QModelIndex & idx) const
 	{
 		const auto & val = get_element_ptr(idx);
 

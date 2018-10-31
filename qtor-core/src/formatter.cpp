@@ -1,7 +1,10 @@
-﻿#include <qtor/formatter.hqt>
+﻿#include <qtor/formatter.hpp>
 #include <QtTools/ToolsBase.hpp>
 #include <QtTools/DateUtils.hpp>
 #include <QtCore/QStringBuilder>
+#include <QtCore/QCoreApplication>
+
+#define FORMATTER "formatter"
 
 namespace qtor
 {
@@ -16,28 +19,28 @@ namespace qtor
 
 	const char * formatter::ms_size_strings[5] =
 	{
-		QT_TRANSLATE_NOOP("formatter", "%1 bytes"),
-		QT_TRANSLATE_NOOP("formatter", "%1 kbytes"),
-		QT_TRANSLATE_NOOP("formatter", "%1 Mbytes"),
-		QT_TRANSLATE_NOOP("formatter", "%1 Gbytes"),
-		QT_TRANSLATE_NOOP("formatter", "%1 Tbytes"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 bytes"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 kbytes"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 Mbytes"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 Gbytes"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 Tbytes"),
 	};
 
 	const char * formatter::ms_speed_strings[5] =
 	{
-		QT_TRANSLATE_NOOP("formatter", "%1 B/s"),
-		QT_TRANSLATE_NOOP("formatter", "%1 kB/s"),
-		QT_TRANSLATE_NOOP("formatter", "%1 MB/s"),
-		QT_TRANSLATE_NOOP("formatter", "%1 GB/s"),
-		QT_TRANSLATE_NOOP("formatter", "%1 TB/s"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 B/s"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 kB/s"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 MB/s"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 GB/s"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%1 TB/s"),
 	};
 
 	const char * formatter::ms_duration_strings[4] =
 	{
-		QT_TRANSLATE_NOOP("formatter", "%Ln day(s)"),
-		QT_TRANSLATE_NOOP("formatter", "%Ln hour(s)"),
-		QT_TRANSLATE_NOOP("formatter", "%Ln minute(s)"),
-		QT_TRANSLATE_NOOP("formatter", "%Ln second(s)"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%Ln day(s)"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%Ln hour(s)"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%Ln minute(s)"),
+		QT_TRANSLATE_NOOP(FORMATTER, "%Ln second(s)"),
 	};
 
 	auto formatter::weigh(double  val) const noexcept -> weight
@@ -53,7 +56,7 @@ namespace qtor
 		return val * ms_weights[w];
 	}
 
-	QString formatter::format_item(uint64_type val, const char * strings[5]) const
+	QString formatter::format_uint_item(uint64_type val, const char * strings[5]) const
 	{
 		auto w = weigh(val);
 		auto fmt = strings[w];
@@ -67,12 +70,12 @@ namespace qtor
 
 	QString formatter::format_size(size_type val) const
 	{
-		return format_item(val, ms_size_strings);
+		return format_uint_item(val, ms_size_strings);
 	}
 
 	QString formatter::format_speed(size_type val) const
 	{
-		return format_item(val, ms_speed_strings);
+		return format_uint_item(val, ms_speed_strings);
 	}
 
 	QString formatter::format_int64(int64_type val) const
@@ -155,6 +158,57 @@ namespace qtor
 
 	QString formatter::format_nullopt() const
 	{
-		return QStringLiteral("N/A");
+		//: value has no value(std::nullopt) like does not have any speed/size information
+		return tr("N/A");
+	}
+
+	QString formatter::format_unsupported() const
+	{
+		//: unknown data type, normally should not happen
+		return tr("unknown type");
+	}
+
+	QString formatter::format_item(const any & val, unsigned type) const
+	{
+		switch (type)
+		{
+			case model_meta::Uint64   : return format_uint64(val);
+			case model_meta::Int64    : return format_int64(val);
+			case model_meta::Bool     : return format_bool(val);
+			case model_meta::Double   : return format_double(val);
+			case model_meta::String   : return format_string(val);
+
+			case model_meta::Speed    : return format_speed(val);
+			case model_meta::Size     : return format_size(val);
+			case model_meta::DateTime : return format_datetime(val);
+			case model_meta::Duration : return format_duration(val);
+			case model_meta::Percent  : return format_percent(val);
+			case model_meta::Ratio    : return format_ratio(val);
+
+		default:
+			return format_unsupported();
+		}
+	}
+
+	QString formatter::format_item_short(const any & val, unsigned type) const
+	{
+		switch (type)
+		{
+			case model_meta::Uint64   : return format_uint64(val);
+			case model_meta::Int64    : return format_int64(val);
+			case model_meta::Bool     : return format_bool(val);
+			case model_meta::Double   : return format_double(val);
+			case model_meta::String   : return format_short_string(val);
+
+			case model_meta::Speed    : return format_speed(val);
+			case model_meta::Size     : return format_size(val);
+			case model_meta::DateTime : return format_datetime(val);
+			case model_meta::Duration : return format_duration(val);
+			case model_meta::Percent  : return format_percent(val);
+			case model_meta::Ratio    : return format_ratio(val);
+
+		default:
+			return format_unsupported();
+		}
 	}
 }

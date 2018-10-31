@@ -4,7 +4,6 @@
 #include <boost/preprocessor/if.hpp>
 
 #include <qtor/types.hpp>
-#include <qtor/formatter.hqt>
 #include <qtor/sparse_container.hpp>
 
 #include <QtTools/ToolsBase.hpp>
@@ -60,8 +59,22 @@ namespace qtor
 		};
 	};
 
-	struct torrent_file : torrent_file_enum
+	struct torrent_file //: torrent_file_enum
 	{
+		enum : unsigned
+		{
+			FileName,
+			TotalSize,
+			HaveSize,
+			Index,
+			Priority,
+			Wanted,
+
+			FirstField = FileName,
+			LastField = Wanted,
+			FiledCount = LastField + 1,
+		};
+
 		filepath_type filename;
 		size_type     total_size;
 		size_type     have_size;
@@ -70,7 +83,7 @@ namespace qtor
 		bool          wanted;
 	};
 
-	struct torrent_dir : torrent_file_enum
+	struct torrent_dir //: torrent_file_enum
 	{
 		filepath_type filename;
 		size_type     total_size;
@@ -118,28 +131,20 @@ namespace qtor
 	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
 
 
-	class torrent_file_meta :
-		public virtual model_meta,
-		public virtual formatter
+	class torrent_file_meta : public model_meta
 	{
 	public:
-		using formatter::format_item;
-
-	public:
 		virtual  index_type item_count()               const noexcept;
-		virtual    unsigned item_type(index_type type) const noexcept;
-		virtual string_type item_name(index_type type) const;
-
-		virtual  QString format_item(const torrent_file & val, index_type index) const;
-		virtual  QString format_item(const torrent_dir & val, index_type index) const;
-		virtual  QString format_item_short(const torrent_file & val, index_type index) const;
-		virtual  QString format_item_short(const torrent_dir & val, index_type index) const;
-
-		QString format_item(const torrent_file_entity & val, index_type index) const;
-		QString format_item_short(const torrent_file_entity & val, index_type index) const;
+		virtual    unsigned item_type(index_type index) const noexcept;
+		virtual string_type item_name(index_type index) const;
 
 	public:
-		torrent_file_meta(QObject * parent = nullptr);
+		any_type get_item(const torrent_file & item, int index) const;
+		any_type get_item(const torrent_dir &  item, int index) const;
+		any_type get_item(const torrent_file_entity & item, int index) const;
+
+	public:
+		torrent_file_meta() = default;
 	};
 
 	struct torrent_peer
@@ -349,6 +354,6 @@ namespace qtor
 		static const item_map_ptr ms_items;
 
 	public:
-		torrent_meta(QObject * parent = nullptr);
+		torrent_meta();
 	};
 }

@@ -209,7 +209,7 @@ namespace qtor
 		if (not model) return QString::null;
 
 		auto & tor = model->GetItem(index.row());
-		const formatter * fmt = model->GetFormatter();
+		const formatter * fmt = model->GetFormatter().get();
 
 		return TittleText(tor, fmt) % "\n" % ProgressText(tor, fmt) % "\n" % StatusText(tor, fmt);
 	}
@@ -239,7 +239,7 @@ namespace qtor
 		const auto margins = ms_OutterMargins + QtTools::Delegates::TextMargins(option);
 		const auto rect = item.option->rect - margins;
 
-		item.fmt = model->GetFormatter();
+		item.fmt = model->GetFormatter().get();
 		item.tor = &tor;
 		item.title = TittleText(tor, item.fmt);
 		item.progress = ProgressText(tor, item.fmt);

@@ -1,11 +1,9 @@
 #pragma once
-#include <bitset>
-#include <tuple>
+#include <memory>
 #include <vector>
 #include <unordered_map>
 #include <qtor/types.hpp>
 #include <qtor/model_meta.hpp>
-#include <qtor/formatter.hqt>
 #include <viewed/refilter_type.hpp>
 
 namespace qtor
@@ -19,7 +17,7 @@ namespace qtor
 	{
 	public:
 		using index_type = unsigned;
-		using any_type   = QVariant;
+		using any_type   = any;
 
 	protected:
 		std::unordered_map<index_type, any_type> m_items;
@@ -47,30 +45,16 @@ namespace qtor
 	/************************************************************************/
 	/*                    sparse_container_meta                             */
 	/************************************************************************/
-	class sparse_container_meta : public virtual model_meta
+	class simple_sparse_container_meta : public model_meta
 	{
-	public:
-		virtual QString format_item(const sparse_container & cont, index_type key) const = 0;
-		virtual QString format_item_short(const sparse_container & cont, index_type key) const = 0;
-
-	public:
-		virtual ~sparse_container_meta() = default;
-	};
-
-	class simple_sparse_container_meta : public virtual sparse_container_meta, public virtual formatter
-	{
-		using base_type = sparse_container_meta;
+		using base_type = model_meta;
 		using self_type = simple_sparse_container_meta;
 
 	public:
-		using formatter_type = qtor::formatter;
-		using format_method  = QString(formatter_type::*)(const any_type &) const;
-
 		struct item
 		{
 			unsigned      type;
 			string_type   name;
-			format_method method;
 		};
 
 		using item_map     = std::unordered_map<index_type, item>;
@@ -80,20 +64,9 @@ namespace qtor
 		item_map_ptr m_items;
 
 	public:
-		using base_type::format_item;
-		using formatter_type::format_item;
-
-	public:
 		virtual  index_type item_count()              const noexcept override;
 		virtual    unsigned item_type(index_type key) const noexcept override;
 		virtual string_type item_name(index_type key) const override;
-
-		virtual QString format_item(const sparse_container & cont, index_type key) const override;
-		virtual QString format_item_short(const sparse_container & cont, index_type key) const override;
-
-	protected:
-		simple_sparse_container_meta(QObject * parent = nullptr)
-			: formatter_type(parent) {}
 
 	public:
 		simple_sparse_container_meta(item_map_ptr items)

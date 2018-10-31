@@ -12,7 +12,7 @@ namespace qtor
 	int AbstractFileTreeModel::FindColumn(unsigned id) const
 	{
 		auto first = m_columns.begin();
-		auto last = m_columns.end();
+		auto last  = m_columns.end();
 		auto it = std::find(first, last, id);
 
 		return it == last ? -1 : it - first;
@@ -26,20 +26,29 @@ namespace qtor
 		return m_meta->item_name(m_columns[section]);
 	}
 
-	QString AbstractFileTreeModel::GetValue(const QModelIndex & idx) const
+	QVariant AbstractFileTreeModel::GetItem(const QModelIndex & idx) const
 	{
-		if (idx.isValid()) return QString();
-
-		auto val = GetItem(idx);
-		return m_meta->format_item(val, idx.column());
+		auto entity = GetEntity(idx);
+		auto column = m_columns[idx.column()];
+		return m_meta->get_item(entity, column);
 	}
 
-	QString AbstractFileTreeModel::GetValueShort(const QModelIndex & idx) const
+	QString AbstractFileTreeModel::GetString(const QModelIndex & idx) const
 	{
-		if (idx.isValid()) return QString();
+		if (not idx.isValid()) return QString();
 
 		auto val = GetItem(idx);
-		return m_meta->format_item_short(val, idx.column());
+		auto column = m_columns[idx.column()];
+		return m_fmt->format_item(val, m_meta->item_type(column));
+	}
+
+	QString AbstractFileTreeModel::GetStringShort(const QModelIndex & idx) const
+	{
+		if (not idx.isValid()) return QString();
+
+		auto val = GetItem(idx);
+		auto column = m_columns[idx.column()];
+		return m_fmt->format_item_short(val, m_meta->item_type(column));
 	}
 
 	int AbstractFileTreeModel::columnCount(const QModelIndex & parent /* = QModelIndex() */) const
@@ -79,14 +88,13 @@ namespace qtor
 
 	QVariant AbstractFileTreeModel::data(const QModelIndex & index, int role /* = Qt::DisplayRole */) const
 	{
-		if (not index.isValid())
-			return {};
+		if (not index.isValid()) return {};
 
 		switch (role)
 		{
 			case Qt::DisplayRole:
 			case Qt::ToolTipRole:
-				return GetValueShort(index);
+				return GetStringShort(index);
 
 			//case Qt::SizeHintRole:
 			//	return QSize {ColumnSizeHint(index.column()), -1};

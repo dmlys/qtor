@@ -4,7 +4,8 @@
 #include <QtCore/QAbstractItemModel>
 
 #include <qtor/torrent.hpp>
-#include <qtor/formatter.hqt>
+#include <qtor/model_meta.hpp>
+#include <qtor/formatter.hpp>
 
 namespace qtor
 {
@@ -18,7 +19,8 @@ namespace qtor
 
 	protected:
 		std::vector<unsigned> m_columns;
-		const torrent_file_meta * m_meta = new torrent_file_meta(this);
+		std::shared_ptr<formatter> m_fmt = std::make_shared<formatter>();
+		std::shared_ptr<torrent_file_meta> m_meta = std::make_shared<torrent_file_meta>();
 
 		QString m_filterStr;
 		Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
@@ -32,16 +34,17 @@ namespace qtor
 		virtual void SortBy(int column, Qt::SortOrder order) = 0;
 
 	public:
-		const model_meta * GetMeta() const noexcept { return m_meta; }
-		const formatter * GetFormatter() const noexcept { return m_meta; }
+		const auto & GetMeta() const noexcept { return m_meta; }
+		const auto & GetFormatter() const noexcept { return m_fmt; }
 
-		virtual auto GetItem(const QModelIndex & idx) const -> torrent_file_entity = 0;
+		virtual auto GetEntity(const QModelIndex & idx) const -> torrent_file_entity = 0;
+		virtual auto GetItem(const QModelIndex & idx) const -> QVariant;
 
 		virtual int FindColumn(unsigned id) const;
 		virtual QString FieldName(int section) const;
 
-		virtual QString GetValue(const QModelIndex & idx) const;
-		virtual QString GetValueShort(const QModelIndex & idx) const;
+		virtual QString GetString(const QModelIndex & idx) const;
+		virtual QString GetStringShort(const QModelIndex & idx) const;
 
 		void SetFilter(QString expr);
 		auto GetFilter() const noexcept { return m_filterStr; }

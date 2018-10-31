@@ -127,7 +127,7 @@ namespace qtor
 		//virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 		//virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-		virtual torrent_file_entity GetItem(const QModelIndex & idx) const override;
+		virtual torrent_file_entity GetEntity(const QModelIndex & idx) const override;
 
 	public:
 		using base_type::base_type;
