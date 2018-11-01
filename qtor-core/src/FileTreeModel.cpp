@@ -20,30 +20,30 @@ namespace qtor
 
 		switch (type)
 		{
-		    case torrent_file::Index:
+		    case torrent_file_meta::Index:
 		    default:
 
-		    case torrent_file::FileName:
+		    case torrent_file_meta::FileName:
 			    m_leaf_compare = COMPARE(leaf_type, path_type, filename);
 				m_node_compare = COMPARE(node_type, path_type, filename);
 			    break;
 
-		    case torrent_file::TotalSize:
+		    case torrent_file_meta::TotalSize:
 			    m_leaf_compare = COMPARE(leaf_type, size_type, total_size);
 				m_node_compare = COMPARE(node_type, size_type, total_size);
 			    break;
 
-		    case torrent_file::HaveSize:
+		    case torrent_file_meta::HaveSize:
 			    m_leaf_compare = COMPARE(leaf_type, size_type, have_size);
 				m_node_compare = COMPARE(node_type, size_type, have_size);
 			    break;
 
-		    case torrent_file::Priority:
+		    case torrent_file_meta::Priority:
 			    m_leaf_compare = COMPARE(leaf_type, int_type, priority);
 				m_node_compare = COMPARE(node_type, int_type, priority);
 			    break;
 
-		    case torrent_file::Wanted:
+		    case torrent_file_meta::Wanted:
 			    m_leaf_compare = COMPARE(leaf_type, bool, wanted);
 				m_node_compare = COMPARE(node_type, Qt::CheckState, wanted);
 			    break;
@@ -75,7 +75,7 @@ namespace qtor
 		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
 
-	filepath_type torrent_file_tree_traits::get_name(const filepath_type & filepath)
+	auto torrent_file_tree_traits::get_name(const path_type & filepath) -> pathview_type
 	{
 		int pos = filepath.lastIndexOf('/') + 1;
 		return filepath.mid(pos);
@@ -109,7 +109,7 @@ namespace qtor
 	}
 
 
-	torrent_file_entity FileTreeModelImpl::GetEntity(const QModelIndex & idx) const
+	torrent_file_entity FileTreeModelBase::GetEntity(const QModelIndex & idx) const
 	{
 		const auto & val = get_element_ptr(idx);
 
@@ -117,7 +117,7 @@ namespace qtor
 		return viewed::visit(visitor, val);
 	}
 
-	void FileTreeModelImpl::recalculate_page(page_type & page)
+	void FileTreeModelBase::recalculate_page(page_type & page)
 	{
 		constexpr size_type zero = 0;
 		auto & children = page.children.template get<view_type::by_seq>();
@@ -128,12 +128,12 @@ namespace qtor
 		page.have_size  = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item);  });
 	}
 
-	void FileTreeModelImpl::SortBy(int column, Qt::SortOrder order)
+	void FileTreeModelBase::SortBy(int column, Qt::SortOrder order)
 	{
 		sort_by(column, order);
 	}
 
-	void FileTreeModelImpl::FilterBy(QString expr)
+	void FileTreeModelBase::FilterBy(QString expr)
 	{
 		filter_by(expr);
 	}
@@ -142,9 +142,9 @@ namespace qtor
 	    : base_type(parent)
 	{
 		SetColumns({
-		    torrent_file::FileName,
-		    torrent_file::TotalSize,
-		    torrent_file::HaveSize
+		    torrent_file_meta::FileName,
+		    torrent_file_meta::TotalSize,
+		    torrent_file_meta::HaveSize
 		});
 	}
 
@@ -152,9 +152,9 @@ namespace qtor
 	    : base_type(std::move(store), parent)
 	{
 		SetColumns({
-		    torrent_file::FileName,
-		    torrent_file::TotalSize,
-		    torrent_file::HaveSize
+		    torrent_file_meta::FileName,
+		    torrent_file_meta::TotalSize,
+		    torrent_file_meta::HaveSize
 		});
 
 		init();

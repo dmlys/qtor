@@ -1,4 +1,5 @@
 #include <qtor/torrent.hpp>
+#include <qtor/FileTreeModel.hqt>
 #include <ext/config.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
@@ -50,19 +51,20 @@ namespace qtor
 	/************************************************************************/
 	auto torrent_file_meta::item_count() const noexcept -> index_type
 	{
-		return torrent_file::FiledCount;
+		return FiledCount;
 	}
 
 	unsigned torrent_file_meta::item_type(index_type type) const noexcept
 	{
 		switch (type)
 		{
-			case torrent_file::FileName:  return model_meta::String;
-			case torrent_file::TotalSize: return model_meta::Size;
-			case torrent_file::HaveSize:  return model_meta::Size;
-			case torrent_file::Index:     return model_meta::Int64;
-			case torrent_file::Priority:  return model_meta::Int64;
-			case torrent_file::Wanted:    return model_meta::Bool;
+			case FileName:
+			case FilePath:  return model_meta::String;
+			case TotalSize: return model_meta::Size;
+			case HaveSize:  return model_meta::Size;
+			case Index:     return model_meta::Int64;
+			case Priority:  return model_meta::Int64;
+			case Wanted:    return model_meta::Bool;
 
 			default:
 				EXT_UNREACHABLE();
@@ -73,12 +75,13 @@ namespace qtor
 	{
 		switch (item)
 		{
-			case torrent_file::FileName:  return QStringLiteral("fname");
-			case torrent_file::TotalSize: return QStringLiteral("total size");
-			case torrent_file::HaveSize:  return QStringLiteral("have size");
-			case torrent_file::Index:     return QStringLiteral("index");
-			case torrent_file::Priority:  return QStringLiteral("priority");
-			case torrent_file::Wanted:    return QStringLiteral("wanted");
+			case FileName:  return QStringLiteral("fname");
+			case FilePath:  return QStringLiteral("fpath");
+			case TotalSize: return QStringLiteral("total size");
+			case HaveSize:  return QStringLiteral("have size");
+			case Index:     return QStringLiteral("index");
+			case Priority:  return QStringLiteral("priority");
+			case Wanted:    return QStringLiteral("wanted");
 
 			default:
 				EXT_UNREACHABLE();
@@ -89,12 +92,13 @@ namespace qtor
 	{
 		switch (index)
 		{
-			case torrent_file::FileName:  return make_any(item.filename);
-			case torrent_file::TotalSize: return make_any(item.total_size);
-			case torrent_file::HaveSize:  return make_any(item.have_size);
-			case torrent_file::Index:     return make_any(item.index);
-			case torrent_file::Priority:  return make_any(item.priority);
-			case torrent_file::Wanted:    return make_any(item.wanted);
+			case FileName:  return make_any(torrent_file_tree_traits::get_name(item.filename));
+			case FilePath:  return make_any(item.filename);
+			case TotalSize: return make_any(item.total_size);
+			case HaveSize:  return make_any(item.have_size);
+			case Index:     return make_any(item.index);
+			case Priority:  return make_any(item.priority);
+			case Wanted:    return make_any(item.wanted);
 
 			default: return any_type();
 		}
@@ -104,12 +108,13 @@ namespace qtor
 	{
 		switch (index)
 		{
-			case torrent_file::FileName:  return make_any(item.filename);
-			case torrent_file::TotalSize: return make_any(item.total_size);
-			case torrent_file::HaveSize:  return make_any(item.have_size);
-			case torrent_file::Index:     return make_any(item.index);
-			case torrent_file::Priority:  return make_any(item.priority);
-			case torrent_file::Wanted:    return make_any(item.wanted);
+			case FileName:  return make_any(item.filename);
+			case FilePath:  return make_any(item.filename);
+			case TotalSize: return make_any(item.total_size);
+			case HaveSize:  return make_any(item.have_size);
+			case Index:     return make_any(item.index);
+			case Priority:  return make_any(item.priority);
+			case Wanted:    return make_any(item.wanted);
 
 			default: return any_type();
 		}

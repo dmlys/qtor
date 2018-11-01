@@ -42,39 +42,8 @@ namespace qtor
 	/************************************************************************/
 	/*                   torrent_file                                       */
 	/************************************************************************/
-	struct torrent_file_enum
+	struct torrent_file
 	{
-		enum : unsigned
-		{
-			FileName,
-			TotalSize,
-			HaveSize,
-			Index,
-			Priority,
-			Wanted,
-
-			FirstField = FileName,
-			LastField = Wanted,
-			FiledCount = LastField + 1,
-		};
-	};
-
-	struct torrent_file //: torrent_file_enum
-	{
-		enum : unsigned
-		{
-			FileName,
-			TotalSize,
-			HaveSize,
-			Index,
-			Priority,
-			Wanted,
-
-			FirstField = FileName,
-			LastField = Wanted,
-			FiledCount = LastField + 1,
-		};
-
 		filepath_type filename;
 		size_type     total_size;
 		size_type     have_size;
@@ -83,7 +52,7 @@ namespace qtor
 		bool          wanted;
 	};
 
-	struct torrent_dir //: torrent_file_enum
+	struct torrent_dir
 	{
 		filepath_type filename;
 		size_type     total_size;
@@ -134,6 +103,23 @@ namespace qtor
 	class torrent_file_meta : public model_meta
 	{
 	public:
+		enum : unsigned
+		{
+			FileName,
+			FilePath,
+			TotalSize,
+			HaveSize,
+			Index,
+			Priority,
+			Wanted,
+
+			FirstField = FileName,
+			LastField = Wanted,
+			FiledCount = LastField + 1,
+
+		};
+
+	public:
 		virtual  index_type item_count()               const noexcept;
 		virtual    unsigned item_type(index_type index) const noexcept;
 		virtual string_type item_name(index_type index) const;
@@ -146,6 +132,8 @@ namespace qtor
 	public:
 		torrent_file_meta() = default;
 	};
+
+
 
 	struct torrent_peer
 	{
