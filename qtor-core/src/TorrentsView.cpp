@@ -373,12 +373,12 @@ namespace qtor
 		m_listView->setModel(model);
 		m_rowFilter->clear();
 		
-		int nameCol = model->FindColumn(torrent::Name);
+		int nameCol = model->MetaToViewIndex(torrent::Name);
 		m_tableView->setItemDelegateForColumn(nameCol, m_nameDelegate);
 
 		//connect(model, &QAbstractItemModel::layoutChanged, this, &TorrentsView::ModelChanged);
 		//connect(model, &QAbstractItemModel::modelReset, this, &TorrentsView::ModelChanged);
-		connect(model, &AbstractSparseContainerModel::SortingChanged, this, &TorrentsView::OnSortingChanged);
+		connect(model, &AbstractTableItemModel::SortingChanged, this, &TorrentsView::OnSortingChanged);
 
 		connect(m_tableView->horizontalHeader(), &QHeaderView::customContextMenuRequested,
 		        this, &TorrentsView::OpenHeaderConfigurationWidget);
@@ -401,7 +401,7 @@ namespace qtor
 		m_sizeHint = m_defMinSizeHint;
 	}
 
-	void TorrentsView::SetModel(std::shared_ptr<AbstractSparseContainerModel> model)
+	void TorrentsView::SetModel(std::shared_ptr<AbstractTableItemModel> model)
 	{
 		// both null or valid
 		if (m_model) m_model->disconnect(this);

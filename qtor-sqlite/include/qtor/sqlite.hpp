@@ -4,7 +4,9 @@
 
 #include <sqlite3yaw.hpp>
 #include <sqlite3yaw_ext.hpp>
+
 #include <qtor/torrent.hpp>
+#include <qtor/torrent_file.hpp>
 
 namespace qtor::sqlite
 {

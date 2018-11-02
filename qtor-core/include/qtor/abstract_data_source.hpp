@@ -10,7 +10,9 @@
 #include <ext/netlib/subscription_handle.hpp>
 
 #include <QtTools/GuiQueue.hqt>
+
 #include <qtor/torrent.hpp>
+#include <qtor/torrent_file.hpp>
 
 namespace qtor
 {
@@ -53,6 +55,7 @@ namespace qtor
 		virtual void set_timeout(std::chrono::steady_clock::duration timeout) = 0;
 		virtual void set_logger(ext::library_logger::logger * logger) = 0;
 		virtual void set_gui_queue(QtTools::GuiQueue * queue) = 0;
+		virtual auto get_gui_queue() const -> QtTools::GuiQueue * = 0;
 
 	public:
 		virtual ~abstract_data_source() = default;

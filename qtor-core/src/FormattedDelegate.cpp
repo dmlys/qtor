@@ -12,21 +12,20 @@ namespace qtor
 		m_meta = qvariant_cast<model_meta *>(metavar);
 
 		base_type::InitStyle(option, index);
-//		if (m_fmt == nullptr or m_meta == nullptr)
-//			return base_type::displayText(value, locale);
-
-//		auto type = m_meta->item_type(index.column());
-//		QString text; // format_item(
-//		//m_fmt->format_
-//		option.text = text;
 	}
 
 	QString FormattedDelegate::displayText(const QVariant & value, const QLocale & locale) const
 	{
 		auto old_locale = m_fmt->get_locale();
 		m_fmt->set_locale(locale);
+
+		auto meta_index = 0u;
+		auto view_index = 0u;
+
+		auto str = m_fmt->format_item_short(value, meta_index);
+
 		m_fmt->set_locale(old_locale);
 
-		return {};
+		return str;
 	}
 }

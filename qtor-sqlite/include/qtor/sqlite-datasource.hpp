@@ -33,7 +33,9 @@ namespace qtor::sqlite
 		void * m_ses = nullptr;
 		std::string m_path;
 		torrent_list m_torrents;
-		std::vector<subscription_ptr> m_subs;
+		std::vector<subscription_ptr> m_subs;	
+
+		QtTools::GuiQueue * m_queue = nullptr;
 
 	protected:
 		void emit_subs();
@@ -42,7 +44,8 @@ namespace qtor::sqlite
 		void set_address(std::string addr) override;
 		void set_timeout(std::chrono::steady_clock::duration timeout) override {}
 		void set_logger(ext::library_logger::logger * logger) override {}
-		void set_gui_queue(QtTools::GuiQueue * queue) override {}
+		void set_gui_queue(QtTools::GuiQueue * queue) override { m_queue = queue; }
+		auto get_gui_queue() const -> QtTools::GuiQueue * override { return m_queue; }
 
 	public:
 		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle override { return {}; }

@@ -23,6 +23,7 @@ namespace qtor
 		    case torrent_file_meta::Index:
 		    default:
 
+			case torrent_file_meta::FilePath:
 		    case torrent_file_meta::FileName:
 			    m_leaf_compare = COMPARE(leaf_type, path_type, filename);
 				m_node_compare = COMPARE(node_type, path_type, filename);
@@ -75,12 +76,6 @@ namespace qtor
 		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
 
-	auto torrent_file_tree_traits::get_name(const path_type & filepath) -> pathview_type
-	{
-		int pos = filepath.lastIndexOf('/') + 1;
-		return filepath.mid(pos);
-	}
-
 	auto torrent_file_tree_traits::analyze(const pathview_type & path, const pathview_type & filename) const
 	    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>
 	{
@@ -108,9 +103,26 @@ namespace qtor
 		return ref == name;
 	}
 
+	QVariant FileTreeModelBase::GetItem(const QModelIndex & idx) const
+	{
+		if (not idx.isValid()) return QVariant();
+
+		const auto & val = get_element_ptr(idx);
+		const auto meta_index = ViewToMetaIndex(idx.column());
+
+		auto visitor = [this, meta_index](auto * ptr)
+		{
+			auto * meta = static_cast<const torrent_file_meta *>(this->m_meta.get());
+			return meta->get_item(*ptr, meta_index);
+		};
+
+		return viewed::visit(visitor, val);
+	}
 
 	torrent_file_entity FileTreeModelBase::GetEntity(const QModelIndex & idx) const
 	{
+		if (not idx.isValid()) return torrent_file_entity();
+
 		const auto & val = get_element_ptr(idx);
 
 		auto visitor = [](auto * ptr) { return torrent_file_entity(ptr); };

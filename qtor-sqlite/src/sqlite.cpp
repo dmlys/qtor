@@ -14,23 +14,12 @@ namespace qtor::sqlite
 	struct field_info
 	{
 		std::string name;
+		std::string_view sqltype;
 		unsigned type;
 		unsigned index;
 	};
 
-	const model_meta & torrents_meta()
-	{
-		static const qtor::torrent_meta meta;
-		return meta;
-	}
-
-	const model_meta & torrent_files_meta()
-	{
-		static const qtor::torrent_file_meta meta;
-		return meta;
-	}
-
-	static const char * get_type(unsigned type)
+	static const char * get_sql_type(unsigned type)
 	{
 		switch (type)
 		{
@@ -48,6 +37,36 @@ namespace qtor::sqlite
 		}
 	}
 
+	static auto create_info(const model_meta & meta)
+	{
+		auto make_info = [&meta](auto index)
+		{
+			auto type = meta.item_type(index);
+			return field_info {
+				FromQString(meta.item_name(index)),
+				get_sql_type(type),
+				type,
+				index,
+			};
+		};
+
+		auto count = meta.item_count();
+		auto fields = boost::counting_range(0u, count) | boost::adaptors::transformed(make_info);
+		return std::vector(fields.begin(), fields.end());
+	}
+
+	const model_meta & torrents_meta()
+	{
+		static const qtor::torrent_meta meta;
+		return meta;
+	}
+
+	const model_meta & torrent_files_meta()
+	{
+		static const qtor::torrent_file_meta meta;
+		return meta;
+	}
+
 	void create_table(sqlite3yaw::session & ses, const std::string & name, const model_meta & meta)
 	{
 		std::string cmd;
@@ -57,15 +76,14 @@ namespace qtor::sqlite
 		sqlite3yaw::escape_sql_name(name, cmd);
 		cmd += "( ";
 
-		model_meta::index_type count = meta.item_count();
-		for (decltype(count) i = 0; i < count; ++i)
+		for (auto & field : create_info(meta))
 		{
-			auto name = QtTools::FromQString(meta.item_name(i));
-			auto type = meta.item_type(i);
+			auto name = field.name;
+			auto type = field.type;
 			sqlite3yaw::escape_sql_name(name, cmd);
 
 			cmd += ' ';
-			cmd += get_type(type);
+			cmd += type;
 
 			if (name == "Id")
 				cmd += " PRIMARY KEY";
@@ -112,9 +130,8 @@ namespace qtor::sqlite
 		auto & meta = torrents_meta();
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 
-		auto count = meta.item_count();
-		auto get_name = [&meta](unsigned u) { return QtTools::FromQString(meta.item_name(u)); };
-		auto names = boost::counting_range(0u, count) | boost::adaptors::transformed(get_name);
+		auto field_info = create_info(meta);
+		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 
 		auto batch_range = make_batch_range(meta, names, torrents);
 		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
@@ -149,45 +166,44 @@ namespace qtor::sqlite
 	};
 	*/
 
-	static torrent load_torrent(sqlite3yaw::statement & stmt, const model_meta & meta)
+	static torrent load_torrent(sqlite3yaw::statement & stmt, const std::vector<field_info> & meta)
 	{
 		torrent torr;
 		//conv_type conv {stmt, torr};
 
-		int count = stmt.column_count();
-		for (int i = 0; i < count; ++i)
+		for (auto & info : meta)
 		{ 
-			unsigned key  = i;
-			unsigned type = meta.item_type(i);
+			unsigned key  = info.index;
+			unsigned type = info.type;
 
 			switch (type)
 			{
 				case model_meta::Uint64:
 				case model_meta::Speed:
 				case model_meta::Size:
-					torr.set_item(key, sqlite3yaw::get<optional<uint64_type>>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<uint64_type>>(stmt, key));
 					break;
 
 				case model_meta::Bool:
-					torr.set_item(key, sqlite3yaw::get<optional<bool>>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<bool>>(stmt, key));
 					break;
 
 				case model_meta::Double:
 				case model_meta::Percent:
 				case model_meta::Ratio:
-					torr.set_item(key, sqlite3yaw::get<optional<double>>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<double>>(stmt, key));
 					break;
 
 				case model_meta::String:
-					torr.set_item(key, sqlite3yaw::get<optional<string_type>>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<string_type>>(stmt, key));
 					break;
 
 				case model_meta::DateTime:
-					torr.set_item(key, sqlite3yaw::get<optional<datetime_type>>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<datetime_type>>(stmt, key));
 					break;
 
 				case model_meta::Duration:
-					torr.set_item(key, sqlite3yaw::get<optional<duration_type>>(stmt, i));
+					torr.set_item(key, sqlite3yaw::get<optional<duration_type>>(stmt, key));
 					break;
 
 				default:
@@ -201,23 +217,21 @@ namespace qtor::sqlite
 	auto load_torrents(sqlite3yaw::session & ses) -> torrent_list
 	{
 		auto & meta = torrents_meta();
+		auto info = create_info(meta);
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 
-//		boost::remove_erase_if(info, [&meta](auto & val)
-//		{
-//			auto & name = std::get<2>(val);
-//			auto it = boost::find_if(meta.fields, [&name](auto & v) { return v.name == name; });
-//			return it == meta.fields.end();
-//		});
+		boost::remove_erase_if(info, [&tmeta](auto & val)
+		{
+			auto & name = val.name;
+			auto it = boost::find_if(tmeta.fields, [&name](auto & v) { return v.name == name; });
+			return it == tmeta.fields.end();
+		});
 
-		auto count = meta.item_count();
-		auto get_name = [&meta](unsigned u) { return QtTools::FromQString(meta.item_name(u)); };
-		auto names = boost::counting_range(0u, count) | boost::adaptors::transformed(get_name);
-
+		auto names = info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 		auto cmd = sqlite3yaw::select_command(torrents_table_name, names);
 		auto stmt = ses.prepare(cmd);
 
-		auto loader = [&meta](auto & stmt) { return load_torrent(stmt, meta); };
+		auto loader = [&info](auto & stmt) { return load_torrent(stmt, info); };
 		auto recs = sqlite3yaw::make_record_range(stmt, loader);
 		torrent_list result(recs.begin(), recs.end());
 		return result;

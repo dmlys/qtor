@@ -36,7 +36,7 @@ namespace qtor
 
 	protected:
 		/// display model
-		std::shared_ptr<AbstractSparseContainerModel> m_model;
+		std::shared_ptr<AbstractTableItemModel> m_model;
 		/// parent window
 		MainWindow * m_parent = nullptr;
 
@@ -128,8 +128,8 @@ namespace qtor
 
 		/// initializes widget
 		/// @Param model specifies model, if null - deinitializes widget
-		virtual void SetModel(std::shared_ptr<AbstractSparseContainerModel> model);
-		virtual auto GetModel() const -> const std::shared_ptr<AbstractSparseContainerModel> & { return m_model; }
+		virtual void SetModel(std::shared_ptr<AbstractTableItemModel> model);
+		virtual auto GetModel() const -> const std::shared_ptr<AbstractTableItemModel> & { return m_model; }
 
 		/// initializes headers tracking, additionally sets headerConf configuration, see also QtTools::HeaderControlModel.
 		/// TorrentsView must be initialized before calling this method.

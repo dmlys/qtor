@@ -39,6 +39,11 @@ namespace transmission
 	{
 		m_queue = queue;
 	}
+
+	auto data_source::get_gui_queue() const -> QtTools::GuiQueue *
+	{
+		return m_queue;
+	}
 	
 	class data_source::request_base : public base_type::request_base
 	{

@@ -12,7 +12,9 @@
 #include <boost/range/adaptor/transformed.hpp>
 
 #include <fmt/format.h>
+
 #include <qtor/torrent.hpp>
+#include <qtor/torrent_file.hpp>
 
 
 namespace qtor {

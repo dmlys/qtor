@@ -25,14 +25,20 @@ namespace qtor
 		return qint(m_store.size());
 	}
 
-	int TorrentsModel::FullRowCount() const
+	int TorrentsModel::FullRowCount(const QModelIndex & parent /* = QModelIndex() */) const
 	{
 		return qint(m_owner->size());
 	}
 
-	const torrent & TorrentsModel::GetItem(int row) const
+	QVariant TorrentsModel::GetItem(const QModelIndex & idx) const
 	{
-		return *m_store.at(row);
+		if (not idx.isValid()) return QVariant();
+
+		auto row = idx.row();
+		auto meta_index = ViewToMetaIndex(idx.column());
+
+		auto * item = m_store[row];
+		return item->get_item(meta_index);
 	}
 
 	void TorrentsModel::FilterBy(QString expr)

@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include <qtor/types.hpp>
-#include <qtor/torrent.hpp>
+#include <qtor/torrent_file.hpp>
 #include <qtor/torrent_file_store.hpp>
-#include <qtor/AbstractFileTreeModel.hqt>
+#include <qtor/AbstractItemModel.hqt>
+
 #include <viewed/sftree_view_qtbase.hpp>
 #include <viewed/sftree_model_qtbase.hpp>
 
@@ -21,9 +21,8 @@ namespace qtor
 		using node_type = torrent_dir;
 
 		static void set_name(node_type & node, const pathview_type & path, const pathview_type & name) { node.filename = name; }
-		static pathview_type get_name(const path_type & name);
-		static pathview_type get_name(const leaf_type & leaf) { return get_name(leaf.filename); }
-		static pathview_type get_name(const node_type & node) { return get_name(node.filename); }
+		static pathview_type get_name(const leaf_type & leaf) { return qtor::get_name(leaf.filename); }
+		static pathview_type get_name(const node_type & node) { return qtor::get_name(node.filename); }
 		static pathview_type get_path(const leaf_type & leaf) { return leaf.filename; }
 
 		bool is_child(const pathview_type & path, const pathview_type & name, const pathview_type & leaf_path) const;
@@ -82,11 +81,11 @@ namespace qtor
 		using filter_pred_type = filepath_filter;
 	};
 
-	class FileTreeModelBase : public viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>
+	class FileTreeModelBase : public viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractItemModel>
 	{
 		using self_type = FileTreeModelBase;
-		using base_type = viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
-		using view_type = viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractFileTreeModel>;
+		using base_type = viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractItemModel>;
+		using view_type = viewed::sftree_facade_qtbase<torrent_file_tree_traits, AbstractItemModel>;
 
 	protected:
 		struct get_total_size_type
@@ -124,10 +123,8 @@ namespace qtor
 
 	public:
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
-		//virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-		//virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-
-		virtual torrent_file_entity GetEntity(const QModelIndex & idx) const override;
+		virtual QVariant GetItem(const QModelIndex & index) const override;
+		virtual torrent_file_entity GetEntity(const QModelIndex & idx) const;
 
 	public:
 		using base_type::base_type;

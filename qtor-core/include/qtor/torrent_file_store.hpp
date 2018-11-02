@@ -1,8 +1,7 @@
 #pragma once
-#include <viewed/hash_container_base.hpp>
+#include <qtor/torrent_file.hpp>
 #include <qtor/abstract_data_source.hpp>
-#include <qtor/view_manager.hpp>
-#include <qtor/torrent.hpp>
+#include <viewed/hash_container_base.hpp>
 
 namespace qtor
 {
@@ -19,6 +18,16 @@ namespace qtor
 			torrent_file_id_equal
 		>;
 
+	protected:
+		torrent_id_type m_torrent_id;
+		std::shared_ptr<abstract_data_source> m_source;
+
+	public:
+		auto torrent_id() { return m_torrent_id; }
+
+	public:
+		void refresh();
+
 	public:
 		/// добавляет данные. Уже имеющиеся данные обновляются, остальные добавляются
 		/// определяется по VariantRecord::id
@@ -34,9 +43,17 @@ namespace qtor
 		void assign_records(RecordRange newRecs);
 		
 	public:
-		using base_type::base_type;
+		torrent_file_store(torrent_id_type torrent_id, std::shared_ptr<abstract_data_source> source);
+		torrent_file_store(const torrent torrent, std::shared_ptr<abstract_data_source> source);
+		~torrent_file_store() = default;
 	};
 
+	inline torrent_file_store::torrent_file_store(const torrent torrent, std::shared_ptr<abstract_data_source> source)
+	    : torrent_file_store(torrent.id(), std::move(source)) {}
+
+
+	inline torrent_file_store::torrent_file_store(torrent_id_type torrent_id, std::shared_ptr<abstract_data_source> source)
+		: m_source(std::move(source)) {}
 
 	template <class RecordRange>
 	void torrent_file_store::upsert_records(RecordRange newRecs)

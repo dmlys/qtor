@@ -1,8 +1,8 @@
 #pragma once
-#include <viewed/hash_container_base.hpp>
-#include <qtor/abstract_data_source.hpp>
-#include <qtor/view_manager.hpp>
 #include <qtor/torrent.hpp>
+#include <qtor/view_manager.hpp>
+#include <qtor/abstract_data_source.hpp>
+#include <viewed/hash_container_base.hpp>
 
 namespace qtor
 {
@@ -24,7 +24,7 @@ namespace qtor
 			torrent_id_equal
 		> base_type;
 
-	private:
+	protected:
 		std::shared_ptr<abstract_data_source> m_source;
 
 	protected:

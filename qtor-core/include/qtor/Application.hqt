@@ -6,7 +6,7 @@
 
 #include <qtor/abstract_data_source.hpp>
 #include <qtor/torrent_store.hpp>
-#include <qtor/AbstractSparseContainerModel.hqt>
+#include <qtor/AbstractItemModel.hqt>
 
 
 namespace qtor
@@ -16,9 +16,9 @@ namespace qtor
 		Q_OBJECT;
 
 	public:
-		typedef std::shared_ptr<torrent_store>                torrent_store_ptr;
-		typedef std::shared_ptr<abstract_data_source>         abstract_data_source_ptr;
-		typedef std::shared_ptr<AbstractSparseContainerModel> abstract_torrent_model_ptr;
+		typedef std::shared_ptr<torrent_store>           torrent_store_ptr;
+		typedef std::shared_ptr<abstract_data_source>    abstract_data_source_ptr;
+		typedef std::shared_ptr<AbstractItemModel>       abstract_torrent_model_ptr;
 
 	protected:
 		abstract_data_source_ptr m_source;

@@ -34,6 +34,7 @@ namespace transmission
 		void set_timeout(std::chrono::steady_clock::duration timeout) override;
 		void set_logger(ext::library_logger::logger * logger) override;
 		void set_gui_queue(QtTools::GuiQueue * queue) override;
+		auto get_gui_queue() const -> QtTools::GuiQueue * override;
 
 	public:
 		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle override { return {}; }
