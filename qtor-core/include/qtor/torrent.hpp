@@ -246,5 +246,8 @@ namespace qtor
 
 	public:
 		torrent_meta();
-	};
+	};	
 }
+
+Q_DECLARE_METATYPE(      qtor::torrent *)
+Q_DECLARE_METATYPE(const qtor::torrent *)

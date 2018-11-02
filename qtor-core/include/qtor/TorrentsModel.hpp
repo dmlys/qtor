@@ -41,6 +41,7 @@ namespace qtor
 
 	public:
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
+		virtual QVariant GetEntity(const QModelIndex & index) const override;
 		virtual QVariant GetItem(const QModelIndex & index) const override;
 		static QString StatusString(unsigned status);
 

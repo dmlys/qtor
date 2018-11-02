@@ -30,14 +30,20 @@ namespace qtor
 		return qint(m_owner->size());
 	}
 
+	QVariant TorrentsModel::GetEntity(const QModelIndex & idx) const
+	{
+		if (not idx.isValid()) return QVariant();
+
+		auto * item = m_store[idx.row()];
+		return QVariant::fromValue(item);
+	}
+
 	QVariant TorrentsModel::GetItem(const QModelIndex & idx) const
 	{
 		if (not idx.isValid()) return QVariant();
 
-		auto row = idx.row();
 		auto meta_index = ViewToMetaIndex(idx.column());
-
-		auto * item = m_store[row];
+		auto * item = m_store[idx.row()];
 		return item->get_item(meta_index);
 	}
 

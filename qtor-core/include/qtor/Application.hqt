@@ -18,7 +18,7 @@ namespace qtor
 	public:
 		typedef std::shared_ptr<torrent_store>           torrent_store_ptr;
 		typedef std::shared_ptr<abstract_data_source>    abstract_data_source_ptr;
-		typedef std::shared_ptr<AbstractItemModel>       abstract_torrent_model_ptr;
+		typedef std::shared_ptr<AbstractTableItemModel>  abstract_torrent_model_ptr;
 
 	protected:
 		abstract_data_source_ptr m_source;

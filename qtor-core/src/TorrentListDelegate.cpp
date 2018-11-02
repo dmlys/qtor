@@ -208,8 +208,9 @@ namespace qtor
 		auto * model = dynamic_cast<const TorrentsModel *>(index.model());
 		if (not model) return QString::null;
 
-		auto & tor = model->GetItem(index.row());
 		const formatter * fmt = model->GetFormatter().get();
+		const auto * tor_ptr = qvariant_cast<const torrent *>(model->GetEntity(index));
+		const auto & tor = *tor_ptr;
 
 		return TittleText(tor, fmt) % "\n" % ProgressText(tor, fmt) % "\n" % StatusText(tor, fmt);
 	}
@@ -235,7 +236,8 @@ namespace qtor
 		item.index = index;
 
 		const auto * model = dynamic_cast<const TorrentsModel *>(item.index.model());
-		const auto & tor = model->GetItem(item.index.row());
+		const auto * tor_ptr = qvariant_cast<const torrent *>(model->GetEntity(index));
+		const auto & tor = *tor_ptr;
 		const auto margins = ms_OutterMargins + QtTools::Delegates::TextMargins(option);
 		const auto rect = item.option->rect - margins;
 

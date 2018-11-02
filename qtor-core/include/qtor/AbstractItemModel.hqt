@@ -61,6 +61,7 @@ namespace qtor
 
 	public:
 		// implemented by derived
+		virtual QVariant GetEntity(const QModelIndex & index) const = 0;
 		virtual QVariant GetItem(const QModelIndex & index) const = 0;
 		virtual int FullRowCount(const QModelIndex & parent = QModelIndex()) const = 0;
 		int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;

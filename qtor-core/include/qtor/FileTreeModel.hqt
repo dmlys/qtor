@@ -124,7 +124,7 @@ namespace qtor
 	public:
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
 		virtual QVariant GetItem(const QModelIndex & index) const override;
-		virtual torrent_file_entity GetEntity(const QModelIndex & idx) const;
+		virtual QVariant GetEntity(const QModelIndex & idx) const;
 
 	public:
 		using base_type::base_type;

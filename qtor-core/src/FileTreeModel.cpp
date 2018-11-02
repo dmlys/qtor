@@ -119,15 +119,15 @@ namespace qtor
 		return viewed::visit(visitor, val);
 	}
 
-	torrent_file_entity FileTreeModelBase::GetEntity(const QModelIndex & idx) const
-	{
-		if (not idx.isValid()) return torrent_file_entity();
+//	QVariant FileTreeModelBase::GetEntity(const QModelIndex & idx) const
+//	{
+//		if (not idx.isValid()) return torrent_file_entity();
 
-		const auto & val = get_element_ptr(idx);
+//		const auto & val = get_element_ptr(idx);
 
-		auto visitor = [](auto * ptr) { return torrent_file_entity(ptr); };
-		return viewed::visit(visitor, val);
-	}
+//		auto visitor = [](auto * ptr) { return torrent_file_entity(ptr); };
+//		return viewed::visit(visitor, val);
+//	}
 
 	void FileTreeModelBase::recalculate_page(page_type & page)
 	{
