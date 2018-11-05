@@ -1,10 +1,12 @@
-#include <qtor/sqlite.hpp>
+﻿#include <qtor/sqlite.hpp>
 #include <qtor/sqlite-conv-qtor.hpp>
 #include <qtor/utils.hpp>
 
 #include <boost/range/counting_range.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
+#include <ext/range/pretty_printers.hpp>
+#include <iostream>
 
 namespace qtor::sqlite
 {
@@ -132,6 +134,9 @@ namespace qtor::sqlite
 
 		auto field_info = create_info(meta);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
+
+		using namespace ext::pretty_printers;
+		std::cout << names << std::endl;
 
 		auto batch_range = make_batch_range(meta, names, torrents);
 		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);

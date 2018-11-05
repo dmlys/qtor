@@ -1,4 +1,4 @@
-#include <qtor/TorrentsModel.hpp>
+﻿#include <qtor/TorrentsModel.hpp>
 #include <QtTools/ToolsBase.hpp>
 
 namespace qtor

@@ -1,4 +1,4 @@
-#include <qtor/TorrentListDelegate.hqt>
+﻿#include <qtor/TorrentListDelegate.hqt>
 #include <qtor/TorrentsModel.hpp>
 
 #include <QtCore/QStringBuilder>

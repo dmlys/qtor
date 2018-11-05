@@ -1,6 +1,7 @@
-#pragma once
+﻿#pragma once
 #include <qtor/types.hpp>
 #include <qtor/model_meta.hpp>
+#include <QtCore/QMetaType>
 
 namespace qtor
 {
@@ -105,5 +106,10 @@ namespace qtor
 	public:
 		torrent_file_meta() = default;
 	};
-
 }
+
+Q_DECLARE_METATYPE(      qtor::torrent_file *)
+Q_DECLARE_METATYPE(const qtor::torrent_file *)
+Q_DECLARE_METATYPE(      qtor::torrent_dir  *)
+Q_DECLARE_METATYPE(const qtor::torrent_dir  *)
+Q_DECLARE_METATYPE(qtor::torrent_file_entity)

@@ -125,18 +125,45 @@
 #include <qtor/FileTreeModel.hqt>
 #include <qtor/FileTreeView.hqt>
 #include <QtTools/PlainLabel.hqt>
+#include <QtTools/DateUtils.hpp>
+
+#include <viewed/sfmodel_qtbase.hpp>
+
+__attribute__((constructor))
+void premain()
+{
+	using namespace std;
+	using namespace qtor;
+
+	QtTools::QtRegisterStdString();
+	//QMetaType::registerComparators<datetime_type>();
+	//QMetaType::registerComparators<duration_type>();
+	QMetaType::registerConverter<qtor::torrent *, const qtor::torrent *>();
+	QMetaType::registerConverter<qtor::torrent_file *, const qtor::torrent_file *>();
+	QMetaType::registerConverter<qtor::torrent_dir *, const qtor::torrent_dir *>();
+}
 
 int main(int argc, char * argv[])
 {
 	using namespace std;
 	using namespace qtor;
 
+	auto now = chrono::system_clock::now();
+	auto var = QVariant::fromValue(now);
+	auto intvar = QVariant::fromValue(12);
+	auto qsvar = QVariant::fromValue(QString("12"));
+
+	cout << qvariant_cast<short int>(qsvar) << endl;
+	cout << QtTools::ToQDateTime(now).toString() << endl;
+	cout << var.toString() << endl;
+	cout << qvariant_cast<std::string>(var) << endl;
+
+	cout << intvar.toString() << endl;
+
+	return 0;
+
 	ext::netlib::socket_stream_init();
 	ext::init_future_library(std::thread::hardware_concurrency());
-
-	QtTools::QtRegisterStdString();
-	QMetaType::registerComparators<datetime_type>();
-	QMetaType::registerComparators<duration_type>();
 
 	Q_INIT_RESOURCE(QtTools);
 	Q_INIT_RESOURCE(qtor_core_resource);
@@ -222,11 +249,11 @@ int main(int argc, char * argv[])
 	qapp.setPalette(palette);
 #endif
 
-	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	source->set_address("bin/data.db"s);
+	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	//source->set_address("bin/data.db"s);
 
-//	auto source = std::make_shared<qtor::transmission::data_source>();
-//	source->set_address("http://melkiy:9091/transmission/rpc"s);
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
 
 	qtor::TransmissionRemoteApp app {std::move(source)};
 	qtor::MainWindow mainWindow;

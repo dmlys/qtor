@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -14,6 +14,7 @@
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 #include <QtTools/ToolsBase.hpp>
+#include <QtTools/DateUtils.hpp>
 
 namespace qtor
 {
@@ -120,5 +121,5 @@ namespace qtor
 //Q_DECLARE_METATYPE(qtor::speed_type)
 //Q_DECLARE_METATYPE(qtor::size_type)
 //Q_DECLARE_METATYPE(qtor::string_type);
-Q_DECLARE_METATYPE(qtor::datetime_type);
-Q_DECLARE_METATYPE(qtor::duration_type);
+//Q_DECLARE_METATYPE(qtor::datetime_type);
+//Q_DECLARE_METATYPE(qtor::duration_type);
