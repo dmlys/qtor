@@ -127,7 +127,8 @@
 #include <QtTools/PlainLabel.hqt>
 #include <QtTools/DateUtils.hpp>
 
-#include <viewed/sfmodel_qtbase.hpp>
+#include "VariantStringConverter.hpp"
+
 
 __attribute__((constructor))
 void premain()
@@ -135,7 +136,7 @@ void premain()
 	using namespace std;
 	using namespace qtor;
 
-	QtTools::QtRegisterStdString();
+	//QtTools::QtRegisterStdString();
 	//QMetaType::registerComparators<datetime_type>();
 	//QMetaType::registerComparators<duration_type>();
 	QMetaType::registerConverter<qtor::torrent *, const qtor::torrent *>();
@@ -148,17 +149,28 @@ int main(int argc, char * argv[])
 	using namespace std;
 	using namespace qtor;
 
-	auto now = chrono::system_clock::now();
-	auto var = QVariant::fromValue(now);
-	auto intvar = QVariant::fromValue(12);
-	auto qsvar = QVariant::fromValue(QString("12"));
+	QtTools::register_string_metatype<std::string>();
 
-	cout << qvariant_cast<short int>(qsvar) << endl;
-	cout << QtTools::ToQDateTime(now).toString() << endl;
-	cout << var.toString() << endl;
-	cout << qvariant_cast<std::string>(var) << endl;
+	//auto now = chrono::system_clock::now();
+	//auto dtnow = QDateTime::currentDateTime();
+	//
+	//QVariant dtvar = QVariant::fromValue(dtnow);
+	////cout << dtvar << endl;
+	//cout << dtvar.toString() << endl;
+	//cout << dtnow.toString(Qt::DateFormat::ISODateWithMs) << endl;
+	//cout << dtnow.date().toString(Qt::DateFormat::ISODateWithMs) << endl;
+	//cout << dtnow.time().toString(Qt::DateFormat::ISODateWithMs) << endl;
 
-	cout << intvar.toString() << endl;
+	//auto var = QVariant::fromValue(now);
+	//auto intvar = QVariant::fromValue(12);
+	//auto qsvar = QVariant::fromValue(QString("12"));
+	//
+	//cout << qvariant_cast<short int>(qsvar) << endl;
+	//cout << QtTools::ToQDateTime(now).toString() << endl;
+	//cout << var.toString() << endl;
+	//cout << qvariant_cast<std::string>(var) << endl;
+	//
+	//cout << intvar.toString() << endl;
 
 	return 0;
 
