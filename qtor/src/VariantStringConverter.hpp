@@ -4,6 +4,7 @@
 #include <climits>
 #include <limits>
 #include <string>
+#include <charconv>
 
 #include <ext/itoa.hpp>
 
@@ -13,78 +14,10 @@
 #include <QtCore/QDateTime>
 
 #include <QtTools/ToolsBase.hpp>
+#include <QtTools/DateUtils.hpp>
 
 namespace QtTools
 {
-	template <class String>
-	struct string_qvariant_converters
-	{
-		using string_type = String;
-
-		static QString string_to_qstring(const string_type & str) { return QtTools::ToQString(str); }
-		static string_type qstring_to_string(const QString & str) { return QtTools::FromQString(str); }
-
-		template <class SignedType> static SignedType string_to_signed(const string_type & str);
-		template <class SignedType> static SignedType string_to_unsigned(const string_type & str);
-		template <class IntegralType> static string_type integral_to_string(IntegralType val);
-
-		static auto string_to_short(const string_type & str) { return string_to_signed<signed short>(str); }
-		static auto string_to_ushort(const string_type & str) { return string_to_unsigned<unsigned short>(str); }
-		static auto string_to_int(const string_type & str) { return string_to_signed<signed int>(str); }
-		static auto string_to_uint(const string_type & str) { return string_to_unsigned<unsigned int>(str); }
-		static auto string_to_long(const string_type & str) { return string_to_signed<signed long>(str); }
-		static auto string_to_ulong(const string_type & str) { return string_to_unsigned<unsigned long>(str); }
-		static auto string_to_longlong(const string_type & str) { return string_to_signed<signed long long>(str); }
-		static auto string_to_ulonglong(const string_type & str) { return string_to_unsigned<unsigned long long>(str); }
-
-		static auto short_to_string(signed short val) { return integral_to_string(val); }
-		static auto ushort_to_string(unsigned short val) { return integral_to_string(val); }
-		static auto int_to_string(signed int val) { return integral_to_string(val); }
-		static auto uint_to_string(unsigned int val) { return integral_to_string(val); }
-		static auto long_to_string(signed long val) { return integral_to_string(val); }
-		static auto ulong_to_string(unsigned long val) { return integral_to_string(val); }
-		static auto longlong_to_string(signed long long val) { return integral_to_string(val); }
-		static auto ulonglong_to_string(unsigned long long val) { return integral_to_string(val); }
-	};
-
-	template <class String>
-	template <class SignedType>
-	SignedType string_qvariant_converters<String>::string_to_signed(const string_type & str)
-	{
-		static_assert(std::is_signed_v<SignedType>);
-
-		auto * first = str.data();
-		auto * last = first + str.size();
-
-		long long result = std::strtoll(first, &last, 10);
-		constexpr long long min = std::numeric_limits<SignedType>::min();
-		constexpr long long max = std::numeric_limits<SignedType>::max();
-		return static_cast<SignedType>(std::clamp(min, result, max));
-	}
-
-	template <class String>
-	template <class UnsignedType>
-	UnsignedType string_qvariant_converters<String>::string_to_unsigned(const string_type & str)
-	{
-		static_assert(std::is_unsigned_v<UnsignedType>);
-
-		auto * first = str.data();
-		auto * last = first + str.size();
-
-		unsigned long long result = std::strtoull(first, &last, 10);
-		constexpr unsigned long long min = std::numeric_limits<UnsignedType>::min();
-		constexpr unsigned long long max = std::numeric_limits<UnsignedType>::max();
-		return static_cast<UnsignedType>(std::clamp(min, result, max));
-	}
-
-	template <class String>
-	template <class IntegralType>
-	auto string_qvariant_converters<String>::integral_to_string(IntegralType val) -> string_type
-	{
-		ext::itoa_buffer<IntegralType> buffer;
-		return string_type(ext::itoa(val, buffer), std::end(buffer));
-	}
-
 	namespace register_helpers
 	{
 		template <class SignedType, class StringType>
@@ -120,11 +53,71 @@ namespace QtTools
 			return StringType(first, last);
 		}
 
-		template <class StringType>
-		double to_double(const StringType & str)
+		template <class Double, class StringType>
+		Double to_double(const StringType & str)
 		{
 			const char * first = str.data();
-			return std::strtod(first, nullptr);
+			if constexpr (std::is_same_v<Double, float>)
+				return std::strtof(first, nullptr);
+			else if constexpr (std::is_same_v<Double, double>)
+				return std::strtod(first, nullptr);
+		    else if constexpr (std::is_same_v<Double, long double>)
+				return std::strtold(first, nullptr);
+		}
+
+		template <class StringType, class FloatType>
+		StringType from_double(FloatType val)
+		{
+			QString qstr;
+			qstr.setNum(val);
+			return FromQString(qstr);
+		}
+
+		template <class StringType, class DateType>
+		StringType from_datetime(const DateType & datetime)
+		{
+			if constexpr (std::is_same_v<DateType, std::chrono::system_clock::time_point>)
+			{
+				auto qdt = ToQDateTime(datetime);
+				auto qstr = qdt.toString(Qt::DateFormat::ISODateWithMs);
+				return FromQString(qstr);
+			}
+			else
+			{
+				auto qstr = datetime.toString(Qt::DateFormat::ISODateWithMs);
+				return FromQString(qstr);
+			}
+		}
+
+		template <class DateType, class StringType>
+		DateType to_datetime(const StringType & str)
+		{
+			if constexpr (std::is_same_v<DateType, std::chrono::system_clock::time_point>)
+			{
+				auto qstr = ToQString(str);
+				return ToStdChrono(QDateTime::fromString(qstr, Qt::DateFormat::ISODateWithMs));
+			}
+			else
+			{
+				auto qstr = ToQString(str);
+				return DateType::fromString(qstr, Qt::DateFormat::ISODateWithMs);
+			}
+		}
+
+		template <class StringType>
+		QByteArray to_bytearray(const StringType & str)
+		{
+			const char * first = str.data();
+			int size = static_cast<int>(str.size());
+			return QByteArray(first, size);
+		}
+
+		template <class StringType>
+		StringType from_bytearray(const QByteArray & val)
+		{
+			const char * first = val.data();
+			const char * last = first + val.size();
+			return StringType(first, last);
 		}
 	}
 
@@ -132,6 +125,7 @@ namespace QtTools
 	void register_string_metatype()
 	{
 		using string_type = String;
+		using namespace register_helpers;
 
 		qRegisterMetaType<string_type>();
 		QMetaType::registerComparators<string_type>();
@@ -139,12 +133,21 @@ namespace QtTools
 		QMetaType::registerConverter<string_type, QString>(static_cast<QString(*)(const string_type & )>(ToQString));
 		QMetaType::registerConverter<QString, string_type>(static_cast<string_type(*)(const QString & )>(FromQString<string_type>));
 
-		using register_helpers::to_integral;
-		using register_helpers::from_integral;
+		QMetaType::registerConverter<string_type, QByteArray>(to_bytearray<string_type>);
+		QMetaType::registerConverter<QByteArray, string_type>(from_bytearray<string_type>);
 
-        #define REGISTER_NUM_CONV(type) \
-	        QMetaType::registerConverter<string_type, type>(static_cast<type (*)(const string_type &)>(to_integral<type, string_type>)); \
-	        QMetaType::registerConverter<type, string_type>(static_cast<string_type(*)(type )>(from_integral<string_type, type>));
+		#define REGISTER_NUM_CONV(type) \
+	        QMetaType::registerConverter<string_type, type>(to_integral<type, string_type>); \
+	        QMetaType::registerConverter<type, string_type>(from_integral<string_type, type>);
+
+		#define REGISTER_FLOAT_CONV(type) \
+			QMetaType::registerConverter<string_type, type>(to_double<type, string_type>); \
+			QMetaType::registerConverter<type, string_type>(from_double<string_type, type>);
+
+		#define REGISTER_DATE_CONV(type) \
+			QMetaType::registerConverter<string_type, type>(to_datetime<type, string_type>); \
+			QMetaType::registerConverter<type, string_type>(from_datetime<string_type, type>);
+
 
 		REGISTER_NUM_CONV(signed short);
 		REGISTER_NUM_CONV(unsigned short);
@@ -154,5 +157,19 @@ namespace QtTools
 		REGISTER_NUM_CONV(unsigned long);
 		REGISTER_NUM_CONV(signed long long);
 		REGISTER_NUM_CONV(unsigned long long);
+
+		REGISTER_FLOAT_CONV(float);
+		REGISTER_FLOAT_CONV(double);
+		//REGISTER_FLOAT_CONV(long double);
+
+		REGISTER_DATE_CONV(QDateTime);
+		REGISTER_DATE_CONV(QDate);
+		REGISTER_DATE_CONV(QTime);
+		REGISTER_DATE_CONV(std::chrono::system_clock::time_point);
+
+
+		#undef REGISTER_NUM_CONV
+		#undef REGISTER_FLOAT_CONV
+		#undef REGISTER_DATE_CONV
 	}
 }
