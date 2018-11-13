@@ -125,9 +125,10 @@ namespace qtor
 		//virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
 		virtual QVariant GetItem(const QModelIndex & index) const override;
 		virtual QVariant GetEntity(const QModelIndex & idx) const override;
+		virtual int FullRowCount(const QModelIndex & parent = QModelIndex()) const override;
 
 	public:
-		using base_type::base_type;
+		FileTreeModelBase(QObject * parent = nullptr);
 	};
 
 

@@ -94,7 +94,7 @@ namespace qtor
 		};
 
 	public:
-		virtual  index_type item_count()               const noexcept;
+		virtual  index_type item_count()                const noexcept;
 		virtual    unsigned item_type(index_type index) const noexcept;
 		virtual string_type item_name(index_type index) const;
 

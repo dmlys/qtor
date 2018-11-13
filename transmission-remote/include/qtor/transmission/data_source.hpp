@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <qtor/abstract_data_source.hpp>
 #include <ext/netlib/socket_rest_supervisor.hpp>
 
@@ -23,8 +23,13 @@ namespace transmission
 	protected:
 		class request_base;
 		class subscription_base;
+
+		template <class type>
+		using request = base_type::request<type, request_base>;
+
 		class torrent_subscription;
 		class torrent_request;
+		class torrent_list_request;
 
 	protected:
 		void emit_signal(event_sig & sig, event_type ev) override;
@@ -61,7 +66,7 @@ namespace transmission
 		virtual ext::future<void> purge_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
 
 	public:
-		virtual ext::future<torrent_file_list> get_torrent_files(torrent_id_type id) override { return ext::make_ready_future<torrent_file_list>({}); }
+		virtual ext::future<torrent_file_list> get_torrent_files(torrent_id_type id) override;
 		virtual ext::future<torrent_peer_list> get_torrent_peers(torrent_id_type id) override { return ext::make_ready_future<torrent_peer_list>({}); }
 
 	public:

@@ -39,6 +39,37 @@ namespace qtor::sqlite
 		}
 	}
 
+	class torrent_meta_adapter : public model_meta
+	{
+	public:
+		model_meta * wrapped;
+
+	public:
+
+		// model_meta interface
+	public:
+		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
+		unsigned item_type(index_type index) const noexcept override;
+		string_type item_name(index_type index) const override;
+	};
+
+	unsigned torrent_meta_adapter::item_type(index_type index) const noexcept
+	{
+		if (index < wrapped->item_count())
+			return wrapped->item_type(index);
+
+		return String;
+	}
+
+	string_type torrent_meta_adapter::item_name(index_type index) const
+	{
+		if (index < wrapped->item_count())
+			return wrapped->item_name(index);
+
+		return "torrent_id";
+	}
+
+
 	static auto create_info(const model_meta & meta)
 	{
 		auto make_info = [&meta](auto index)
@@ -81,7 +112,7 @@ namespace qtor::sqlite
 		for (auto & field : create_info(meta))
 		{
 			auto name = field.name;
-			auto type = field.type;
+			auto type = field.sqltype;
 			sqlite3yaw::escape_sql_name(name, cmd);
 
 			cmd += ' ';
@@ -135,41 +166,9 @@ namespace qtor::sqlite
 		auto field_info = create_info(meta);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 
-		using namespace ext::pretty_printers;
-		std::cout << names << std::endl;
-
 		auto batch_range = make_batch_range(meta, names, torrents);
 		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
 	}
-
-	/*
-	struct conv_type
-	{
-		unsigned idx = 0;
-		sqlite3yaw::statement * stmt;
-		torrent * torr;
-
-#define OPERATOR(Type)                                              \
-		void operator()(torrent & (torrent::*pmf)(Type val))        \
-		{                                                           \
-			Type val;                                               \
-			sqlite3yaw::get(*stmt, idx++, val);                     \
-			(torr->*pmf)(std::move(val));                           \
-		}                                                           \
-
-		OPERATOR(string_type);
-		OPERATOR(uint64_type);
-		OPERATOR(double);
-		OPERATOR(bool);
-		OPERATOR(datetime_type);
-		OPERATOR(duration_type);
-
-#undef OPERATOR
-
-		conv_type(sqlite3yaw::statement & stmt, torrent & torr)
-			: stmt(&stmt), torr(&torr) {}
-	};
-	*/
 
 	static torrent load_torrent(sqlite3yaw::statement & stmt, const std::vector<field_info> & meta)
 	{
@@ -241,4 +240,18 @@ namespace qtor::sqlite
 		torrent_list result(recs.begin(), recs.end());
 		return result;
 	}
+
+//	void save_torrent_files(sqlite3yaw::session & ses, const torrent_file_list & files)
+//	{
+//		using namespace std;
+//		const auto & meta = torrent_files_meta();
+//		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
+
+//		auto field_info = create_info(meta);
+//		//field_info.push_back({"torrent_id"s, "TEXT"sv, model_meta::String, field_info.size()});
+//		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
+
+//		auto batch_range = make_batch_range(meta, names, files);
+//		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
+//	}
 }

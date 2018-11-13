@@ -1,4 +1,5 @@
-#include <qtor/transmission/requests.hpp>
+﻿#include <qtor/transmission/requests.hpp>
+#include <ext/range/combine.hpp>
 #include <yaml-cpp/yaml.h>
 
 namespace YAML
@@ -88,6 +89,15 @@ namespace transmission
 		// files stats
 		static const std::string Files = "files";
 		static const std::string FileStats = "fileStats";
+
+		// files parts
+		static const std::string BytesCompleted = "bytesCompleted";
+		static const std::string Length = "length";
+		//static const std::string Name = "name";
+
+		// fileStats parts
+		static const std::string Wanted = "wanted";
+		static const std::string Priority = "priority";
 
 		// peers
 		static const std::string Peers = "peers";
@@ -366,16 +376,35 @@ namespace transmission
 		if (res != "success")
 			throw std::runtime_error(fmt::format("Bad response: " + res));
 
-		YAML::Node files = node[Arguments][Torrents][Files];
-		YAML::Node fileStats = node[Arguments][Torrents][FileStats];
+		YAML::Node files = node[Arguments][Torrents][0][Files];
+		YAML::Node fileStats = node[Arguments][Torrents][0][FileStats];
 
+		for (auto [file_node, file_stat_node] : ext::combine(files, fileStats))
+		{
+			torrent_file file;
 
+			file.filename = file_node[Name].as<filepath_type>();
+			file.total_size = file_node[Length].as<size_type>();
+			file.total_size = file_stat_node[BytesCompleted].as<size_type>();
+			file.wanted = file_stat_node[Wanted].as<bool_type>();
+			file.priority = file_stat_node[Priority].as<int_type>();
 
+			result.push_back(std::move(file));
+		}
+
+		return result;
 	}
 
-	static torrent_file_list parse_torrent_file_list(const std::string & json)
+	torrent_file_list parse_torrent_file_list(const std::string & json)
 	{
+		auto doc = YAML::Load(json);
+		return parse_torrent_file_list(doc);
+	}
 
+	torrent_file_list parse_torrent_file_list(std::istream & json_source)
+	{
+		auto doc = YAML::Load(json_source);
+		return parse_torrent_file_list(doc);
 	}
 
 	torrent_list parse_torrent_list(const std::string & json)

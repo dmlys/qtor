@@ -1,4 +1,4 @@
-#include <csignal>
+﻿#include <csignal>
 #include <iostream>
 
 #include <sqlite3yaw.hpp>
@@ -17,54 +17,9 @@
 
 std::string g_sqlite_path;
 std::string g_url;
-
-
-qtor::torrent_list load_torrents()
-{
-	using namespace std::chrono_literals;
-
-	ext::library_logger::stream_logger logger {std::clog};
-
-	qtor::transmission::data_source source;
-	source.set_address(g_url);
-	source.set_logger(&logger);
-	source.set_timeout(10s);
-
-	if (not source.connect().get())
-	{
-		std::exit(EXIT_FAILURE);
-	}
-	
-	try
-	{
-		auto torrents = source.get_torrents().get();
-		source.disconnect().get();
-		return torrents;
-	}
-	catch (std::exception & ex)
-	{
-		std::cerr << ex.what() << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
-}
-
-void save_torrents(qtor::torrent_list torrents)
-{
-	try
-	{
-		sqlite3yaw::session ses;
-		ses.open(g_sqlite_path);
-
-		qtor::sqlite::drop_torrents_table(ses);
-		qtor::sqlite::create_torrents_table(ses);
-		qtor::sqlite::save_torrents(ses, torrents);
-	}
-	catch (std::exception & ex)
-	{
-		std::cerr << "sqlite failure: " << ex.what() << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
-}
+ext::library_logger::stream_logger g_logger {std::clog};
+qtor::transmission::data_source g_source;
+sqlite3yaw::session g_session;
 
 
 int main(int argc, char ** argv)
@@ -94,10 +49,36 @@ int main(int argc, char ** argv)
 		return EXIT_FAILURE;
 	}
 
+	using namespace std;
 	ext::init_future_library();
 	ext::netlib::socket_stream_init();
-	auto torrents = load_torrents();
-	save_torrents(std::move(torrents));
 
+	g_session.open(g_sqlite_path);
+
+	g_source.set_address(g_url);
+	g_source.set_logger(&g_logger);
+	g_source.set_timeout(10s);
+
+	if (not g_source.connect().get())
+	{
+		return EXIT_FAILURE;
+	}
+
+	auto torrents = g_source.get_torrents().get();
+	qtor::sqlite::drop_torrents_table(g_session);
+	qtor::sqlite::drop_torrent_files_table(g_session);
+	qtor::sqlite::create_torrents_table(g_session);
+	qtor::sqlite::create_torrent_files_table(g_session);
+
+	qtor::sqlite::save_torrents(g_session, torrents);
+
+	for (auto & tor : torrents)
+	{
+		auto id = tor.id();
+		auto files = g_source.get_torrent_files(id);
+
+	}
+
+	g_source.disconnect().get();
 	return EXIT_SUCCESS;
 }

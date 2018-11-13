@@ -129,6 +129,14 @@ namespace qtor
 		return QVariant::fromValue(viewed::visit(visitor, val));
 	}
 
+	int FileTreeModelBase::FullRowCount(const QModelIndex & idx) const
+	{
+		if (not idx.isValid()) return 0;
+
+		const auto * page = get_page(idx);
+		return page->children.size();
+	}
+
 	void FileTreeModelBase::recalculate_page(page_type & page)
 	{
 		constexpr size_type zero = 0;
@@ -148,6 +156,13 @@ namespace qtor
 	void FileTreeModelBase::FilterBy(QString expr)
 	{
 		filter_by(expr);
+	}
+
+	FileTreeModelBase::FileTreeModelBase(QObject * parent)
+	    : base_type(parent)
+	{
+		m_meta = std::make_shared<torrent_file_meta>();
+		m_fmt = std::make_shared<formatter>();
 	}
 
 	FileTreeModel::FileTreeModel(QObject * parent /* = nullptr */)

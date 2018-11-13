@@ -1,8 +1,9 @@
-#include <qtor/transmission/data_source.hpp>
+﻿#include <qtor/transmission/data_source.hpp>
 #include <qtor/transmission/requests.hpp>
 
 #include <ext/netlib/parse_url.hpp>
 #include <ext/netlib/http_parser.hpp>
+#include <ext/library_logger/logging_macros.hpp>
 #include <fmt/format.h>
 
 namespace qtor {
@@ -197,43 +198,9 @@ namespace transmission
 		}
 	}
 
-	//template <class Request, class Response, >
-	//class template_request : public data_source::request<std::invoke_result_t<Response, std::string>>
-	//{
-	//public:
-	//	using request_type = Request;
-	//	using response_type = Response;
-
-	//public:
-	//	torrent_id_list m_request_idx;
-	//	request_type m_requester;
-	//	response_type m_responser;
-
-	//public:
-	//	auto request_command() -> std::string override 
-	//	{
-	//		return m_requester(m_request_idx); 
-	//	}
-
-	//	auto parse_response(std::string body) override 
-	//	{
-	//		auto res = m_responser(std::move(body));
-	//		set_value(std::move(tlist));
-	//	}
-
-	//public:
-
-	//};
-
-	//template <class Request, class Response>
-	//static auto make_request(Request request, Response response)
-	//{
-
-	//}
-
-	class data_source::torrent_request : public request<torrent_list, request_base>
+	class data_source::torrent_request : public request<torrent_list>
 	{
-		typedef data_source::request<torrent_list, request_base> base_type;
+		typedef data_source::request<torrent_list> base_type;
 
 	public:
 		torrent_id_list m_request_idx;
@@ -248,6 +215,27 @@ namespace transmission
 		{
 			auto tlist = parse_torrent_list(body);
 			set_value(std::move(tlist));
+		}
+	};
+
+	class data_source::torrent_list_request : public request<torrent_file_list>
+	{
+		using base_type = data_source::request<torrent_file_list>;
+
+	public:
+		torrent_id_type m_request_id;
+
+	public:
+		auto request_command() -> std::string override
+		{
+			auto cmd = make_torrent_files_get_command(m_request_id);
+			return cmd;
+		}
+
+		void parse_response(std::string body) override
+		{
+			auto list = parse_torrent_file_list(body);
+			set_value(std::move(list));
 		}
 	};
 
@@ -279,13 +267,20 @@ namespace transmission
 	{
 		auto obj = ext::make_intrusive<torrent_request>();
 		obj->m_request_idx = std::move(idx);
-		return this->add_request(obj);
+		return this->add_request(std::move(obj));
 	}
 
 	auto data_source::subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle
 	{
 		auto obj = ext::make_intrusive<torrent_subscription>();
 		obj->m_handler = std::move(handler);
-		return this->add_subscription(obj);
+		return this->add_subscription(std::move(obj));
+	}
+
+	auto data_source::get_torrent_files(torrent_id_type idx) -> ext::future<torrent_file_list>
+	{
+		auto obj = ext::make_intrusive<torrent_list_request>();
+		obj->m_request_id = std::move(idx);
+		return this->add_request(std::move(obj));
 	}
 }}

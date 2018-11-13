@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include <vector>
 #include <istream>
@@ -21,6 +21,7 @@ namespace qtor {
 namespace transmission
 {
 	struct as_stdstring_t {} constexpr as_stdstring;
+	struct as_ints_t {} constexpr as_ints;
 
 	template <class Range, std::enable_if_t<ext::is_range_of<Range, QString>::value, int> = 0>
 	inline auto operator |(const Range & range, as_stdstring_t) noexcept
@@ -28,10 +29,22 @@ namespace transmission
 		return boost::adaptors::transform(range, [](const auto & str) { return FromQString(str); });
 	}
 
-	template <class Range, std::enable_if_t<not ext::is_range_of<Range, QString>::value, int> = 0>
+	template <class Range, std::enable_if_t<ext::is_range_of<Range, std::string>::value, int> = 0>
 	inline decltype(auto) operator |(const Range & range, as_stdstring_t) noexcept
 	{
 		return range;
+	}
+	
+	template <class Range, std::enable_if_t<ext::is_range_of_v<Range, QString>, int> = 0>
+	inline auto operator |(const Range & range, as_ints_t) noexcept
+	{
+		return boost::adaptors::transform(range, [](const QString & qstr) { return qstr.toLong(); });
+	}
+
+	template <class Range, std::enable_if_t<not ext::is_range_of_v<Range, QString>, int> = 0>
+	inline auto operator |(const Range & range, as_ints_t) noexcept
+	{
+		return boost::adaptors::transform(range, [](const auto & str) { return std::stol(str); });
 	}
 
 
@@ -145,7 +158,7 @@ namespace transmission
 		if (boost::empty(ids))
 			return fmt::format(request_template_all, command, json_join(fields));
 		else
-			return fmt::format(request_template, command, json_join(fields), json_join(ids | as_stdstring));
+			return fmt::format(request_template, command, json_join(fields), json_join(ids | as_ints));
 	}
 
 	template <class IdsRange, class FieldsRange>
@@ -161,8 +174,17 @@ namespace transmission
 	}
 
 
+	inline std::string make_torrent_files_get_command(const torrent_id_type & id)
+	{
+		auto ids = {id};
+		return make_torrent_get_command(ids, request_torrent_files_fields);
+	}
+
 	torrent_list parse_torrent_list(const std::string & json);
 	torrent_list parse_torrent_list(std::istream & json_stream);
+
+	torrent_file_list parse_torrent_file_list(const std::string & json);
+	torrent_file_list parse_torrent_file_list(std::istream & json_source);
 
 	session_stat parse_statistics(const std::string & json);
 	session_stat parse_statistics(std::istream & json_stream);
