@@ -1,5 +1,6 @@
-#include <qtor/FileTreeView.hqt>
+﻿#include <qtor/FileTreeView.hqt>
 #include <qtor/MainWindow.hqt>
+#include <qtor/FormattedDelegate.hqt>
 
 #include <QtGui/QClipboard>
 #include <QtWidgets/QShortcut>
@@ -264,9 +265,8 @@ namespace qtor
 		m_treeView->setModel(model);
 		m_rowFilter->clear();
 		
-		//int nameCol = model->FindColumn(torrent::Name);
-		//m_treeView->setItemDelegateForColumn(nameCol, m_nameDelegate);
-		m_treeView->setItemDelegateForColumn(0, m_nameDelegate);
+		auto name_col = model->MetaToViewIndex(torrent_file_meta::FileName);
+		m_treeView->setItemDelegateForColumn(name_col, m_nameDelegate);
 
 		//connect(model, &QAbstractItemModel::layoutChanged, this, &FileTreeView::ModelChanged);
 		//connect(model, &QAbstractItemModel::modelReset, this, &FileTreeView::ModelChanged);
@@ -372,7 +372,9 @@ namespace qtor
 		m_treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 		m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);		
 
-		m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);		
+		m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);
+		auto * delegate = new qtor::FormattedDelegate(this);
+		m_treeView->setItemDelegate(delegate);
 
 		m_verticalLayout->addWidget(m_rowFilter);
 		m_verticalLayout->addWidget(m_treeView);

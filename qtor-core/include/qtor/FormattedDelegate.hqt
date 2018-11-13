@@ -1,7 +1,8 @@
-#pragma once
+﻿#pragma once
 #include <QtTools/Delegates/StyledDelegate.hpp>
 #include <qtor/formatter.hpp>
 #include <qtor/model_meta.hpp>
+#include <qtor/AbstractItemModel.hqt>
 
 namespace qtor
 {
@@ -15,7 +16,7 @@ namespace qtor
 	protected:
 		mutable qtor::formatter  * m_fmt   = nullptr;
 		mutable qtor::model_meta * m_meta  = nullptr;
-		mutable const QAbstractItemModel * m_model = nullptr;
+		mutable const AbstractItemModel * m_model = nullptr;
 		mutable QModelIndex m_cur_idx;
 
 	protected:
