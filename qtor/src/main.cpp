@@ -136,29 +136,6 @@ int main(int argc, char * argv[])
 	QtTools::QtRegisterStdString();
 	QtTools::QtRegisterStdChronoTypes();
 
-	auto now = chrono::system_clock::now();
-	auto dtnow = QDateTime::currentDateTime();
-
-	QVariant dtvar = QVariant::fromValue(dtnow);
-	//cout << dtvar << endl;
-	//cout << dtvar.toString() << endl;
-	//cout << dtnow.toString(Qt::DateFormat::ISODateWithMs) << endl;
-	//cout << dtnow.date().toString(Qt::DateFormat::ISODateWithMs) << endl;
-	//cout << dtnow.time().toString(Qt::DateFormat::ISODateWithMs) << endl;
-
-	auto var = QVariant::fromValue(now);
-	auto intvar = QVariant::fromValue(12);
-	auto qsvar = QVariant::fromValue(QString("12"));
-
-	//cout << qvariant_cast<short int>(qsvar) << endl;
-	//cout << QtTools::ToQDateTime(now).toString() << endl;
-	cout << var.toString() << endl;
-	//cout << qvariant_cast<std::string>(var) << endl;
-
-	//cout << intvar.toString() << endl;
-
-	return 0;
-
 	ext::netlib::socket_stream_init();
 	ext::init_future_library(std::thread::hardware_concurrency());
 

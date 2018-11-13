@@ -88,20 +88,20 @@ namespace transmission
 	
 		if (first == last) return;
 	
-		auto sepr = ext::as_literal(", ");
-		auto quote = ext::as_literal("\"");
-		auto val = ext::as_literal(*first);
+		auto sepr = ext::str_view(", ");
+		auto quote = ext::str_view("\"");
+		const auto & val = *first;
 	
 		ext::append(cont, begin(quote), end(quote));
-		escape_json_string(val, cont);
+		escape_json_string(ext::str_view(val), cont);
 		ext::append(cont, begin(quote), end(quote));
 	
 		for (++first; first != last; ++first)
 		{
-			val = ext::as_literal(*first);
+			const auto & val = *first;
 			ext::append(cont, begin(sepr), end(sepr));
 			ext::append(cont, begin(quote), end(quote));
-			escape_json_string(val, cont);
+			escape_json_string(ext::str_view(val), cont);
 			ext::append(cont, begin(quote), end(quote));
 		}
 	}
@@ -120,7 +120,7 @@ namespace transmission
 	
 		if (first == last) return;
 	
-		auto sepr = ext::as_literal(", ");
+		auto sepr = ext::str_view(", ");
 		ext::append(cont, ext::itoa(*first, buffer), bufend);
 	
 		for (++first; first != last; ++first)
