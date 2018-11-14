@@ -15,11 +15,11 @@ CppApplication
 	Depends { name: "transmission-remote" }
 
 	cpp.cxxLanguageVersion : "c++17"
-	cpp.defines: project.additionalDefines
-	cpp.includePaths: project.additionalIncludePaths
-	cpp.systemIncludePaths: project.additionalSystemIncludePaths
 	cpp.cxxFlags: project.additionalCxxFlags
 	cpp.driverFlags: project.additionalDriverFlags
+	cpp.defines: project.additionalDefines
+	cpp.systemIncludePaths: project.additionalSystemIncludePaths
+	cpp.includePaths: project.additionalIncludePaths
 	cpp.libraryPaths: project.additionalLibraryPaths
 
 	cpp.dynamicLibraries: ["yaml-cpp", "z", "stdc++fs", "ssl", "crypto", "sqlite3", "boost_regex", "boost_system", "boost_program_options", "fmt"]

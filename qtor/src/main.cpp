@@ -128,6 +128,9 @@
 #include <QtTools/PlainLabel.hqt>
 #include <QtTools/DateUtils.hpp>
 
+#include <QtXml/QtXml>
+#include <QtXmlPatterns/QXmlFormatter>
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
