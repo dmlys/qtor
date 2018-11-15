@@ -77,15 +77,15 @@ namespace qtor
 	class model_accessor<torrent_file> : public model_meta
 	{
 	public:
-		virtual any_type get_item(const torrent_file & item, int index) const = 0;
-		virtual any_type get_item(const torrent_dir &  item, int index) const = 0;
-		virtual any_type get_item(const torrent_file_entity & item, int index) const = 0;
+		virtual any_type get_item(const torrent_file & item, index_type index) const = 0;
+		virtual any_type get_item(const torrent_dir &  item, index_type index) const = 0;
+		virtual any_type get_item(const torrent_file_entity & item, index_type index) const = 0;
 	};
 
 	class torrent_file_meta : public model_accessor<torrent_file>
 	{
 	public:
-		enum : unsigned
+		enum : index_type
 		{
 			FileName,
 			FilePath,
@@ -107,9 +107,9 @@ namespace qtor
 		virtual string_type item_name(index_type index) const          override;
 
 	public:
-		virtual any_type get_item(const torrent_file & item, int index) const override;
-		virtual any_type get_item(const torrent_dir &  item, int index) const override;
-		virtual any_type get_item(const torrent_file_entity & item, int index) const override;
+		virtual any_type get_item(const torrent_file & item, index_type index) const override;
+		virtual any_type get_item(const torrent_dir &  item, index_type index) const override;
+		virtual any_type get_item(const torrent_file_entity & item, index_type index) const override;
 
 	public:
 		torrent_file_meta() = default;

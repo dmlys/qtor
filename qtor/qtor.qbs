@@ -3,7 +3,7 @@ import qbs
 CppApplication
 {
 	Depends { name: "cpp" }
-	Depends { name: "Qt"; submodules: ["core", "gui", "widgets"] }
+	Depends { name: "Qt"; submodules: ["core", "gui", "widgets", "svg"] }
 
 	Depends { name: "netlib" }
 	Depends { name: "extlib" }

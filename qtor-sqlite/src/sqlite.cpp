@@ -39,32 +39,120 @@ namespace qtor::sqlite
 		}
 	}
 
-	class torrent_meta_adapter : public model_meta
+	template <class Type>
+	class torrent_meta_adapter : public model_accessor<Type>
 	{
-	public:
-		model_meta * wrapped;
+		using base_type = model_accessor<Type>;
 
 	public:
+		using typename base_type::index_type;
+		using typename base_type::any_type;
+
+	public:
+		const model_accessor<Type> * wrapped;
+		torrent_id_type torrent_id;
 
 		// model_meta interface
 	public:
 		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
-		unsigned item_type(index_type index) const noexcept override;
-		string_type item_name(index_type index) const override;
+		virtual unsigned item_type(index_type index) const noexcept override;
+		virtual string_type item_name(index_type index) const override;
+		virtual any_type get_item(const Type & item, index_type index) const override;
+
+	public:
+		torrent_meta_adapter(const model_accessor<Type> & wrapped, torrent_id_type id)
+		    : wrapped(&wrapped), torrent_id(std::move(id)) {}
 	};
 
-	unsigned torrent_meta_adapter::item_type(index_type index) const noexcept
-	{
-		if (index == 0) return String;
+	/// constructor template deduction guide
+	template <class Type>
+	torrent_meta_adapter(const model_accessor<Type> & wrapped, torrent_id_type) -> torrent_meta_adapter<Type>;
 
-		return wrapped->item_type(index + 1);
+	template <>
+	class torrent_meta_adapter<torrent_file> : public model_accessor<torrent_file>
+	{
+		using base_type = model_accessor<torrent_file>;
+
+	public:
+		using typename base_type::index_type;
+		using typename base_type::any_type;
+
+	public:
+		const model_accessor<torrent_file> * wrapped;
+		torrent_id_type torrent_id;
+
+	public:
+		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
+		virtual unsigned item_type(index_type index) const noexcept override;
+		virtual string_type item_name(index_type index) const override;
+
+		virtual any_type get_item(const torrent_file & item, index_type index) const override;
+		virtual any_type get_item(const torrent_dir & item, index_type index) const override;
+		virtual any_type get_item(const torrent_file_entity & item, index_type index) const override;
+
+	public:
+		torrent_meta_adapter(const model_accessor<torrent_file> & wrapped, torrent_id_type id)
+		    : wrapped(&wrapped), torrent_id(std::move(id)) {}
+	};
+
+
+	template <class Type>
+	unsigned torrent_meta_adapter<Type>::item_type(index_type index) const noexcept
+	{
+		if (index == 0) return model_meta::String;
+
+		return wrapped->item_type(index - 1);
 	}
 
-	string_type torrent_meta_adapter::item_name(index_type index) const
+	template <class Type>
+	string_type torrent_meta_adapter<Type>::item_name(index_type index) const
 	{
 		if (index == 0) return "torrent_id";
 
-		return wrapped->item_name(index + 1);
+		return wrapped->item_name(index - 1);
+	}
+
+	template <class Type>
+	auto torrent_meta_adapter<Type>::get_item(const Type & item, index_type index) const -> any_type
+	{
+		if (index == 0) return torrent_id;
+
+		return wrapped->get_item(item, index - 1);
+	}
+
+	unsigned torrent_meta_adapter<torrent_file>::item_type(index_type key) const noexcept
+	{
+		if (key == 0) return model_meta::String;
+
+		return wrapped->item_type(key - 1);
+	}
+
+	string_type torrent_meta_adapter<torrent_file>::item_name(index_type key) const
+	{
+		if (key == 0) return "torrent_id";
+
+		return wrapped->item_name(key - 1);
+	}
+
+	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_file & item, index_type key) const -> any_type
+	{
+		if (key == 0) return torrent_id;
+
+		return wrapped->get_item(item, key - 1);
+	}
+
+	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_dir & item, index_type key) const -> any_type
+	{
+		if (key == 0) return torrent_id;
+
+		return wrapped->get_item(item, key - 1);
+	}
+
+	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_file_entity & item, index_type key) const -> any_type
+	{
+		if (key == 0) return torrent_id;
+
+		return wrapped->get_item(item, key - 1);
 	}
 
 
@@ -86,13 +174,13 @@ namespace qtor::sqlite
 		return std::vector(fields.begin(), fields.end());
 	}
 
-	const model_meta & torrents_meta()
+	const model_accessor<sparse_container> & torrents_meta()
 	{
 		static const qtor::torrent_meta meta;
 		return meta;
 	}
 
-	const model_meta & torrent_files_meta()
+	const model_accessor<torrent_file> & torrent_files_meta()
 	{
 		static const qtor::torrent_file_meta meta;
 		return meta;
@@ -239,11 +327,13 @@ namespace qtor::sqlite
 		return result;
 	}
 
-//	void save_torrent_files(sqlite3yaw::session & ses, const torrent_file_list & files)
-//	{
-//		using namespace std;
-//		const auto & meta = torrent_files_meta();
-//		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
+	void save_torrent_files(sqlite3yaw::session & ses, const torrent_file_list & files)
+	{
+		using namespace std;
+		const auto & meta = torrent_files_meta();
+		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
+
+		torrent_meta_adapter<torrent_file> adapter(meta, "");
 
 //		auto field_info = create_info(meta);
 //		//field_info.push_back({"torrent_id"s, "TEXT"sv, model_meta::String, field_info.size()});
@@ -251,5 +341,5 @@ namespace qtor::sqlite
 
 //		auto batch_range = make_batch_range(meta, names, files);
 //		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
-//	}
+	}
 }

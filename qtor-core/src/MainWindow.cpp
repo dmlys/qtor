@@ -1,5 +1,8 @@
 #include <qtor/MainWindow.hqt>
 
+#include <QtWidgets/QFileDialog>
+#include <QtSvg/QSvgGenerator>
+
 namespace qtor
 {
 	void MainWindow::OnDisconnected()
@@ -107,6 +110,22 @@ namespace qtor
 
 	void MainWindow::connectSignals()
 	{
+		connect(m_actionOpen, &QAction::triggered, this, &MainWindow::saveToSvg);
+	}
+
+	void MainWindow::saveToSvg()
+	{
+		QString path = QFileDialog::getSaveFileName(this, tr("Save SVG"));
+
+		if (path.isEmpty()) return;
+
+		QSvgGenerator generator;
+		generator.setFileName(path);
+		auto dpi = this->logicalDpiX();
+		generator.setResolution(dpi);
+		//generator.setDescription()
+
+		this->render(&generator);
 
 	}
 

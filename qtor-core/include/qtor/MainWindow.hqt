@@ -67,6 +67,8 @@ namespace qtor
 		void VerifyTorrentLocalData(const QModelIndex & idx);
 		void SetTorrentLocation(const QModelIndex & idx, QString location);
 
+		void saveToSvg();
+
 	public: // torrent dialogs
 		QWidget * OpenTorrentSettings(const QModelIndex & idx);
 		QWidget * OpenTorrentLocationSettings(const QModelIndex & idx);

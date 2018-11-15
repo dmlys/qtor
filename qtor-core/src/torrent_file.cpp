@@ -51,7 +51,7 @@ namespace qtor
 		}
 	}
 
-	auto torrent_file_meta::get_item(const torrent_file & item, int index) const -> any_type
+	auto torrent_file_meta::get_item(const torrent_file & item, index_type index) const -> any_type
 	{
 		switch (index)
 		{
@@ -67,7 +67,7 @@ namespace qtor
 		}
 	}
 
-	auto torrent_file_meta::get_item(const torrent_dir & item, int index) const -> any_type
+	auto torrent_file_meta::get_item(const torrent_dir & item, index_type index) const -> any_type
 	{
 		switch (index)
 		{
@@ -83,7 +83,7 @@ namespace qtor
 		}
 	}
 
-	auto torrent_file_meta::get_item(const torrent_file_entity & item, int index) const -> any_type
+	auto torrent_file_meta::get_item(const torrent_file_entity & item, index_type index) const -> any_type
 	{
 		auto visitor = [this, index](auto * ptr) { return get_item(*ptr, index); };
 		return std::visit(visitor, item);

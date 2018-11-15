@@ -45,7 +45,7 @@ namespace qtor
 	/************************************************************************/
 	/*                    sparse_container_meta                             */
 	/************************************************************************/
-	class simple_sparse_container_meta : public model_meta
+	class simple_sparse_container_meta : public model_accessor<sparse_container>
 	{
 		using base_type = model_meta;
 		using self_type = simple_sparse_container_meta;
@@ -67,6 +67,8 @@ namespace qtor
 		virtual  index_type item_count()              const noexcept override;
 		virtual    unsigned item_type(index_type key) const noexcept override;
 		virtual string_type item_name(index_type key) const override;
+
+		virtual any_type get_item(const sparse_container & item, index_type key) const override;
 
 	public:
 		simple_sparse_container_meta(item_map_ptr items)

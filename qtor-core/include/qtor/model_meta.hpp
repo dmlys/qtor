@@ -40,7 +40,7 @@ namespace qtor
 	class model_accessor : public model_meta
 	{
 	public:
-		any_type get_item(const Type & item, int index) const = 0;
+		virtual any_type get_item(const Type & item, index_type index) const = 0;
 	};
 }
 
