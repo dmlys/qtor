@@ -55,18 +55,16 @@ namespace qtor::sqlite
 
 	unsigned torrent_meta_adapter::item_type(index_type index) const noexcept
 	{
-		if (index < wrapped->item_count())
-			return wrapped->item_type(index);
+		if (index == 0) return String;
 
-		return String;
+		return wrapped->item_type(index + 1);
 	}
 
 	string_type torrent_meta_adapter::item_name(index_type index) const
 	{
-		if (index < wrapped->item_count())
-			return wrapped->item_name(index);
+		if (index == 0) return "torrent_id";
 
-		return "torrent_id";
+		return wrapped->item_name(index + 1);
 	}
 
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <qtor/types.hpp>
 
 namespace qtor
@@ -34,6 +34,13 @@ namespace qtor
 
 	public:
 		virtual ~model_meta() = default;
+	};
+
+	template <class Type>
+	class model_accessor : public model_meta
+	{
+	public:
+		any_type get_item(const Type & item, int index) const = 0;
 	};
 }
 

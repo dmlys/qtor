@@ -73,8 +73,16 @@ namespace qtor
 	using torrent_file_id_less    = torrent_file_id_comparator<std::less<>>;
 	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
 
+	template <>
+	class model_accessor<torrent_file> : public model_meta
+	{
+	public:
+		virtual any_type get_item(const torrent_file & item, int index) const = 0;
+		virtual any_type get_item(const torrent_dir &  item, int index) const = 0;
+		virtual any_type get_item(const torrent_file_entity & item, int index) const = 0;
+	};
 
-	class torrent_file_meta : public model_meta
+	class torrent_file_meta : public model_accessor<torrent_file>
 	{
 	public:
 		enum : unsigned
@@ -94,14 +102,14 @@ namespace qtor
 		};
 
 	public:
-		virtual  index_type item_count()                const noexcept;
-		virtual    unsigned item_type(index_type index) const noexcept;
-		virtual string_type item_name(index_type index) const;
+		virtual  index_type item_count()                const noexcept override;
+		virtual    unsigned item_type(index_type index) const noexcept override;
+		virtual string_type item_name(index_type index) const          override;
 
 	public:
-		any_type get_item(const torrent_file & item, int index) const;
-		any_type get_item(const torrent_dir &  item, int index) const;
-		any_type get_item(const torrent_file_entity & item, int index) const;
+		virtual any_type get_item(const torrent_file & item, int index) const override;
+		virtual any_type get_item(const torrent_dir &  item, int index) const override;
+		virtual any_type get_item(const torrent_file_entity & item, int index) const override;
 
 	public:
 		torrent_file_meta() = default;
