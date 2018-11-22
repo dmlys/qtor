@@ -51,9 +51,9 @@ namespace qtor
 		}
 	}
 
-	auto torrent_file_meta::get_item(const torrent_file & item, index_type index) const -> any_type
+	auto torrent_file_meta::get_item(const torrent_file & item, index_type key) const -> any_type
 	{
-		switch (index)
+		switch (key)
 		{
 			case FileName:  return make_any(get_name(item.filename));
 			case FilePath:  return make_any(item.filename);
@@ -67,9 +67,9 @@ namespace qtor
 		}
 	}
 
-	auto torrent_file_meta::get_item(const torrent_dir & item, index_type index) const -> any_type
+	auto torrent_file_meta::get_item(const torrent_dir & item, index_type key) const -> any_type
 	{
-		switch (index)
+		switch (key)
 		{
 			case FileName:  return make_any(item.filename);
 			case FilePath:  return make_any(item.filename);
@@ -80,6 +80,38 @@ namespace qtor
 			case Wanted:    return make_any(item.wanted);
 
 			default: return any_type();
+		}
+	}
+
+	void torrent_file_meta::set_item(torrent_file & item, index_type key, const any_type & val) const
+	{
+		switch (key)
+		{
+			case FileName:  return;
+			case FilePath:  item.filename   = qvariant_cast<filepath_type>(val); return;
+			case TotalSize: item.total_size = qvariant_cast<size_type>(val); return;
+			case HaveSize:  item.total_size = qvariant_cast<size_type>(val); return;
+			case Index:     item.index      = qvariant_cast<int_type>(val); return;
+			case Priority:  item.priority   = qvariant_cast<int_type>(val); return;
+			case Wanted:    item.wanted     = qvariant_cast<bool_type>(val); return;
+
+			default: return;
+		}
+	}
+
+	void torrent_file_meta::set_item(torrent_dir & item, index_type key, const any_type & val) const
+	{
+		switch (key)
+		{
+			case FileName:  return;
+			case FilePath:  item.filename   = qvariant_cast<filepath_type>(val); return;
+			case TotalSize: item.total_size = qvariant_cast<size_type>(val); return;
+			case HaveSize:  item.total_size = qvariant_cast<size_type>(val); return;
+			case Index:     item.index      = qvariant_cast<int_type>(val); return;
+			case Priority:  item.priority   = qvariant_cast<int_type>(val); return;
+			case Wanted:    item.wanted     = qvariant_cast<Qt::CheckState>(val); return;
+
+			default: return;
 		}
 	}
 }

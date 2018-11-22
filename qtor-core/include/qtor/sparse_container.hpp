@@ -69,6 +69,7 @@ namespace qtor
 		virtual string_type item_name(index_type key) const override;
 
 		virtual any_type get_item(const sparse_container & item, index_type key) const override;
+		virtual void     set_item(sparse_container & item, index_type key, const any_type & val) const override;
 
 	public:
 		simple_sparse_container_meta(item_map_ptr items)

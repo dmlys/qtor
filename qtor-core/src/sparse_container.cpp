@@ -223,4 +223,30 @@ namespace qtor
 	{
 		return item.get_item(key);
 	}
+
+	void simple_sparse_container_meta::set_item(sparse_container & item, index_type key, const any_type & val) const
+	{
+		auto type = item_type(key);
+		switch (type)
+		{
+			case Int64:
+
+			case Speed:
+			case Size:
+			case Uint64: item.set_item(key, qvariant_cast<uint64_type>(val)); break;
+			case Bool:   item.set_item(key, qvariant_cast<bool>(val));        break;
+
+			case Ratio:
+			case Percent:
+			case Double:
+				item.set_item(key, qvariant_cast<double>(val));
+				break;
+
+			case String:   item.set_item(key, qvariant_cast<string_type>(val));   break;
+			case DateTime: item.set_item(key, qvariant_cast<datetime_type>(val)); break;
+			case Duration: item.set_item(key, qvariant_cast<duration_type>(val)); break;
+
+			default: item.set_item(key, val); break;
+		}
+	}
 }

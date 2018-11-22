@@ -29,6 +29,10 @@ namespace qtor
 		typedef uint64_type    speed_type;
 		typedef uint64_type    size_type;
 
+		// for simplicity of macros
+		using double_type = double;
+		using bool_type   = bool;
+
 		using datetime_type = std::chrono::system_clock::time_point;
 		using duration_type = std::chrono::system_clock::duration;
 		using filepath_type = QString;

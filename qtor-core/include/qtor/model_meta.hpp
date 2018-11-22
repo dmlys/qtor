@@ -41,6 +41,7 @@ namespace qtor
 	{
 	public:
 		virtual any_type get_item(const Type & item, index_type index) const = 0;
+		virtual void     set_item(Type & item, index_type index, const any_type & val) const = 0;
 	};
 }
 

@@ -18,10 +18,6 @@ namespace YAML
 namespace qtor {
 namespace transmission
 {
-	// for simplicity of macros
-	using double_type = double;
-	using bool_type   = bool;
-
 	inline namespace constants
 	{
 		const std::string request_template = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ], "ids": [ {} ] }} }})";

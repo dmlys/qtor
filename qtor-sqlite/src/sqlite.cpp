@@ -57,7 +57,9 @@ namespace qtor::sqlite
 		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
 		virtual unsigned item_type(index_type index) const noexcept override;
 		virtual string_type item_name(index_type index) const override;
+
 		virtual any_type get_item(const Type & item, index_type index) const override;
+		virtual void     set_item(Type & item, index_type index, const any_type & val) const override;
 
 	public:
 		torrent_meta_adapter(const model_accessor<Type> & wrapped, torrent_id_type id)
@@ -89,6 +91,9 @@ namespace qtor::sqlite
 		virtual any_type get_item(const torrent_file & item, index_type index) const override;
 		virtual any_type get_item(const torrent_dir & item, index_type index) const override;
 
+		virtual void set_item(torrent_file & item, index_type index, const any_type & val) const override;
+		virtual void set_item(torrent_dir & item, index_type index, const any_type & val) const override;
+
 	public:
 		torrent_meta_adapter(const model_accessor<torrent_file> & wrapped, torrent_id_type id)
 		    : wrapped(&wrapped), torrent_id(std::move(id)) {}
@@ -114,8 +119,14 @@ namespace qtor::sqlite
 	template <class Type>
 	auto torrent_meta_adapter<Type>::get_item(const Type & item, index_type index) const -> any_type
 	{
-		if (index == 0) return torrent_id;
+		if (index == 0) return;
+		return wrapped->get_item(item, index - 1);
+	}
 
+	template <class Type>
+	void torrent_meta_adapter<Type>::set_item(Type & item, index_type index, const any_type & val) const
+	{
+		if (index == 0) return;
 		return wrapped->get_item(item, index - 1);
 	}
 
@@ -145,6 +156,20 @@ namespace qtor::sqlite
 		if (key == 0) return torrent_id;
 
 		return wrapped->get_item(item, key - 1);
+	}
+
+	void torrent_meta_adapter<torrent_file>::set_item(torrent_file & item, index_type key, const any_type & val) const
+	{
+		if (key == 0) return;
+
+		return wrapped->set_item(item, key - 1, val);
+	}
+
+	void torrent_meta_adapter<torrent_file>::set_item(torrent_dir & item, index_type key, const any_type & val) const
+	{
+		if (key == 0) return;
+
+		return wrapped->set_item(item, key - 1, val);
 	}
 
 
