@@ -88,7 +88,6 @@ namespace qtor::sqlite
 
 		virtual any_type get_item(const torrent_file & item, index_type index) const override;
 		virtual any_type get_item(const torrent_dir & item, index_type index) const override;
-		virtual any_type get_item(const torrent_file_entity & item, index_type index) const override;
 
 	public:
 		torrent_meta_adapter(const model_accessor<torrent_file> & wrapped, torrent_id_type id)
@@ -142,13 +141,6 @@ namespace qtor::sqlite
 	}
 
 	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_dir & item, index_type key) const -> any_type
-	{
-		if (key == 0) return torrent_id;
-
-		return wrapped->get_item(item, key - 1);
-	}
-
-	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_file_entity & item, index_type key) const -> any_type
 	{
 		if (key == 0) return torrent_id;
 

@@ -119,14 +119,18 @@ namespace qtor
 		return viewed::visit(visitor, val);
 	}
 
+	struct any_from_element
+	{
+		auto operator()(const torrent_file * ptr) const { return QVariant::fromValue(ptr); }
+		auto operator()(const torrent_dir * ptr)  const { return QVariant::fromValue(ptr); }
+	};
+
 	QVariant FileTreeModelBase::GetEntity(const QModelIndex & idx) const
 	{
-		if (not idx.isValid()) return QVariant::fromValue(torrent_file_entity());
+		if (not idx.isValid()) return QVariant();
 
 		const auto & val = get_element_ptr(idx);
-
-		auto visitor = [](auto * ptr) { return torrent_file_entity(ptr); };
-		return QVariant::fromValue(viewed::visit(visitor, val));
+		return viewed::visit(any_from_element(), val);
 	}
 
 	int FileTreeModelBase::FullRowCount(const QModelIndex & idx) const

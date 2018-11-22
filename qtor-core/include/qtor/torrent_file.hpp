@@ -39,12 +39,6 @@ namespace qtor
 	};
 
 
-	using torrent_file_entity =	variant
-	<
-		const torrent_file *,
-		const torrent_dir *
-	>;
-
 	struct torrent_file_id_hasher
 	{
 		auto operator()(const torrent_file & val) const noexcept
@@ -79,7 +73,6 @@ namespace qtor
 	public:
 		virtual any_type get_item(const torrent_file & item, index_type index) const = 0;
 		virtual any_type get_item(const torrent_dir &  item, index_type index) const = 0;
-		virtual any_type get_item(const torrent_file_entity & item, index_type index) const = 0;
 	};
 
 	class torrent_file_meta : public model_accessor<torrent_file>
@@ -109,7 +102,6 @@ namespace qtor
 	public:
 		virtual any_type get_item(const torrent_file & item, index_type index) const override;
 		virtual any_type get_item(const torrent_dir &  item, index_type index) const override;
-		virtual any_type get_item(const torrent_file_entity & item, index_type index) const override;
 
 	public:
 		torrent_file_meta() = default;
@@ -120,4 +112,3 @@ Q_DECLARE_METATYPE(      qtor::torrent_file *)
 Q_DECLARE_METATYPE(const qtor::torrent_file *)
 Q_DECLARE_METATYPE(      qtor::torrent_dir  *)
 Q_DECLARE_METATYPE(const qtor::torrent_dir  *)
-Q_DECLARE_METATYPE(qtor::torrent_file_entity)
