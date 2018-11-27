@@ -287,8 +287,11 @@ namespace qtor::sqlite
 		auto field_info = create_info(meta);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 
+		qtor::const_field_iterator<sparse_container, model_meta::index_type> it(&meta, torrents.front(), 0u);
+		qtor::types_variant_iterator<sparse_container, model_meta::index_type> it2(it);
+
 		auto batch_range = make_batch_range(meta, names, torrents);
-		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
+//		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
 	}
 
 	static torrent load_torrent(sqlite3yaw::statement & stmt, const std::vector<field_info> & meta)
@@ -373,7 +376,7 @@ namespace qtor::sqlite
 		auto field_info = create_info(adapter);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 
-		auto batch_range = make_batch_range(meta, names, files);
+//		auto batch_range = make_batch_range(meta, names, files);
 //		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
 	}
 }

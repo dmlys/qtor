@@ -122,16 +122,3 @@ Q_DECLARE_METATYPE(      qtor::torrent_file *)
 Q_DECLARE_METATYPE(const qtor::torrent_file *)
 Q_DECLARE_METATYPE(      qtor::torrent_dir  *)
 Q_DECLARE_METATYPE(const qtor::torrent_dir  *)
-
-struct test
-{
-	qtor::bool_type bval;
-	qtor::string_type sval;
-	qtor::speed_type spval;
-
-	Q_GADGET
-
-	Q_PROPERTY(qtor::bool_type bval MEMBER bval)
-	Q_PROPERTY(qtor::string_type sval MEMBER sval)
-	Q_PROPERTY(qtor::speed_type  spval MEMBER spval)
-};

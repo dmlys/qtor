@@ -102,6 +102,7 @@ namespace qtor
 
 	public:
 		auto index() const noexcept { return helper::index(m_index); }
+		auto meta()  const noexcept { return m_meta; }
 
 	private:
 		void increment() noexcept { ++m_index; }
