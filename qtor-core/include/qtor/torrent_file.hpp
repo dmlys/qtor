@@ -93,14 +93,18 @@ namespace qtor
 
 			FirstField = FileName,
 			LastField = Wanted,
-			FiledCount = LastField + 1,
+			FieldCount = LastField + 1,
 
 		};
+
+	public:
+		static const std::array<index_type, FieldCount> ms_editable_fields;
 
 	public:
 		virtual  index_type item_count()                const noexcept override;
 		virtual    unsigned item_type(index_type index) const noexcept override;
 		virtual string_type item_name(index_type index) const          override;
+		virtual bool is_virtual_item(index_type index)  const          override;
 
 	public:
 		virtual any_type get_item(const torrent_file & item, index_type index) const override;
@@ -118,3 +122,16 @@ Q_DECLARE_METATYPE(      qtor::torrent_file *)
 Q_DECLARE_METATYPE(const qtor::torrent_file *)
 Q_DECLARE_METATYPE(      qtor::torrent_dir  *)
 Q_DECLARE_METATYPE(const qtor::torrent_dir  *)
+
+struct test
+{
+	qtor::bool_type bval;
+	qtor::string_type sval;
+	qtor::speed_type spval;
+
+	Q_GADGET
+
+	Q_PROPERTY(qtor::bool_type bval MEMBER bval)
+	Q_PROPERTY(qtor::string_type sval MEMBER sval)
+	Q_PROPERTY(qtor::speed_type  spval MEMBER spval)
+};

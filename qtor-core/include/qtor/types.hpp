@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <array>
 #include <chrono>
 
 #include <any>
@@ -20,19 +21,22 @@ namespace qtor
 {
 	inline namespace types
 	{
-		//typedef std::string    string_type;
-		typedef QString        string_type;
-		typedef std::uint64_t  uint64_type;
-		typedef std::int64_t   int64_type;
-		typedef int            int_type;
-		typedef unsigned int   uint_type;
-		typedef uint64_type    speed_type;
-		typedef uint64_type    size_type;
+		using string_type = QString;
+		using uint64_type = std::uint64_t;
+		using int64_type  = std::int64_t;
+		using int_type    = int;
+		using uint_type   = unsigned int;
+		using speed_type  = uint64_type;
+		using size_type   = uint64_type;
 
 		// for simplicity of macros
 		using double_type = double;
 		using bool_type   = bool;
 
+		using ratio_type   = double;
+		using percent_type = double;
+
+		// date time types
 		using datetime_type = std::chrono::system_clock::time_point;
 		using duration_type = std::chrono::system_clock::duration;
 		using filepath_type = QString;

@@ -219,6 +219,11 @@ namespace qtor
 		return it->second.name;
 	}
 
+	bool simple_sparse_container_meta::is_virtual_item(index_type index) const
+	{
+		return false;
+	}
+
 	auto simple_sparse_container_meta::get_item(const sparse_container & item, index_type key) const -> any_type
 	{
 		return item.get_item(key);

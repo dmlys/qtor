@@ -24,7 +24,7 @@ namespace qtor
 
 	public:
 		operator any_type() const { return meta->get_item(valptr, index); }
-		field_iterator_proxy & operator =(const any_type & val) { meta->set_item(*valptr, index, val); }
+		field_iterator_proxy & operator =(const any_type & val) { meta->set_item(*valptr, index, val); return *this; }
 
 	public:
 		field_iterator_proxy(const model_accessor<type> * meta, pointer valptr, index_type index)
@@ -36,14 +36,14 @@ namespace qtor
 	struct field_iterator_category_helper
 	{
 		using type = typename std::iterator_traits<index_iterator>::iterator_category;
-		auto index(const index_iterator & it) { return *it; }
+		static auto index(const index_iterator & it) { return *it; }
 	};
 
 	template <>
 	struct field_iterator_category_helper<model_meta::index_type>
 	{
 		using type = std::random_access_iterator_tag;
-		auto index(model_meta::index_type idx) { return idx; }
+		static auto index(model_meta::index_type idx) { return idx; }
 	};
 
 
@@ -51,17 +51,18 @@ namespace qtor
 	struct field_iterator_helper
 	{
 		using index_type = model_meta::index_type;
-		using any_type   = model_meta::any_type;
+		using any_type = model_meta::any_type;
 		using any_type_ref = std::conditional_t<is_const, const any_type &, any_type &>;
 
-		using value_type = type;
-		using reference  = std::conditional_t<is_const, any_type, field_iterator_proxy<type>>;
+		using value_type = any_type;
+		using reference = std::conditional_t<is_const, any_type, field_iterator_proxy<type>>;
 		using type_pointer = std::conditional_t<is_const, const type *, type *>;
+		using type_reference = std::conditional_t<is_const, const type &, type &>;
 		using iterator_category = typename field_iterator_category_helper<index_iterator>::type;
 
 		static index_type index(const index_iterator & it) noexcept { return field_iterator_category_helper<index_iterator>::index(it); }
-		static auto dereference(const model_accessor<type> * meta, const type * valptr, index_type idx) { return meta->get_item(*valptr, idx);   }
-		static auto dereference(const model_accessor<type> * meta,       type * valptr, index_type idx) { return reference(meta, valptr, index); }
+		static auto dereference(const model_accessor<type> * meta, const type * valptr, index_type idx) { return meta->get_item(*valptr, idx); }
+		static auto dereference(const model_accessor<type> * meta,       type * valptr, index_type idx) { return reference(meta, valptr, idx); }
 	};
 
 
@@ -88,6 +89,7 @@ namespace qtor
 
 	public:
 		using type_pointer = typename helper::type_pointer;
+		using type_reference = typename helper::type_reference;
 		using index_type = model_meta::index_type;
 
 		using typename base_type::difference_type;
@@ -107,13 +109,13 @@ namespace qtor
 
 		void advance(difference_type n) noexcept { m_index += n; }
 
-		auto dereference() const -> reference { return helper::dereference(m_meta, m_valptr, m_index); }
+		auto dereference() const -> reference { return helper::dereference(m_meta, m_valptr, index()); }
 		auto distance_to(const self_type & it) const noexcept -> difference_type { return it.m_index - m_index; }
 		bool equal(const self_type & it) const noexcept { return m_valptr == it.m_valptr and m_index == it.m_index; }
 
 	public:
-		field_iterator_base(const model_accessor<type> * meta, type_pointer valptr, index_iterator idx)
-		    : m_meta(meta), m_valptr(valptr), m_index(idx) {}
+		field_iterator_base(const model_accessor<type> * meta, type_reference valref, index_iterator idx)
+		    : m_meta(meta), m_valptr(&valref), m_index(idx) {}
 	};
 
 	template <class type, class index_iterator> using const_field_iterator = field_iterator_base<type, index_iterator, true>;
@@ -121,5 +123,28 @@ namespace qtor
 
 	template <class type, class index_iterator> using const_field_range = boost::iterator_range<const_field_iterator<type, index_iterator>>;
 	template <class type, class index_iterator> using       field_range = boost::iterator_range<      field_iterator<type, index_iterator>>;
-}
 
+
+	template <class type>
+	auto make_field_range(const model_accessor<type> * meta, const type & valref)
+	{
+		using iterator = const_field_iterator<type, model_meta::index_type>;
+		iterator first(meta, valref, 0);
+		iterator last(meta, valref, meta->item_count());
+
+		return boost::make_iterator_range(first, last);
+	}
+
+	template <class type>
+	auto make_editable_field_range(const model_accessor<type> * meta, type & valref)
+	{
+		const model_meta::index_type * first_writable, * last_writable;
+		std::tie(first_writable, last_writable) = meta->true_fields();
+
+		using iterator = field_iterator<type, const model_meta::index_type *>;
+		iterator first(meta, valref, first_writable);
+		iterator last(meta, valref, last_writable);
+
+		return boost::make_iterator_range(first, last);
+	}
+}

@@ -12,9 +12,19 @@ namespace qtor
 	/************************************************************************/
 	/*                  torrent_file_meta                                   */
 	/************************************************************************/
+	const std::array<torrent_file_meta::index_type, torrent_file_meta::FieldCount> torrent_file_meta::ms_editable_fields =
+	{
+		torrent_file_meta::FilePath,
+		torrent_file_meta::TotalSize,
+		torrent_file_meta::HaveSize,
+		torrent_file_meta::Index,
+		torrent_file_meta::Priority,
+		torrent_file_meta::Wanted,
+	};
+
 	auto torrent_file_meta::item_count() const noexcept -> index_type
 	{
-		return FiledCount;
+		return FieldCount;
 	}
 
 	unsigned torrent_file_meta::item_type(index_type type) const noexcept
@@ -49,6 +59,11 @@ namespace qtor
 			default:
 				EXT_UNREACHABLE();
 		}
+	}
+
+	bool torrent_file_meta::is_virtual_item(index_type index) const
+	{
+		return false;
 	}
 
 	auto torrent_file_meta::get_item(const torrent_file & item, index_type key) const -> any_type

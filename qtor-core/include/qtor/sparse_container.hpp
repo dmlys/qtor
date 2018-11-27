@@ -64,9 +64,10 @@ namespace qtor
 		item_map_ptr m_items;
 
 	public:
-		virtual  index_type item_count()              const noexcept override;
-		virtual    unsigned item_type(index_type key) const noexcept override;
-		virtual string_type item_name(index_type key) const override;
+		virtual  index_type item_count()               const noexcept override;
+		virtual    unsigned item_type(index_type key)  const noexcept override;
+		virtual string_type item_name(index_type key)  const          override;
+		virtual bool is_virtual_item(index_type index) const          override;
 
 		virtual any_type get_item(const sparse_container & item, index_type key) const override;
 		virtual void     set_item(sparse_container & item, index_type key, const any_type & val) const override;

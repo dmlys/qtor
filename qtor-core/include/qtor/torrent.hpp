@@ -73,7 +73,7 @@ namespace qtor
 
 
 #define QTOR_TORRENT_FOR_EACH_BASIC_FIELD(F)                                    \
-    /*opt/req, Id, Name, Type, TypeName */                                      \
+	/*opt/req, Id, Name, Type, TypeName */                                      \
 	F(QTOR_REQ,   Id,      id,      string, torrent_id_type)                    \
 	F(QTOR_REQ,   Name,    name,    string, string_type)                        \
 	F(QTOR_OPT,   Creator, creator, string, string_type)                        \

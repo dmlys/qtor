@@ -131,11 +131,31 @@
 #include <QtXml/QtXml>
 #include <QtXmlPatterns/QXmlFormatter>
 
+#include <qtor/qt_model_meta.hpp>
+
+
+
 
 int main(int argc, char * argv[])
 {
 	using namespace std;
 	using namespace qtor;
+
+	qtor::qt_model_meta<test> meta;
+
+	auto count = meta.item_count();
+	for (unsigned u = 0; u < count; ++u)
+	{
+		fmt::print("name = {}, type = {}\n", meta.item_name(u), meta.item_type(u));
+	}
+
+	//qtor::qt_model_meta<test> meta;
+
+	//cout << sizeof(qtor::qt_model_meta<test>) << endl;
+	//cout << sizeof(qtor::model_accessor<test>) << endl;
+	//cout << sizeof(std::vector<int>) << endl;
+
+	return 0;
 
 	QtTools::QtRegisterStdString();
 	QtTools::QtRegisterStdChronoTypes();

@@ -2,11 +2,12 @@
 #include <qtor/sqlite-conv-qtor.hpp>
 #include <qtor/utils.hpp>
 
+#include <qtor/types.hpp>
+#include <qtor/torrent.hpp>
+#include <qtor/torrent_file.hpp>
+
 #include <boost/range/counting_range.hpp>
 #include <boost/range/adaptor/transformed.hpp>
-
-#include <ext/range/pretty_printers.hpp>
-#include <iostream>
 
 namespace qtor::sqlite
 {
@@ -57,6 +58,7 @@ namespace qtor::sqlite
 		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
 		virtual unsigned item_type(index_type index) const noexcept override;
 		virtual string_type item_name(index_type index) const override;
+		virtual bool is_virtual_item(index_type index) const override;
 
 		virtual any_type get_item(const Type & item, index_type index) const override;
 		virtual void     set_item(Type & item, index_type index, const any_type & val) const override;
@@ -87,6 +89,7 @@ namespace qtor::sqlite
 		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
 		virtual unsigned item_type(index_type index) const noexcept override;
 		virtual string_type item_name(index_type index) const override;
+		virtual bool is_virtual_item(index_type index) const override;
 
 		virtual any_type get_item(const torrent_file & item, index_type index) const override;
 		virtual any_type get_item(const torrent_dir & item, index_type index) const override;
@@ -117,6 +120,14 @@ namespace qtor::sqlite
 	}
 
 	template <class Type>
+	bool torrent_meta_adapter<Type>::is_virtual_item(index_type index) const
+	{
+		if (index == 0) return true;
+
+		return base_type::is_virtual_item(index);
+	}
+
+	template <class Type>
 	auto torrent_meta_adapter<Type>::get_item(const Type & item, index_type index) const -> any_type
 	{
 		if (index == 0) return;
@@ -142,6 +153,13 @@ namespace qtor::sqlite
 		if (key == 0) return "torrent_id";
 
 		return wrapped->item_name(key - 1);
+	}
+
+	bool torrent_meta_adapter<torrent_file>::is_virtual_item(index_type index) const
+	{
+		if (index == 0) return true;
+
+		return wrapped->is_virtual_item(index);
 	}
 
 	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_file & item, index_type key) const -> any_type
@@ -352,11 +370,10 @@ namespace qtor::sqlite
 
 		torrent_meta_adapter<torrent_file> adapter(meta, "");
 
-//		auto field_info = create_info(meta);
-//		//field_info.push_back({"torrent_id"s, "TEXT"sv, model_meta::String, field_info.size()});
-//		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
+		auto field_info = create_info(adapter);
+		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 
-//		auto batch_range = make_batch_range(meta, names, files);
+		auto batch_range = make_batch_range(meta, names, files);
 //		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
 	}
 }

@@ -31,13 +31,14 @@ namespace qtor
 		virtual  index_type item_count()                const noexcept = 0;
 		virtual    unsigned item_type(index_type index) const noexcept = 0;
 		virtual string_type item_name(index_type index) const = 0;
+		virtual bool is_virtual_item(index_type index) const = 0;
 
 	public:
 		virtual ~model_meta() = default;
 	};
 
 	template <class Type>
-	class model_accessor : public model_meta
+	class model_accessor : public virtual model_meta
 	{
 	public:
 		virtual any_type get_item(const Type & item, index_type index) const = 0;
