@@ -18,32 +18,18 @@ namespace qtor
 		nullopt_t
 	>;
 
-	class make_types_variant
-	{
-	public:
-		using any_type   = model_meta::any_type;
-		using index_type = model_meta::index_type;
-
-	private:
-		const model_meta * m_meta;
-
-	public:
-		using result_type = types_variant;
-		types_variant operator()(const any_type & val, index_type index) const;
-
-	public:
-		make_types_variant(const model_meta & meta)
-			: m_meta(&meta) {}
-	};
+	types_variant make_types_variant(const model_meta * meta, const model_meta::any_type & val, model_meta::index_type index);
 
 
-	template <class Type, class IndexIterator>
+
+
+	template <class type, class index_iterator>
 	class types_variant_iterator :
 		public boost::iterator_adaptor<
-			/* Derived    */ types_variant_iterator<Type, IndexIterator>,
-			/* Base       */ const_field_iterator<Type, IndexIterator>,
+			/* Derived    */ types_variant_iterator<type, index_iterator>,
+			/* Base       */ const_field_iterator<type, index_iterator>,
 	        /* value_type */ types_variant,
-	        /* category   */ typename const_field_iterator<Type, IndexIterator>::iterator_category,
+	        /* category   */ typename const_field_iterator<type, index_iterator>::iterator_category,
 	        /* reference  */ types_variant
 		>
 	{
@@ -51,54 +37,52 @@ namespace qtor
 
 		using self_type = types_variant_iterator;
 		using base_type = boost::iterator_adaptor<
-			/* Derived    */ types_variant_iterator<Type, IndexIterator>,
-			/* Base       */ const_field_iterator<Type, IndexIterator>,
+			/* Derived    */ types_variant_iterator<type, index_iterator>,
+			/* Base       */ const_field_iterator<type, index_iterator>,
 	        /* value_type */ types_variant,
-			/* category   */ typename const_field_iterator<Type, IndexIterator>::iterator_category,
+			/* category   */ typename const_field_iterator<type, index_iterator>::iterator_category,
 	        /* reference  */ types_variant
 		>;
 
-	public:
-		using typename base_type::reference;
-
 	private:
-		reference dereference() const;
+		auto dereference() const;
 
 	public:
 		using base_type::base_type;
+
+		types_variant_iterator(const model_accessor<type> * meta, const type & valref, index_iterator idx)
+		    : base_type(typename base_type::base_type(meta, valref, idx)) {}
 	};
 
-	template <class Type, class IndexIterator>
-	auto types_variant_iterator<Type, IndexIterator>::dereference() const -> reference
+	template <class type, class index_iterator>
+	auto types_variant_iterator<type, index_iterator>::dereference() const
 	{
-		const auto & base_it = *this->base();
+		const auto & base_it = this->base_reference();
 		const auto * meta = base_it.meta();
 		const auto idx = base_it.index();
 
 		const auto val = *base_it;
-		return make_types_variant(*meta)(val, idx);
+		return make_types_variant(meta, val, idx);
 	}
 
-	template <class Type>
-	using types_variant_range = boost::iterator_range<types_variant_iterator<Type, model_meta::index_type>>;
+	template <class type>
+	using types_variant_range = boost::iterator_range<types_variant_iterator<type, model_meta::index_type>>;
 
 
 	template <class Type>
 	inline auto make_types_variant_range(const model_accessor<Type> & meta, const Type & val)
 	{
-		using types_iterator = types_variant_iterator<Type, model_meta::index_type>;
-		using field_iterator = const_field_iterator<Type, model_meta::index_type>;
 		auto first = static_cast<model_meta::index_type>(0);
 		auto last = static_cast<model_meta::index_type>(meta.item_count());
 
 		return boost::make_iterator_range(
-			types_iterator(field_iterator(&meta, val, first)),
-			types_iterator(field_iterator(&meta, val, last))
+			types_variant_iterator(&meta, val, first),
+			types_variant_iterator(&meta, val, last)
 		);
 	}
 	
 	/************************************************************************/
-	/*                      torrents_batch_range                            */
+	/*                          batch_range                                 */
 	/************************************************************************/
 	template <class NamesRange, class ValuesRange>
 	class batch_range :
@@ -126,8 +110,8 @@ namespace qtor
 	
 	private:
 		const names_range * m_names;
-		const values_range * m_torrents;
-		const model_accessor<value_type> * m_meta;
+		const values_range * m_values;
+		const model_accessor<ext::range_value_t<ValuesRange>> * m_meta;
 		mutable values_iterator m_cur, m_last;
 	
 	public:
@@ -136,17 +120,16 @@ namespace qtor
 		reference front() const { return ext::combine(*m_names, make_types_variant_range(*m_meta, *m_cur)); }
 	
 	public:
-		batch_range(const model_accessor<value_type> & meta, const names_range & names, const values_range & torrents)
-			: m_names(&names), m_torrents(&torrents), m_meta(&meta),
-			  m_cur(torrents.begin()), m_last(torrents.end())
+		batch_range(const model_accessor<ext::range_value_t<ValuesRange>> & meta, const names_range & names, const values_range & values)
+			: m_names(&names), m_values(&values), m_meta(&meta),
+			  m_cur(values.begin()), m_last(values.end())
 		{ }
 	};
 	
 	template <class Type, class NamesRange, class ValuesRange>
 	auto make_batch_range(const model_accessor<Type> & meta, const NamesRange & names, const ValuesRange & values)
 	{
-		using range_type = ext::range_value_t<ValuesRange>;
-		static_assert(std::is_convertible_v<range_type, Type>);
-		return batch_range<NamesRange, ValuesRange>(meta, names, values);
+		static_assert(ext::is_range_of_v<ValuesRange, Type>);
+		return batch_range(meta, names, values);
 	}
 }
