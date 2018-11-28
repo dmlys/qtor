@@ -209,11 +209,11 @@ namespace qtor::sqlite
 		return std::vector(fields.begin(), fields.end());
 	}
 
-//	const model_accessor<torrent> & torrents_meta()
-//	{
-//		static const qtor::torrent_meta meta;
-//		return meta;
-//	}
+	const model_accessor<torrent> & torrents_meta()
+	{
+		static const qtor::torrent_meta meta;
+		return meta;
+	}
 
 	const model_accessor<torrent_file> & torrent_files_meta()
 	{
