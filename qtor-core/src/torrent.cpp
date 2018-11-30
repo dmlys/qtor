@@ -45,4 +45,9 @@ namespace qtor
 
 	}
 
+	const torrent_meta & default_torrent_meta()
+	{
+		static const torrent_meta meta;
+		return meta;
+	}
 }

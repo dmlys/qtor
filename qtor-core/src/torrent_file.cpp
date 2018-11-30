@@ -12,15 +12,7 @@ namespace qtor
 	/************************************************************************/
 	/*                  torrent_file_meta                                   */
 	/************************************************************************/
-	const std::array<torrent_file_meta::index_type, torrent_file_meta::FieldCount> torrent_file_meta::ms_editable_fields =
-	{
-		torrent_file_meta::FilePath,
-		torrent_file_meta::TotalSize,
-		torrent_file_meta::HaveSize,
-		torrent_file_meta::Index,
-		torrent_file_meta::Priority,
-		torrent_file_meta::Wanted,
-	};
+	const torrent_file_meta torrent_file_meta::instance;
 
 	auto torrent_file_meta::item_count() const noexcept -> index_type
 	{

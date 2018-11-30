@@ -236,17 +236,19 @@ namespace qtor
 	using torrent_id_greater = torrent_id_comparator<std::greater<>>;
 
 
-	class torrent_meta : public simple_sparse_container_meta
+	class torrent_meta : public simple_sparse_container_meta<torrent>
 	{
 		using self_type = torrent_meta;
-		using base_type = simple_sparse_container_meta;
+		using base_type = simple_sparse_container_meta<torrent>;
 
 	protected:
 		static const item_map_ptr ms_items;
 
 	public:
 		torrent_meta();
-	};	
+	};
+
+	const torrent_meta & default_torrent_meta();
 }
 
 Q_DECLARE_METATYPE(      qtor::torrent *)

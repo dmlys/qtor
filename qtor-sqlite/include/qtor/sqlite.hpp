@@ -13,9 +13,6 @@ namespace qtor::sqlite
 	extern const std::string torrents_table_name;
 	extern const std::string torrent_files_table_name;
 
-	const model_accessor<torrent> & torrents_meta();
-	const model_accessor<torrent_file> & torrent_files_meta();
-
 	void create_table(sqlite3yaw::session & ses, const std::string & name, const model_meta & meta);
 	void create_torrents_table(sqlite3yaw::session & ses);
 	void drop_torrents_table(sqlite3yaw::session & ses);

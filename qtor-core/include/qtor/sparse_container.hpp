@@ -45,7 +45,11 @@ namespace qtor
 	/************************************************************************/
 	/*                    sparse_container_meta                             */
 	/************************************************************************/
-	class simple_sparse_container_meta : public model_accessor<sparse_container>
+	template <class Type>
+	class simple_sparse_container_meta;
+
+	template <>
+	class simple_sparse_container_meta<void> : public virtual model_meta
 	{
 		using base_type = model_meta;
 		using self_type = simple_sparse_container_meta;
@@ -69,9 +73,6 @@ namespace qtor
 		virtual string_type item_name(index_type key)  const          override;
 		virtual bool is_virtual_item(index_type index) const          override;
 
-		virtual any_type get_item(const sparse_container & item, index_type key) const override;
-		virtual void     set_item(sparse_container & item, index_type key, const any_type & val) const override;
-
 	public:
 		simple_sparse_container_meta(item_map_ptr items)
 			: m_items(std::move(items)) {}
@@ -79,6 +80,53 @@ namespace qtor
 		virtual ~simple_sparse_container_meta() = default;
 	};
 
+	template <class Type>
+	class simple_sparse_container_meta : public model_accessor<Type>,
+	                                     public simple_sparse_container_meta<void>
+	{
+		using base_type = simple_sparse_container_meta<void>;
+		using self_type = simple_sparse_container_meta;
+
+	public:
+		virtual any_type get_item(const Type & item, index_type key) const override;
+		virtual void     set_item(Type & item, index_type key, const any_type & val) const override;
+
+	public:
+		using base_type::base_type;
+	};
+
+	template <class Type>
+	auto simple_sparse_container_meta<Type>::get_item(const Type & item, index_type key) const -> any_type
+	{
+		return item.get_item(key);
+	}
+
+	template <class Type>
+	void simple_sparse_container_meta<Type>::set_item(Type & item, index_type key, const any_type & val) const
+	{
+		auto type = item_type(key);
+		switch (type)
+		{
+			case Int64:
+
+			case Speed:
+			case Size:
+			case Uint64: item.set_item(key, qvariant_cast<uint64_type>(val)); break;
+			case Bool:   item.set_item(key, qvariant_cast<bool>(val));        break;
+
+			case Ratio:
+			case Percent:
+			case Double:
+				item.set_item(key, qvariant_cast<double>(val));
+				break;
+
+			case String:   item.set_item(key, qvariant_cast<string_type>(val));   break;
+			case DateTime: item.set_item(key, qvariant_cast<datetime_type>(val)); break;
+			case Duration: item.set_item(key, qvariant_cast<duration_type>(val)); break;
+
+			default: item.set_item(key, val); break;
+		}
+	}
 
 	/************************************************************************/
 	/*                    sparse_container_comparator                       */

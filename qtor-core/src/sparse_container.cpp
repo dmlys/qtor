@@ -196,12 +196,12 @@ namespace qtor
 	/************************************************************************/
 	/*                 simple_sparse_container_meta                         */
 	/************************************************************************/
-	auto simple_sparse_container_meta::item_count() const noexcept -> index_type
+	auto simple_sparse_container_meta<void>::item_count() const noexcept -> index_type
 	{
 		return static_cast<index_type>(m_items->size());
 	}
 
-	unsigned simple_sparse_container_meta::item_type(index_type key) const noexcept
+	unsigned simple_sparse_container_meta<void>::item_type(index_type key) const noexcept
 	{
 		auto it = m_items->find(key);
 		if (it == m_items->end())
@@ -210,7 +210,7 @@ namespace qtor
 		return it->second.type;
 	}
 
-	string_type simple_sparse_container_meta::item_name(index_type key) const
+	string_type simple_sparse_container_meta<void>::item_name(index_type key) const
 	{
 		auto it = m_items->find(key);
 		if (it == m_items->end())
@@ -219,39 +219,8 @@ namespace qtor
 		return it->second.name;
 	}
 
-	bool simple_sparse_container_meta::is_virtual_item(index_type index) const
+	bool simple_sparse_container_meta<void>::is_virtual_item(index_type index) const
 	{
 		return false;
-	}
-
-	auto simple_sparse_container_meta::get_item(const sparse_container & item, index_type key) const -> any_type
-	{
-		return item.get_item(key);
-	}
-
-	void simple_sparse_container_meta::set_item(sparse_container & item, index_type key, const any_type & val) const
-	{
-		auto type = item_type(key);
-		switch (type)
-		{
-			case Int64:
-
-			case Speed:
-			case Size:
-			case Uint64: item.set_item(key, qvariant_cast<uint64_type>(val)); break;
-			case Bool:   item.set_item(key, qvariant_cast<bool>(val));        break;
-
-			case Ratio:
-			case Percent:
-			case Double:
-				item.set_item(key, qvariant_cast<double>(val));
-				break;
-
-			case String:   item.set_item(key, qvariant_cast<string_type>(val));   break;
-			case DateTime: item.set_item(key, qvariant_cast<datetime_type>(val)); break;
-			case Duration: item.set_item(key, qvariant_cast<duration_type>(val)); break;
-
-			default: item.set_item(key, val); break;
-		}
 	}
 }

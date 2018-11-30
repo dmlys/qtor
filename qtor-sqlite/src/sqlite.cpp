@@ -49,13 +49,22 @@ namespace qtor::sqlite
 		using typename base_type::index_type;
 		using typename base_type::any_type;
 
-	public:
-		const model_accessor<Type> * wrapped;
-		torrent_id_type torrent_id;
+	protected:
+		struct item_meta
+		{
+			unsigned type;
+			string_type name;
+			index_type wrapped_index;
+			any_type bound_value;
+		};
+
+	protected:
+		const model_accessor<Type> * m_wrapped;
+		std::vector<item_meta> m_meta;
 
 		// model_meta interface
 	public:
-		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
+		virtual index_type item_count() const noexcept override { return m_meta.size(); }
 		virtual unsigned item_type(index_type index) const noexcept override;
 		virtual string_type item_name(index_type index) const override;
 		virtual bool is_virtual_item(index_type index) const override;
@@ -64,13 +73,37 @@ namespace qtor::sqlite
 		virtual void     set_item(Type & item, index_type index, const any_type & val) const override;
 
 	public:
-		torrent_meta_adapter(const model_accessor<Type> & wrapped, torrent_id_type id)
-		    : wrapped(&wrapped), torrent_id(std::move(id)) {}
+		virtual void insert_bounded_value(index_type before, string_type name, unsigned type, any_type value);
+		virtual void bound_value(index_type where, string_type name, unsigned type, any_type value);
+		virtual void unbound_value(index_type where);
+		virtual void push_bound_value(string_type name, unsigned type, any_type value);
+
+	public:
+		torrent_meta_adapter(const model_accessor<Type> & wrapped);
 	};
 
 	/// constructor template deduction guide
 	template <class Type>
-	torrent_meta_adapter(const model_accessor<Type> & wrapped, torrent_id_type) -> torrent_meta_adapter<Type>;
+	torrent_meta_adapter(const model_accessor<Type> & wrapped) -> torrent_meta_adapter<Type>;
+
+
+	template <class Type>
+	torrent_meta_adapter<Type>::torrent_meta_adapter(const model_accessor<Type> & wrapped)
+	    : m_wrapped(wrapped)
+	{
+		auto count = m_wrapped->item_count();
+		m_meta.resize(count);
+		for (index_type u = 0; u < count; ++u)
+		{
+			auto & item = m_meta[u];
+			item.type = m_wrapped->item_type(u);
+			item.name = m_wrapped->item_name(u);
+			item.wrapped_index = u;
+		}
+	}
+
+
+
 
 	template <>
 	class torrent_meta_adapter<torrent_file> : public model_accessor<torrent_file>
@@ -209,18 +242,6 @@ namespace qtor::sqlite
 		return std::vector(fields.begin(), fields.end());
 	}
 
-	const model_accessor<torrent> & torrents_meta()
-	{
-		static const qtor::torrent_meta meta;
-		return meta;
-	}
-
-	const model_accessor<torrent_file> & torrent_files_meta()
-	{
-		static const qtor::torrent_file_meta meta;
-		return meta;
-	}
-
 	void create_table(sqlite3yaw::session & ses, const std::string & name, const model_meta & meta)
 	{
 		std::string cmd;
@@ -254,7 +275,7 @@ namespace qtor::sqlite
 
 	void create_torrents_table(sqlite3yaw::session & ses)
 	{
-		return create_table(ses, torrents_table_name, torrents_meta());
+		return create_table(ses, torrents_table_name, default_torrent_meta());
 	}
 
 	void drop_torrents_table(sqlite3yaw::session & ses)
@@ -267,7 +288,7 @@ namespace qtor::sqlite
 
 	void create_torrent_files_table(sqlite3yaw::session & ses)
 	{
-		return create_table(ses, torrent_files_table_name, torrent_files_meta());
+		return create_table(ses, torrent_files_table_name, torrent_file_meta());
 	}
 
 	void drop_torrent_files_table(sqlite3yaw::session & ses)
@@ -281,7 +302,7 @@ namespace qtor::sqlite
 
 	void save_torrents(sqlite3yaw::session & ses, const torrent_list & torrents)
 	{
-		auto & meta = torrents_meta();
+		auto & meta = default_torrent_meta();
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 
 		auto field_info = create_info(meta);
@@ -341,7 +362,7 @@ namespace qtor::sqlite
 
 	auto load_torrents(sqlite3yaw::session & ses) -> torrent_list
 	{
-		auto & meta = torrents_meta();
+		auto & meta = default_torrent_meta();
 		auto info = create_info(meta);
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 
@@ -365,7 +386,7 @@ namespace qtor::sqlite
 	void save_torrent_files(sqlite3yaw::session & ses, const torrent_file_list & files)
 	{
 		using namespace std;
-		const auto & meta = torrent_files_meta();
+		const auto & meta = torrent_file_meta::instance;
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 
 		torrent_meta_adapter<torrent_file> adapter(meta, "");

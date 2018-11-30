@@ -98,7 +98,7 @@ namespace qtor
 		};
 
 	public:
-		static const std::array<index_type, FieldCount> ms_editable_fields;
+		static const torrent_file_meta instance;
 
 	public:
 		virtual  index_type item_count()                const noexcept override;
