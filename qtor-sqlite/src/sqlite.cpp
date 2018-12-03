@@ -3,6 +3,8 @@
 #include <qtor/utils.hpp>
 
 #include <qtor/types.hpp>
+#include <qtor/model_meta.hpp>
+#include <qtor/bound_meta.hpp>
 #include <qtor/torrent.hpp>
 #include <qtor/torrent_file.hpp>
 
@@ -39,190 +41,6 @@ namespace qtor::sqlite
 				return "TEXT";
 		}
 	}
-
-	template <class Type>
-	class torrent_meta_adapter : public model_accessor<Type>
-	{
-		using base_type = model_accessor<Type>;
-
-	public:
-		using typename base_type::index_type;
-		using typename base_type::any_type;
-
-	protected:
-		struct item_meta
-		{
-			unsigned type;
-			string_type name;
-			index_type wrapped_index;
-			any_type bound_value;
-		};
-
-	protected:
-		const model_accessor<Type> * m_wrapped;
-		std::vector<item_meta> m_meta;
-
-		// model_meta interface
-	public:
-		virtual index_type item_count() const noexcept override { return m_meta.size(); }
-		virtual unsigned item_type(index_type index) const noexcept override;
-		virtual string_type item_name(index_type index) const override;
-		virtual bool is_virtual_item(index_type index) const override;
-
-		virtual any_type get_item(const Type & item, index_type index) const override;
-		virtual void     set_item(Type & item, index_type index, const any_type & val) const override;
-
-	public:
-		virtual void insert_bounded_value(index_type before, string_type name, unsigned type, any_type value);
-		virtual void bound_value(index_type where, string_type name, unsigned type, any_type value);
-		virtual void unbound_value(index_type where);
-		virtual void push_bound_value(string_type name, unsigned type, any_type value);
-
-	public:
-		torrent_meta_adapter(const model_accessor<Type> & wrapped);
-	};
-
-	/// constructor template deduction guide
-	template <class Type>
-	torrent_meta_adapter(const model_accessor<Type> & wrapped) -> torrent_meta_adapter<Type>;
-
-
-	template <class Type>
-	torrent_meta_adapter<Type>::torrent_meta_adapter(const model_accessor<Type> & wrapped)
-	    : m_wrapped(wrapped)
-	{
-		auto count = m_wrapped->item_count();
-		m_meta.resize(count);
-		for (index_type u = 0; u < count; ++u)
-		{
-			auto & item = m_meta[u];
-			item.type = m_wrapped->item_type(u);
-			item.name = m_wrapped->item_name(u);
-			item.wrapped_index = u;
-		}
-	}
-
-
-
-
-	template <>
-	class torrent_meta_adapter<torrent_file> : public model_accessor<torrent_file>
-	{
-		using base_type = model_accessor<torrent_file>;
-
-	public:
-		using typename base_type::index_type;
-		using typename base_type::any_type;
-
-	public:
-		const model_accessor<torrent_file> * wrapped;
-		torrent_id_type torrent_id;
-
-	public:
-		virtual index_type item_count() const noexcept override { return wrapped->item_count() + 1; }
-		virtual unsigned item_type(index_type index) const noexcept override;
-		virtual string_type item_name(index_type index) const override;
-		virtual bool is_virtual_item(index_type index) const override;
-
-		virtual any_type get_item(const torrent_file & item, index_type index) const override;
-		virtual any_type get_item(const torrent_dir & item, index_type index) const override;
-
-		virtual void set_item(torrent_file & item, index_type index, const any_type & val) const override;
-		virtual void set_item(torrent_dir & item, index_type index, const any_type & val) const override;
-
-	public:
-		torrent_meta_adapter(const model_accessor<torrent_file> & wrapped, torrent_id_type id)
-		    : wrapped(&wrapped), torrent_id(std::move(id)) {}
-	};
-
-
-	template <class Type>
-	unsigned torrent_meta_adapter<Type>::item_type(index_type index) const noexcept
-	{
-		if (index == 0) return model_meta::String;
-
-		return wrapped->item_type(index - 1);
-	}
-
-	template <class Type>
-	string_type torrent_meta_adapter<Type>::item_name(index_type index) const
-	{
-		if (index == 0) return "torrent_id";
-
-		return wrapped->item_name(index - 1);
-	}
-
-	template <class Type>
-	bool torrent_meta_adapter<Type>::is_virtual_item(index_type index) const
-	{
-		if (index == 0) return true;
-
-		return base_type::is_virtual_item(index);
-	}
-
-	template <class Type>
-	auto torrent_meta_adapter<Type>::get_item(const Type & item, index_type index) const -> any_type
-	{
-		if (index == 0) return;
-		return wrapped->get_item(item, index - 1);
-	}
-
-	template <class Type>
-	void torrent_meta_adapter<Type>::set_item(Type & item, index_type index, const any_type & val) const
-	{
-		if (index == 0) return;
-		return wrapped->get_item(item, index - 1);
-	}
-
-	unsigned torrent_meta_adapter<torrent_file>::item_type(index_type key) const noexcept
-	{
-		if (key == 0) return model_meta::String;
-
-		return wrapped->item_type(key - 1);
-	}
-
-	string_type torrent_meta_adapter<torrent_file>::item_name(index_type key) const
-	{
-		if (key == 0) return "torrent_id";
-
-		return wrapped->item_name(key - 1);
-	}
-
-	bool torrent_meta_adapter<torrent_file>::is_virtual_item(index_type index) const
-	{
-		if (index == 0) return true;
-
-		return wrapped->is_virtual_item(index);
-	}
-
-	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_file & item, index_type key) const -> any_type
-	{
-		if (key == 0) return torrent_id;
-
-		return wrapped->get_item(item, key - 1);
-	}
-
-	auto torrent_meta_adapter<torrent_file>::get_item(const torrent_dir & item, index_type key) const -> any_type
-	{
-		if (key == 0) return torrent_id;
-
-		return wrapped->get_item(item, key - 1);
-	}
-
-	void torrent_meta_adapter<torrent_file>::set_item(torrent_file & item, index_type key, const any_type & val) const
-	{
-		if (key == 0) return;
-
-		return wrapped->set_item(item, key - 1, val);
-	}
-
-	void torrent_meta_adapter<torrent_file>::set_item(torrent_dir & item, index_type key, const any_type & val) const
-	{
-		if (key == 0) return;
-
-		return wrapped->set_item(item, key - 1, val);
-	}
-
 
 	static auto create_info(const model_meta & meta)
 	{
@@ -389,7 +207,7 @@ namespace qtor::sqlite
 		const auto & meta = torrent_file_meta::instance;
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 
-		torrent_meta_adapter<torrent_file> adapter(meta, "");
+		torrent_meta_adapter<torrent_file> adapter(meta);
 
 		auto field_info = create_info(adapter);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));

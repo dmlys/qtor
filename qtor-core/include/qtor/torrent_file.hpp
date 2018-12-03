@@ -67,6 +67,7 @@ namespace qtor
 	using torrent_file_id_less    = torrent_file_id_comparator<std::less<>>;
 	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
 
+
 	class torrent_file_meta : public model_accessor<torrent_file>,
 	                          public model_accessor<torrent_dir>
 	{
