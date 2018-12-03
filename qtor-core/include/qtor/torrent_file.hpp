@@ -67,18 +67,8 @@ namespace qtor
 	using torrent_file_id_less    = torrent_file_id_comparator<std::less<>>;
 	using torrent_file_id_greater = torrent_file_id_comparator<std::greater<>>;
 
-	template <>
-	class model_accessor<torrent_file> : public model_meta
-	{
-	public:
-		virtual any_type get_item(const torrent_file & item, index_type index) const = 0;
-		virtual any_type get_item(const torrent_dir &  item, index_type index) const = 0;
-
-		virtual void set_item(torrent_file & item, index_type index, const any_type & val) const = 0;
-		virtual void set_item(torrent_dir &  item, index_type index, const any_type & val) const = 0;
-	};
-
-	class torrent_file_meta : public model_accessor<torrent_file>
+	class torrent_file_meta : public model_accessor<torrent_file>,
+	                          public model_accessor<torrent_dir>
 	{
 	public:
 		enum : index_type

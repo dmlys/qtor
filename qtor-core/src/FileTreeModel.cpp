@@ -112,7 +112,7 @@ namespace qtor
 
 		auto visitor = [this, meta_index](auto * ptr)
 		{
-			auto * meta = static_cast<const torrent_file_meta *>(this->m_meta.get());
+			auto * meta = dynamic_cast<const torrent_file_meta *>(this->m_meta.get());
 			return meta->get_item(*ptr, meta_index);
 		};
 
