@@ -40,28 +40,6 @@ void print_help(const boost::program_options::options_description & opts)
 
 int main(int argc, char ** argv)
 {
-	qtor::torrent_file_meta meta;
-	qtor::custom_meta<qtor::torrent_file> bmeta(meta);
-
-	bmeta.push_bound_value("torrent_id", meta.String, "123");
-
-	qtor::torrent_file tf;
-	tf.filename = "test.txt";
-	tf.have_size = tf.total_size = 100;
-	tf.index = 10;
-	tf.priority = 1;
-	tf.wanted = true;
-
-	unsigned n = bmeta.item_count();
-	bmeta.set_item(tf, qtor::torrent_file_meta::FilePath, "abc.txt");
-
-	for (unsigned u = 0; u < n; ++u)
-	{
-		fmt::print("{}: {}\n", bmeta.item_name(u).toStdString(), bmeta.get_item(tf, u).toString().toStdString());
-	}
-
-	return 0;
-
 	namespace po = boost::program_options;
 	po::options_description opts {"options"};
 	opts.add_options()
@@ -104,24 +82,22 @@ int main(int argc, char ** argv)
 	g_source.set_logger(&g_logger);
 	g_source.set_timeout(10s);
 
-	if (not g_source.connect().get())
-	{
-		return EXIT_FAILURE;
-	}
-
-	auto torrents = g_source.get_torrents().get();
 	qtor::sqlite::drop_torrents_table(g_session);
 	qtor::sqlite::drop_torrent_files_table(g_session);
 	qtor::sqlite::create_torrents_table(g_session);
 	qtor::sqlite::create_torrent_files_table(g_session);
 
+	if (not g_source.connect().get())
+		return EXIT_FAILURE;
+
+	auto torrents = g_source.get_torrents().get();
 	qtor::sqlite::save_torrents(g_session, torrents);
 
 	for (auto & tor : torrents)
 	{
 		auto id = tor.id();
-		auto files = g_source.get_torrent_files(id);
-
+		auto files = g_source.get_torrent_files(id).get();
+		qtor::sqlite::save_torrent_files(g_session, files, id);
 	}
 
 	g_source.disconnect().get();

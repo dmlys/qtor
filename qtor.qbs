@@ -3,8 +3,8 @@ import qbs.Environment
 
 Project
 {
-	property pathList additionalIncludePaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.11.2/include"] : []
-	property pathList additionalLibraryPaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.11.2/lib"]     : []
+	//property pathList additionalIncludePaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.11.2/include"] : []
+	//property pathList additionalLibraryPaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.11.2/lib"]     : []
 	property stringList additionalDriverFlags: ["-pthread"]
 	
 	property stringList additionalDefines:

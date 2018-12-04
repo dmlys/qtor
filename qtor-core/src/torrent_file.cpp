@@ -1,4 +1,4 @@
-#include <qtor/torrent_file.hpp>
+﻿#include <qtor/torrent_file.hpp>
 #include <ext/config.hpp>
 
 namespace qtor
@@ -55,7 +55,7 @@ namespace qtor
 
 	bool torrent_file_meta::is_virtual_item(index_type index) const
 	{
-		return false;
+		return index == FileName;
 	}
 
 	auto torrent_file_meta::get_item(const torrent_file & item, index_type key) const -> any_type

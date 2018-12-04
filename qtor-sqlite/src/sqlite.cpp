@@ -60,6 +60,21 @@ namespace qtor::sqlite
 		return std::vector(fields.begin(), fields.end());
 	}
 
+	static auto make_torrent_file_meta(const torrent_id_type & id)
+	{
+		custom_meta<torrent_file> meta(torrent_file_meta::instance);
+
+		auto count = torrent_file_meta::instance.item_count();
+		for (unsigned u = 0, dest = 0; u < count; ++u, ++dest)
+		{
+			if (torrent_file_meta::instance.is_virtual_item(u))
+				meta.remove_item(u);
+		}
+
+		meta.push_item("torrent_id", meta.String, id);
+		return meta;
+	}
+
 	void create_table(sqlite3yaw::session & ses, const std::string & name, const model_meta & meta)
 	{
 		std::string cmd;
@@ -77,12 +92,7 @@ namespace qtor::sqlite
 
 			cmd += ' ';
 			cmd += type;
-
-			if (name == "Id")
-				cmd += " PRIMARY KEY";
-
 			cmd += ',';
-
 		}
 
 		cmd.pop_back();
@@ -106,7 +116,8 @@ namespace qtor::sqlite
 
 	void create_torrent_files_table(sqlite3yaw::session & ses)
 	{
-		return create_table(ses, torrent_files_table_name, torrent_file_meta());
+		auto meta = make_torrent_file_meta("");
+		return create_table(ses, torrent_files_table_name, meta);
 	}
 
 	void drop_torrent_files_table(sqlite3yaw::session & ses)
@@ -120,14 +131,13 @@ namespace qtor::sqlite
 
 	void save_torrents(sqlite3yaw::session & ses, const torrent_list & torrents)
 	{
-		auto & meta = default_torrent_meta();
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
-
+		auto & meta = default_torrent_meta();
 		auto field_info = create_info(meta);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 
 		auto batch_range = make_batch_range(meta, names, torrents);
-		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
+		sqlite3yaw::batch_insert(batch_range, ses, tmeta);
 	}
 
 	static torrent load_torrent(sqlite3yaw::statement & stmt, const std::vector<field_info> & meta)
@@ -201,18 +211,15 @@ namespace qtor::sqlite
 		return result;
 	}
 
-	void save_torrent_files(sqlite3yaw::session & ses, const torrent_file_list & files)
+	void save_torrent_files(sqlite3yaw::session & ses, const torrent_file_list & files, const torrent_id_type & id)
 	{
-		using namespace std;
-		const auto & meta = torrent_file_meta::instance;
-		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
+		auto tmeta = sqlite3yaw::load_table_meta(ses, torrent_files_table_name);
+		auto meta = make_torrent_file_meta(id);
 
-		custom_meta<torrent_file> adapter(meta);
-
-		auto field_info = create_info(adapter);
+		auto field_info = create_info(meta);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));
 
-		auto batch_range = make_batch_range(adapter, names, files);
-		sqlite3yaw::batch_upsert(batch_range, ses, tmeta);
+		auto batch_range = make_batch_range(meta, names, files);
+		sqlite3yaw::batch_insert(batch_range, ses, tmeta);
 	}
 }
