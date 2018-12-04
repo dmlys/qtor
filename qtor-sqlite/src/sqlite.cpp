@@ -4,7 +4,7 @@
 
 #include <qtor/types.hpp>
 #include <qtor/model_meta.hpp>
-#include <qtor/bound_meta.hpp>
+#include <qtor/custom_meta.hpp>
 #include <qtor/torrent.hpp>
 #include <qtor/torrent_file.hpp>
 
@@ -207,7 +207,7 @@ namespace qtor::sqlite
 		const auto & meta = torrent_file_meta::instance;
 		auto tmeta = sqlite3yaw::load_table_meta(ses, torrents_table_name);
 
-		torrent_meta_adapter<torrent_file> adapter(meta);
+		custom_meta<torrent_file> adapter(meta);
 
 		auto field_info = create_info(adapter);
 		auto names = field_info | boost::adaptors::transformed(std::mem_fn(&field_info::name));

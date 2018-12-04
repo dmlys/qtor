@@ -14,6 +14,10 @@
 #include <qtor/sqlite-datasource.hpp>
 #include <qtor/transmission/data_source.hpp>
 
+#include <qtor/model_meta.hpp>
+#include <qtor/custom_meta.hpp>
+
+#include <fmt/format.h>
 
 std::string g_sqlite_path;
 std::string g_url;
@@ -21,9 +25,43 @@ ext::library_logger::stream_logger g_logger {std::clog};
 qtor::transmission::data_source g_source;
 sqlite3yaw::session g_session;
 
+void print_help(const boost::program_options::options_description & opts)
+{
+	auto descr = "Simple program for dumping data from tranmission rpc to sqlite database, used mostly for testing\n";
+	auto examples = "Examples:\n"
+	    "  transmission-sqlite http://localhost:9091/transmission/rpc sqlite.db";
+
+	std::cout
+	    << descr
+	    << opts
+	    << examples
+	    << std::endl;
+}
 
 int main(int argc, char ** argv)
 {
+	qtor::torrent_file_meta meta;
+	qtor::custom_meta<qtor::torrent_file> bmeta(meta);
+
+	bmeta.push_bound_value("torrent_id", meta.String, "123");
+
+	qtor::torrent_file tf;
+	tf.filename = "test.txt";
+	tf.have_size = tf.total_size = 100;
+	tf.index = 10;
+	tf.priority = 1;
+	tf.wanted = true;
+
+	unsigned n = bmeta.item_count();
+	bmeta.set_item(tf, qtor::torrent_file_meta::FilePath, "abc.txt");
+
+	for (unsigned u = 0; u < n; ++u)
+	{
+		fmt::print("{}: {}\n", bmeta.item_name(u).toStdString(), bmeta.get_item(tf, u).toString().toStdString());
+	}
+
+	return 0;
+
 	namespace po = boost::program_options;
 	po::options_description opts {"options"};
 	opts.add_options()
@@ -41,6 +79,13 @@ int main(int argc, char ** argv)
 	try
 	{
 		store(po::command_line_parser(argc, argv).options(opts).positional(pos).run(), vm);
+
+		if (vm.count("help") or argc < 2)
+		{
+			print_help(opts);
+			return EXIT_SUCCESS;
+		}
+
 		notify(vm);
 	}
 	catch (po::error & ex)
