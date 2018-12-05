@@ -23,5 +23,5 @@ namespace qtor::sqlite
 	auto load_torrents(sqlite3yaw::session & ses) -> torrent_list;
 
 	void save_torrent_files(sqlite3yaw::session & ses, const torrent_file_list & files, const torrent_id_type & id);
-	auto load_torrent_files(sqlite3yaw::session & ses, const torrent_id_type & id);
+	auto load_torrent_files(sqlite3yaw::session & ses, const torrent_id_type & id) -> torrent_file_list;
 }

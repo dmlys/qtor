@@ -22,8 +22,9 @@ namespace qtor::sqlite
 		try
 		{
 			auto ses = new sqlite3yaw::session(m_path);
-			m_torrents = load_torrents(*ses);
 			m_ses = ses;
+
+			m_torrents = load_torrents(*ses);
 			notify_connected(std::move(lk));
 
 			emit_subs();
@@ -72,6 +73,13 @@ namespace qtor::sqlite
 		-> ext::future<torrent_list>
 	{
 		return ext::make_ready_future(m_torrents);
+	}
+
+	auto sqlite_datasource::get_torrent_files(torrent_id_type id) -> ext::future<torrent_file_list>
+	{
+		assert(m_ses);
+		auto files = load_torrent_files(*static_cast<sqlite3yaw::session *>(m_ses), id);
+		return ext::make_ready_future(std::move(files));
 	}
 
 	sqlite_datasource::sqlite_datasource()

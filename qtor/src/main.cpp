@@ -148,23 +148,32 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(QtTools);
 	Q_INIT_RESOURCE(qtor_core_resource);
 
+	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	source->set_address("bin/data.db"s);
+
+	//auto source = std::make_shared<qtor::transmission::data_source>();
+	//source->set_address("http://melkiy:9091/transmission/rpc"s);
+
 	QApplication qapp {argc, argv};
 
-	std::vector<torrent_file> paths, paths2;
-	paths.assign({
-	    { QStringLiteral("folder/file1.txt"), 11 * 1000, 2 * 1000 },
-	    { QStringLiteral("folder/file1.txt"), 12 * 1000, 3 * 1000 },
-	    { QStringLiteral("folder/file2.txt"), 13 * 1000, 4 * 1000 },
-	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
-	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
-	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
-	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
-	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
-	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
-	});
+	source->connect().get();
+	auto files = source->get_torrent_files("3").get();
 
-	paths2 = paths;
-	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+//	std::vector<torrent_file> paths, paths2;
+//	paths.assign({
+//	    { QStringLiteral("folder/file1.txt"), 11 * 1000, 2 * 1000 },
+//	    { QStringLiteral("folder/file1.txt"), 12 * 1000, 3 * 1000 },
+//	    { QStringLiteral("folder/file2.txt"), 13 * 1000, 4 * 1000 },
+//	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
+//	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
+//	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
+//	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
+//	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
+//	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
+//	});
+
+//	paths2 = paths;
+//	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
 	
 	//paths.assign({
 	//	{ QStringLiteral("file1.txt") },
@@ -190,9 +199,10 @@ int main(int argc, char * argv[])
 //	//store->assign_records(paths2);
 //	//store->assign_records(paths);
 
-	model->assign(paths);
-	model->upsert(paths2);
-	model->assign(paths);
+	model->assign(files);
+//	model->assign(paths);
+//	model->upsert(paths2);
+//	model->assign(paths);
 	
 	auto idx0 = model->find_element("dir1");
 	Q_ASSERT(not idx0.isValid());
@@ -228,12 +238,6 @@ int main(int argc, char * argv[])
 	palette.setColor(QPalette::Inactive, QPalette::HighlightedText, palette.color(QPalette::Active, QPalette::HighlightedText));
 	qapp.setPalette(palette);
 #endif
-
-//	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-//	source->set_address("bin/data.db"s);
-
-//	//auto source = std::make_shared<qtor::transmission::data_source>();
-//	//source->set_address("http://melkiy:9091/transmission/rpc"s);
 
 //	qtor::TransmissionRemoteApp app {std::move(source)};
 //	qtor::MainWindow mainWindow;
