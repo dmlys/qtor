@@ -18,6 +18,7 @@
 #include <qtor/custom_meta.hpp>
 
 #include <fmt/format.h>
+#include <fmt/core.h>
 
 std::string g_sqlite_path;
 std::string g_url;
@@ -40,9 +41,11 @@ void print_help(const boost::program_options::options_description & opts)
 	    << std::endl;
 }
 
-void load_and_save_torrent_files(const qtor::torrent_list & torrents)
+template <class LoadFunc, class SaveFunc>
+void load_and_save(const qtor::torrent_list & torrents, LoadFunc loader, SaveFunc saver)
 {	
-	std::array<ext::future<qtor::torrent_file_list>, request_slots> request_array;
+	using future_type = std::invoke_result_t<LoadFunc, qtor::abstract_data_source &, qtor::torrent_id_type>;
+	std::array<future_type, request_slots> request_array;
 
 	const auto batch_count = torrents.size() / request_slots;
 	const auto left_count  = torrents.size() % request_slots;
@@ -50,21 +53,21 @@ void load_and_save_torrent_files(const qtor::torrent_list & torrents)
 
 	// schedule enough torrents loads
 	for (unsigned i = 0; i < count; ++i)
-		request_array[i] = g_source.get_torrent_files(torrents[i].id());
+		request_array[i] = loader(g_source, torrents[i].id());
 
 	// process loaded ones and schedule new get operations
 	for (unsigned iteration = 0; iteration < batch_count; ++iteration)
 	{
 		for (unsigned i = 0; i < request_slots; ++i)
 		{
-			auto cur_idx = iteration * batch_count + i;
-			auto next_idx = iteration * batch_count + i + batch_count;
+			auto cur_idx = iteration * request_slots + i;
+			auto next_idx = iteration * request_slots + request_slots + i;
 			auto files = request_array[i].get();
 
 			if (next_idx < torrents.size())
-				request_array[i] = g_source.get_torrent_files(torrents[next_idx].id());
+				request_array[i] = loader(g_source, torrents[next_idx].id());
 
-			qtor::sqlite::save_torrent_files(g_session, files, torrents[cur_idx].id());
+			saver(g_session, std::move(files), torrents[cur_idx].id());
 		}
 	}
 
@@ -73,8 +76,16 @@ void load_and_save_torrent_files(const qtor::torrent_list & torrents)
 	{
 		auto & save_tor = torrents[torrents.size() - left_count + i];
 		auto files = request_array[i].get();
-		qtor::sqlite::save_torrent_files(g_session, files, save_tor.id());
+		saver(g_session, std::move(files), save_tor.id());
 	}
+}
+
+void load_and_save_torrent_files(const qtor::torrent_list & torrents)
+{
+	using std::placeholders::_1; using std::placeholders::_2;
+	auto loader = std::bind(&qtor::abstract_data_source::get_torrent_files, _1, _2);
+	auto saver = qtor::sqlite::save_torrent_files;
+	return load_and_save(torrents, loader, saver);
 }
 
 int main(int argc, char ** argv)

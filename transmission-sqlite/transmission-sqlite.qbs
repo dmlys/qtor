@@ -1,4 +1,4 @@
-import qbs
+﻿import qbs
 
 CppApplication
 {
@@ -22,7 +22,7 @@ CppApplication
 	cpp.includePaths: project.additionalIncludePaths
 	cpp.libraryPaths: project.additionalLibraryPaths
 
-	cpp.dynamicLibraries: ["yaml-cpp", "z", "stdc++fs", "ssl", "crypto", "sqlite3", "boost_regex", "boost_system", "boost_program_options", "fmt"]
+	cpp.dynamicLibraries: ["yaml-cpp", "z", "fmt", "stdc++fs", "ssl", "crypto", "sqlite3", "boost_regex", "boost_system", "boost_program_options"]
 
 	files: [
 		"src/*"

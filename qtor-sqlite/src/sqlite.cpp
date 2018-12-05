@@ -123,7 +123,7 @@ namespace qtor::sqlite
 	void drop_torrent_files_table(sqlite3yaw::session & ses)
 	{
 		std::string cmd = "drop table ";
-		sqlite3yaw::escape_sql_name(torrent_files_table_name);
+		sqlite3yaw::escape_sql_name(torrent_files_table_name, cmd);
 
 		ses.exec_ex(cmd);
 	}

@@ -381,7 +381,7 @@ namespace transmission
 
 			file.filename = file_node[Name].as<filepath_type>();
 			file.total_size = file_node[Length].as<size_type>();
-			file.total_size = file_stat_node[BytesCompleted].as<size_type>();
+			file.have_size = file_stat_node[BytesCompleted].as<size_type>();
 			file.wanted = file_stat_node[Wanted].as<bool_type>();
 			file.priority = file_stat_node[Priority].as<int_type>();
 
