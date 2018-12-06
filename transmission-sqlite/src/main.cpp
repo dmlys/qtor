@@ -62,12 +62,12 @@ void load_and_save(const qtor::torrent_list & torrents, LoadFunc loader, SaveFun
 		{
 			auto cur_idx = iteration * request_slots + i;
 			auto next_idx = iteration * request_slots + request_slots + i;
-			auto files = request_array[i].get();
+			auto entity = request_array[i].get();
 
 			if (next_idx < torrents.size())
 				request_array[i] = loader(g_source, torrents[next_idx].id());
 
-			saver(g_session, std::move(files), torrents[cur_idx].id());
+			saver(g_session, std::move(entity), torrents[cur_idx].id());
 		}
 	}
 
@@ -75,8 +75,8 @@ void load_and_save(const qtor::torrent_list & torrents, LoadFunc loader, SaveFun
 	for (unsigned i = 0; i < left_count; ++i)
 	{
 		auto & save_tor = torrents[torrents.size() - left_count + i];
-		auto files = request_array[i].get();
-		saver(g_session, std::move(files), save_tor.id());
+		auto entity = request_array[i].get();
+		saver(g_session, std::move(entity), save_tor.id());
 	}
 }
 
