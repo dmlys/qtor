@@ -49,8 +49,8 @@ namespace transmission
 	class data_source::request_base : public base_type::request_base
 	{
 	public:
-		void request(ext::netlib::socket_stream & stream) override;
-		void response(ext::netlib::socket_stream & stream) override;
+		void request(ext::netlib::socket_streambuf & streambuf) override;
+		void response(ext::netlib::socket_streambuf & streambuf) override;
 
 	public:
 		virtual auto request_command() -> std::string = 0;
@@ -67,8 +67,8 @@ namespace transmission
 		void emit_data(Data data, const Handler & handler);
 		
 	public:
-		void request(ext::netlib::socket_stream & stream) override;
-		void response(ext::netlib::socket_stream & stream) override;
+		void request(ext::netlib::socket_streambuf & streambuf) override;
+		void response(ext::netlib::socket_streambuf & streambuf) override;
 		auto next_invoke() -> std::chrono::steady_clock::time_point override { return m_next; }
 
 	public:
@@ -94,8 +94,10 @@ namespace transmission
 		}
 	}
 
-	void data_source::subscription_base::request(ext::netlib::socket_stream & stream)
+	void data_source::subscription_base::request(ext::netlib::socket_streambuf & streambuf)
 	{
+		std::ostream stream(&streambuf);
+
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & uri = owner->m_encoded_uri;
 		auto & session = owner->m_xtransmission_session;
@@ -114,40 +116,42 @@ namespace transmission
 		stream << "\r\n" << body;
 	}
 
-	void data_source::subscription_base::response(ext::netlib::socket_stream & stream)
+	void data_source::subscription_base::response(ext::netlib::socket_streambuf & streambuf)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
 
 		std::string name, body;
 		ext::netlib::http_parser parser(ext::netlib::http_parser::response);
-		parser.parse_status(stream, body);
+		parser.parse_status(streambuf, body);
 
 		int code = parser.http_code();
 		if (code / 100 == 2)
 		{
-			ext::netlib::parse_http_response(parser, stream, body);
+			ext::netlib::parse_http_response(parser, streambuf, body);
 			m_next = std::chrono::steady_clock::now() + m_delay;
 			parse_response(std::move(body));
 		}
 		else if (code == 409)
 		{
-			while (parser.parse_header(stream, name, body))
+			while (parser.parse_header(streambuf, name, body))
 				if (name == "X-Transmission-Session-Id")
 					session = body;
 
-			parser.parse_trailing(stream);
+			parser.parse_trailing(streambuf);
 		}
 		else
 		{
-			parser.parse_trailing(stream);
+			parser.parse_trailing(streambuf);
 			auto err = fmt::format("Bad http response: {}, {}", code, body);
 			throw std::runtime_error(std::move(err));
 		}
 	}
 
-	void data_source::request_base::request(ext::netlib::socket_stream & stream)
+	void data_source::request_base::request(ext::netlib::socket_streambuf & streambuf)
 	{
+		std::ostream stream(&streambuf);
+
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & uri = owner->m_encoded_uri;
 		auto & session = owner->m_xtransmission_session;
@@ -166,33 +170,33 @@ namespace transmission
 		stream << "\r\n" << body;
 	}
 
-	void data_source::request_base::response(ext::netlib::socket_stream & stream)
+	void data_source::request_base::response(ext::netlib::socket_streambuf & streambuf)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
 
 		std::string name, body;
 		ext::netlib::http_parser parser(ext::netlib::http_parser::response);
-		parser.parse_status(stream, body);
+		parser.parse_status(streambuf, body);
 
 		int code = parser.http_code();
 		if (code / 100 == 2)
 		{
-			ext::netlib::parse_http_response(parser, stream, body);
+			ext::netlib::parse_http_response(parser, streambuf, body);
 			parse_response(std::move(body));
 		}
 		else if (code == 409)
 		{
-			while (parser.parse_header(stream, name, body))
+			while (parser.parse_header(streambuf, name, body))
 				if (name == "X-Transmission-Session-Id")
 					session = body;
 
-			parser.parse_trailing(stream);
+			parser.parse_trailing(streambuf);
 			set_repeat();
 		}
 		else
 		{
-			parser.parse_trailing(stream);
+			parser.parse_trailing(streambuf);
 			auto err = fmt::format("Bad http response: {}, {}", code, body);
 			throw std::runtime_error(std::move(err));
 		}

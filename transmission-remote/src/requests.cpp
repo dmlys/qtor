@@ -2,6 +2,15 @@
 #include <ext/range/combine.hpp>
 #include <yaml-cpp/yaml.h>
 
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
+#include <QtCore/QJsonValue>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonParseError>
+
 namespace YAML
 {
 	template <>
@@ -364,6 +373,35 @@ namespace transmission
 		return result;
 	}
 
+	static torrent_file_list parse_torrent_file_list(const QJsonDocument & doc)
+	{
+		torrent_file_list result;
+
+		auto root = doc.object();
+		auto res = root["result"].toString();
+		if (res != "success")
+			throw std::runtime_error(fmt::format("Bad response: {}", res));
+
+		QJsonObject data = root["arguments"].toObject()["torrents"].toArray()[0].toObject();
+		QJsonArray files = data["files"].toArray();
+		QJsonArray fileStats = data["fileStats"].toArray();
+
+		for (auto [file_node, file_stat_node] : ext::combine(files, fileStats))
+		{
+			torrent_file file;
+
+			file.filename = file_node.toObject()["name"].toString();
+			file.total_size = file_node.toObject()["length"].toDouble();
+			file.have_size = file_node.toObject()["bytesCompleted"].toDouble();
+			file.wanted = file_stat_node.toObject()["wanted"].toBool();
+			file.priority = file_stat_node.toObject()["priority"].toInt();
+
+			result.push_back(std::move(file));
+		}
+
+		return result;
+	}
+
 	static torrent_file_list parse_torrent_file_list(const YAML::Node & node)
 	{
 		torrent_file_list result;
@@ -381,7 +419,7 @@ namespace transmission
 
 			file.filename = file_node[Name].as<filepath_type>();
 			file.total_size = file_node[Length].as<size_type>();
-			file.have_size = file_stat_node[BytesCompleted].as<size_type>();
+			file.have_size = file_node[BytesCompleted].as<size_type>();
 			file.wanted = file_stat_node[Wanted].as<bool_type>();
 			file.priority = file_stat_node[Priority].as<int_type>();
 
@@ -393,8 +431,15 @@ namespace transmission
 
 	torrent_file_list parse_torrent_file_list(const std::string & json)
 	{
-		auto doc = YAML::Load(json);
-		return parse_torrent_file_list(doc);
+		QByteArray source(json.c_str(), json.size());
+
+		QJsonParseError err;
+		QJsonDocument jdoc = jdoc.fromJson(source, &err);
+
+		if (not jdoc.isNull()) return parse_torrent_file_list(jdoc);
+
+		//auto doc = YAML::Load(json);
+		//return parse_torrent_file_list(doc);
 	}
 
 	torrent_file_list parse_torrent_file_list(std::istream & json_source)

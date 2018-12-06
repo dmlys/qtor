@@ -18,7 +18,8 @@
 #include <qtor/custom_meta.hpp>
 
 #include <fmt/format.h>
-#include <fmt/core.h>
+#include <fmt/ostream.h>
+
 
 std::string g_sqlite_path;
 std::string g_url;
@@ -87,6 +88,13 @@ void load_and_save_torrent_files(const qtor::torrent_list & torrents)
 	auto saver = qtor::sqlite::save_torrent_files;
 	return load_and_save(torrents, loader, saver);
 }
+
+#include <QtCore/QJsonValue>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonParseError>
+
 
 int main(int argc, char ** argv)
 {
