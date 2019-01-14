@@ -76,23 +76,24 @@ namespace qtor
 		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
 
-	auto torrent_file_tree_traits::analyze(const pathview_type & path, const pathview_type & filename) const
+	auto torrent_file_tree_traits::analyze(const pathview_type & path, const pathview_type & leaf_path) const
 	    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>
 	{
-		auto first = filename.begin() + path.size();
-		auto last = filename.end();
+		//[first, last) - next segment in leaf_path,
+		auto first = leaf_path.begin() + path.size();
+		auto last = leaf_path.end();
 		auto it = std::find(first, last, '/');
 
 		if (it == last)
 		{
-			pathview_type name = filename.mid(path.size()); // = QString::null;
+			pathview_type name = leaf_path.mid(path.size()); // = QString::null;
 			return std::make_tuple(viewed::LEAF, path, std::move(name));
 		}
 		else
 		{
-			pathview_type name = filename.mid(path.size(), it - first);
+			pathview_type name = leaf_path.mid(path.size(), it - first);
 			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
-			pathview_type newpath = filename.left(it - filename.begin());
+			pathview_type newpath = leaf_path.left(it - leaf_path.begin());
 			return std::make_tuple(viewed::PAGE, std::move(newpath), std::move(name));
 		}
 	}
