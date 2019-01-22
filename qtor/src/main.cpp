@@ -490,8 +490,11 @@ struct traits
 
 class test_model : public QAbstractTableModel, public viewed::sftableset_model_qtbase<traits>
 {
+	using model_base = QAbstractTableModel;
+	using view_base = viewed::sftableset_model_qtbase<traits>;
+
 public:
-	virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override { return m_store.size(); }
+	virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override { return view_base::m_store.size(); }
 	virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override { return 2; }
 
 	virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override { return {}; }
