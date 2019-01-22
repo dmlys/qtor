@@ -494,11 +494,15 @@ class test_model : public QAbstractTableModel, public viewed::sftableset_model_q
 	using view_base = viewed::sftableset_model_qtbase<traits>;
 
 public:
-	virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override { return view_base::m_store.size(); }
+	virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override { return m_store.size(); }
 	virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override { return 2; }
 
 	virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override { return {}; }
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override { return {}; }
+
+//public:
+//	test_model() = default;
+//	~test_model() = default;
 };
 
 
@@ -514,7 +518,7 @@ int main(int argc, char ** argv)
 
 
 	test_model model;
-	model.assign(std::move(data));
+	//model.assign(std::move(data));
 
 
 }
