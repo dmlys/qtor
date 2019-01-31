@@ -464,62 +464,7 @@
 //	return 0;
 //}
 
-
-#include <viewed/sftableset_model_qtbase.hpp>
-
-struct test_entity
+int main()
 {
-	std::string name;
-	int volume;
-};
-
-struct traits
-{
-	using value_type = test_entity;
-	using key_type = std::string;
-	using key_eq_type = std::equal_to<>;
-	using key_hash_type = std::hash<key_type>;
-
-	using sort_pred_type = viewed::null_sorter;
-	using filter_pred_type = viewed::null_filter;
-
-	inline static const key_type & extract_key(const test_entity & val) noexcept { return val.name; }
-	inline static void update(value_type & val, value_type && newval) { val = std::move(newval); }
-	inline static void update(value_type & val, const value_type & newval) { val = newval; }
-};
-
-class test_model : public QAbstractTableModel, public viewed::sftableset_model_qtbase<traits>
-{
-	using model_base = QAbstractTableModel;
-	using view_base = viewed::sftableset_model_qtbase<traits>;
-
-public:
-	virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override { return m_store.size(); }
-	virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override { return 2; }
-
-	virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override { return {}; }
-	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override { return {}; }
-
-//public:
-//	test_model() = default;
-//	~test_model() = default;
-};
-
-
-int main(int argc, char ** argv)
-{
-	std::vector<test_entity> data =
-	{
-	    {"first", 1},
-	    {"second", 2},
-	    {"opla", 3},
-	    {"123", 4},
-	};
-
-
-	test_model model;
-	//model.assign(std::move(data));
-
 
 }
-

@@ -74,5 +74,6 @@ Project
 		"qtor-sqlite/qtor-sqlite.qbs",
 		"transmission-remote/transmission-remote.qbs",
 		"transmission-sqlite/transmission-sqlite.qbs",
+		"externals/QtTools/examples/viewed-examples.qbs",
 	]
 }
