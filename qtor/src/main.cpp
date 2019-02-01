@@ -165,15 +165,15 @@ int main(int argc, char * argv[])
 
 	std::vector<torrent_file> paths, paths2;
 	paths.assign({
-	    { QStringLiteral("folder/file1.txt"), 11 * 1000, 2 * 1000 },
-	    { QStringLiteral("foldep/file1.txt"), 12 * 1000, 3 * 1000 },
-	    { QStringLiteral("foldex/file2.txt"), 13 * 1000, 4 * 1000 },
-	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
-	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
-	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
-	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
-	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
-	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
+	    { QStringLiteral("folder/copa/file1.txt"), 11 * 1000, 2 * 1000 },
+	    { QStringLiteral("folder123/copa/file1.txt"), 12 * 1000, 3 * 1000 },
+//	    { QStringLiteral("foldex/copa/file2.txt"), 13 * 1000, 4 * 1000 },
+//	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
+//	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
+//	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
+//	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
+//	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
+//	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
 	});
 
 	paths2 = paths;

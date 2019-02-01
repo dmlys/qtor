@@ -25,16 +25,16 @@ namespace qtor
 		static pathview_type get_name(const node_type & node) { return qtor::get_name(node.filename); }
 		static pathview_type get_path(const leaf_type & leaf) { return leaf.filename; }
 
-		bool is_child(const pathview_type & path, const pathview_type & name, const pathview_type & leaf_path) const;
-		auto analyze(const pathview_type & path, const pathview_type & leaf_path) const
+		auto parse_path(const pathview_type & path, const pathview_type & context) const
 		    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
+		bool is_child(const pathview_type & path, const pathview_type & context, const pathview_type & node_name) const;
 
 		// fix for QString to QStringRef conversion
-		//static bool is_child(const pathview_type & path, const pathview_type & name, const path_type & leaf_path)
-		//{ return is_child(path, name, &leaf_path); }
-		//static auto analyze(const pathview_type & path, const path_type & leaf_path)
+		//static auto analyze(const path_type & path, const pathview_type & context)
 		//    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>
-		//{ return analyze(path, &leaf_path); }
+		//{ return analyze(&path, context); }
+		//static bool is_child(const path_type & path, const pathview_type & context, const pathview_type & node_name)
+		//{ return is_child(&path, context, name_name); }
 
 		class column_sorter
 		{

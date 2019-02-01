@@ -76,32 +76,32 @@ namespace qtor
 		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
 
-	auto torrent_file_tree_traits::analyze(const pathview_type & path, const pathview_type & leaf_path) const
+	auto torrent_file_tree_traits::parse_path(const pathview_type & path, const pathview_type & context) const
 	    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>
 	{
 		//[first, last) - next segment in leaf_path,
-		auto first = leaf_path.begin() + path.size();
-		auto last = leaf_path.end();
+		auto first = path.begin() + context.size();
+		auto last = path.end();
 		auto it = std::find(first, last, '/');
 
 		if (it == last)
 		{
-			pathview_type name = leaf_path.mid(path.size()); // = QString::null;
-			return std::make_tuple(viewed::LEAF, path, std::move(name));
+			pathview_type name = path.mid(context.size());
+			return std::make_tuple(viewed::LEAF, context, std::move(name));
 		}
 		else
 		{
-			pathview_type name = leaf_path.mid(path.size(), it - first);
+			pathview_type name = path.mid(context.size(), it - first);
 			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
-			pathview_type newpath = leaf_path.left(it - leaf_path.begin());
+			pathview_type newpath = path.left(it - path.begin());
 			return std::make_tuple(viewed::PAGE, std::move(newpath), std::move(name));
 		}
 	}
 
-	bool torrent_file_tree_traits::is_child(const pathview_type & path, const pathview_type & name, const pathview_type & leaf_path) const
+	bool torrent_file_tree_traits::is_child(const pathview_type & path, const pathview_type & context, const pathview_type & node_name) const
 	{
-		auto ref = leaf_path.mid(path.size(), name.size());
-		return ref == name;
+		auto ref = path.mid(context.size(), node_name.size());
+		return ref == node_name;
 	}
 
 	QVariant FileTreeModelBase::GetItem(const QModelIndex & idx) const
