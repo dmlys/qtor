@@ -316,7 +316,7 @@ namespace qtor
 		QSize addSz = QWidget::sizeHint() - m_tableView->sizeHint();
 		maxSize -= addSz;
 
-		auto sz = QtTools::TableSizeHint(m_tableView, m_sizeHint, maxSize);
+		auto sz = QtTools::ItemViewSizeHint(m_tableView, m_sizeHint, maxSize);
 		return sz += addSz;
 	}
 

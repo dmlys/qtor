@@ -155,7 +155,7 @@ namespace qtor
 
 	void FileTreeModelBase::SortBy(int column, Qt::SortOrder order)
 	{
-		sort_by(column, order);
+		sort_by(ViewToMetaIndex(column), order);
 	}
 
 	void FileTreeModelBase::FilterBy(QString expr)
