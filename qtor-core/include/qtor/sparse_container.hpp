@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <vector>
 #include <unordered_map>
 #include <qtor/types.hpp>
 #include <qtor/model_meta.hpp>
-#include <viewed/refilter_type.hpp>
+#include <viewed/forward_types.hpp>
 
 namespace qtor
 {

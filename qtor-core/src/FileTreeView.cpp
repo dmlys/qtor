@@ -10,10 +10,10 @@
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QMenu>
 
+#include <QtTools/ToolsBase.hpp>
 #include <QtTools/ItemViewUtils.hpp>
 #include <QtTools/HeaderConfigurationWidget.hqt>
 
-#include <QtTools/ToolsBase.hpp>
 #include <ext/join_into.hpp>
 
 namespace qtor
