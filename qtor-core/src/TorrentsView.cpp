@@ -1,4 +1,4 @@
-#include <qtor/TorrentsView.hqt>
+﻿#include <qtor/TorrentsView.hqt>
 #include <qtor/MainWindow.hqt>
 
 #include <QtGui/QClipboard>

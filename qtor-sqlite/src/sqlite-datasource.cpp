@@ -52,7 +52,7 @@ namespace qtor::sqlite
 	}
 
 	auto sqlite_datasource::subscribe_torrents(torrent_handler handler)
-		-> ext::netlib::subscription_handle
+		-> ext::net::subscription_handle
 	{
 		auto sub = ext::make_intrusive<subscription>();
 		sub->m_owner = this;

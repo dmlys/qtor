@@ -1,5 +1,5 @@
 #pragma once
-#include <ext/netlib/subscription_handle.hpp>
+#include <ext/net/subscription_handle.hpp>
 
 namespace qtor
 {
@@ -7,10 +7,10 @@ namespace qtor
 	{
 	protected:
 		unsigned m_viewcount = 0;
-		ext::netlib::subscription_handle m_subsription_handle;
+		ext::net::subscription_handle m_subsription_handle;
 
 	protected:
-		virtual auto subscribe() -> ext::netlib::subscription_handle = 0;
+		virtual auto subscribe() -> ext::net::subscription_handle = 0;
 		virtual void start_subscription();
 		virtual void stop_subscription();
 

@@ -28,7 +28,7 @@ namespace qtor
 		std::shared_ptr<abstract_data_source> m_source;
 
 	protected:
-		auto subscribe() -> ext::netlib::subscription_handle override;
+		auto subscribe() -> ext::net::subscription_handle override;
 
 	public:
 		/// добавляет данные. Уже имеющиеся данные обновляются, остальные добавляются

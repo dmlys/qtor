@@ -93,10 +93,6 @@ namespace qtor
 			torrent::DateStarted,
 			torrent::DateDone,
 		});
-
-		// from view_base_type
-		connect_signals();
-		reinit_view();
 	}
 
 	TorrentsModel::~TorrentsModel()

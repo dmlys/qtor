@@ -132,7 +132,7 @@ int main(int argc, char ** argv)
 
 	using namespace std;
 	ext::init_future_library();
-	ext::netlib::socket_stream_init();
+	ext::net::socket_stream_init();
 
 	g_session.open(g_sqlite_path);
 

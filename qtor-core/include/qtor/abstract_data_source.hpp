@@ -6,8 +6,8 @@
 #include <ext/future.hpp>
 #include <ext/library_logger/logger.hpp>
 
-#include <ext/netlib/connection_controller.hpp>
-#include <ext/netlib/subscription_handle.hpp>
+#include <ext/net/connection_controller.hpp>
+#include <ext/net/subscription_handle.hpp>
 
 #include <QtTools/GuiQueue.hqt>
 
@@ -16,18 +16,18 @@
 
 namespace qtor
 {
-	class abstract_data_source : public virtual ext::netlib::connection_controller
+	class abstract_data_source : public virtual ext::net::connection_controller
 	{
 	public:
 		using torrent_handler = std::function<void (torrent_list & list)>;
 		using session_stat_handler = std::function<void (session_stat & stats)>;
 
 	public:
-		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle = 0;
+		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::net::subscription_handle = 0;
 		virtual ext::future<session_stat> get_session_stats() = 0;
 
 	public:
-		virtual auto subscribe_torrents(torrent_handler handler)->ext::netlib::subscription_handle = 0;
+		virtual auto subscribe_torrents(torrent_handler handler)->ext::net::subscription_handle = 0;
 
 		virtual ext::future<torrent_list> get_torrents() = 0;
 		virtual ext::future<torrent_list> get_torrents(torrent_id_list ids) = 0;

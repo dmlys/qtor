@@ -1,6 +1,6 @@
 #pragma once
-#include <ext/netlib/abstract_connection_controller.hpp>
-#include <ext/netlib/abstract_subscription_controller.hpp>
+#include <ext/net/abstract_connection_controller.hpp>
+#include <ext/net/abstract_subscription_controller.hpp>
 #include <qtor/abstract_data_source.hpp>
 
 
@@ -8,10 +8,10 @@ namespace qtor::sqlite
 {
 	class sqlite_datasource :
 		public abstract_data_source,
-		public ext::netlib::abstract_connection_controller
+		public ext::net::abstract_connection_controller
 	{
 	protected:
-		class subscription : public ext::netlib::abstract_subscription_controller
+		class subscription : public ext::net::abstract_subscription_controller
 		{
 			friend sqlite_datasource;
 			sqlite_datasource * m_owner;
@@ -48,7 +48,7 @@ namespace qtor::sqlite
 		auto get_gui_queue() const -> QtTools::GuiQueue * override { return m_queue; }
 
 	public:
-		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle override { return {}; }
+		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::net::subscription_handle override { return {}; }
 		virtual ext::future<session_stat> get_session_stats() override { return {}; }
 
 	protected:
@@ -56,7 +56,7 @@ namespace qtor::sqlite
 		void do_disconnect_request(unique_lock lk) override;
 
 	public:
-		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
+		auto subscribe_torrents(torrent_handler handler) -> ext::net::subscription_handle override;
 		
 		virtual ext::future<torrent_list> get_torrents() override;
 		virtual ext::future<torrent_list> get_torrents(torrent_id_list ids) override;

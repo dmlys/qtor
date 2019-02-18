@@ -1,8 +1,8 @@
 ﻿#include <qtor/transmission/data_source.hpp>
 #include <qtor/transmission/requests.hpp>
 
-#include <ext/netlib/parse_url.hpp>
-#include <ext/netlib/http_parser.hpp>
+#include <ext/net/parse_url.hpp>
+#include <ext/net/http_parser.hpp>
 #include <ext/library_logger/logging_macros.hpp>
 #include <fmt/format.h>
 
@@ -19,7 +19,7 @@ namespace transmission
 
 	void data_source::set_address(std::string addr)
 	{
-		auto parsed = ext::netlib::parse_url(addr);
+		auto parsed = ext::net::parse_url(addr);
 		m_encoded_uri = parsed.path;
 
 		std::string service = parsed.port.empty() ? "http" : parsed.port;
@@ -49,8 +49,8 @@ namespace transmission
 	class data_source::request_base : public base_type::request_base
 	{
 	public:
-		void request(ext::netlib::socket_streambuf & streambuf) override;
-		void response(ext::netlib::socket_streambuf & streambuf) override;
+		void request(ext::net::socket_streambuf & streambuf) override;
+		void response(ext::net::socket_streambuf & streambuf) override;
 
 	public:
 		virtual auto request_command() -> std::string = 0;
@@ -67,8 +67,8 @@ namespace transmission
 		void emit_data(Data data, const Handler & handler);
 		
 	public:
-		void request(ext::netlib::socket_streambuf & streambuf) override;
-		void response(ext::netlib::socket_streambuf & streambuf) override;
+		void request(ext::net::socket_streambuf & streambuf) override;
+		void response(ext::net::socket_streambuf & streambuf) override;
 		auto next_invoke() -> std::chrono::steady_clock::time_point override { return m_next; }
 
 	public:
@@ -94,7 +94,7 @@ namespace transmission
 		}
 	}
 
-	void data_source::subscription_base::request(ext::netlib::socket_streambuf & streambuf)
+	void data_source::subscription_base::request(ext::net::socket_streambuf & streambuf)
 	{
 		std::ostream stream(&streambuf);
 
@@ -116,19 +116,19 @@ namespace transmission
 		stream << "\r\n" << body;
 	}
 
-	void data_source::subscription_base::response(ext::netlib::socket_streambuf & streambuf)
+	void data_source::subscription_base::response(ext::net::socket_streambuf & streambuf)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
 
 		std::string name, body;
-		ext::netlib::http_parser parser(ext::netlib::http_parser::response);
+		ext::net::http_parser parser(ext::net::http_parser::response);
 		parser.parse_status(streambuf, body);
 
 		int code = parser.http_code();
 		if (code / 100 == 2)
 		{
-			ext::netlib::parse_http_response(parser, streambuf, body);
+			ext::net::parse_http_response(parser, streambuf, body);
 			m_next = std::chrono::steady_clock::now() + m_delay;
 			parse_response(std::move(body));
 		}
@@ -148,7 +148,7 @@ namespace transmission
 		}
 	}
 
-	void data_source::request_base::request(ext::netlib::socket_streambuf & streambuf)
+	void data_source::request_base::request(ext::net::socket_streambuf & streambuf)
 	{
 		std::ostream stream(&streambuf);
 
@@ -170,19 +170,19 @@ namespace transmission
 		stream << "\r\n" << body;
 	}
 
-	void data_source::request_base::response(ext::netlib::socket_streambuf & streambuf)
+	void data_source::request_base::response(ext::net::socket_streambuf & streambuf)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
 
 		std::string name, body;
-		ext::netlib::http_parser parser(ext::netlib::http_parser::response);
+		ext::net::http_parser parser(ext::net::http_parser::response);
 		parser.parse_status(streambuf, body);
 
 		int code = parser.http_code();
 		if (code / 100 == 2)
 		{
-			ext::netlib::parse_http_response(parser, streambuf, body);
+			ext::net::parse_http_response(parser, streambuf, body);
 			parse_response(std::move(body));
 		}
 		else if (code == 409)
@@ -274,7 +274,7 @@ namespace transmission
 		return this->add_request(std::move(obj));
 	}
 
-	auto data_source::subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle
+	auto data_source::subscribe_torrents(torrent_handler handler) -> ext::net::subscription_handle
 	{
 		auto obj = ext::make_intrusive<torrent_subscription>();
 		obj->m_handler = std::move(handler);

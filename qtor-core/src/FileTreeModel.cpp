@@ -188,7 +188,5 @@ namespace qtor
 		    torrent_file_meta::TotalSize,
 		    torrent_file_meta::HaveSize
 		});
-
-		init();
 	}
 }

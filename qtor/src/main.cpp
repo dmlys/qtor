@@ -70,8 +70,8 @@
 //template <class Sink, class HeaderString, class ValueString>
 //void write_http_header(Sink & sink, const HeaderString & name, const ValueString & value)
 //{
-//	using ext::netlib::write_string;
-//	using ext::netlib::encode_url;
+//	using ext::net::write_string;
+//	using ext::net::encode_url;
 //
 //	write_string(sink, name);
 //	write_string(sink, ": ");
@@ -136,7 +136,7 @@
 #include <QtWidgets/QStyleFactory>
 #include <QtWidgets/QMessageBox>
 
-#include <ext/netlib/listener.hpp>
+#include <ext/net/listener.hpp>
 
 int main(int argc, char * argv[])
 {
@@ -146,7 +146,7 @@ int main(int argc, char * argv[])
 	QtTools::QtRegisterStdString();
 	QtTools::QtRegisterStdChronoTypes();
 
-	ext::netlib::socket_stream_init();
+	ext::net::socket_stream_init();
 	ext::init_future_library(std::thread::hardware_concurrency());
 
 	Q_INIT_RESOURCE(QtTools);
@@ -307,9 +307,9 @@ int main(int argc, char * argv[])
 
 
 
-//#include <ext/netlib/socket_rest_supervisor.hpp>
-//#include <ext/netlib/http_parser.hpp>
-//#include <ext/netlib/listener.hpp>
+//#include <ext/net/socket_rest_supervisor.hpp>
+//#include <ext/net/http_parser.hpp>
+//#include <ext/net/listener.hpp>
 
 //#include <ext/library_logger/logger.hpp>
 
@@ -319,7 +319,7 @@ int main(int argc, char * argv[])
 
 //#include <csignal>
 
-//class test_source : public virtual ext::netlib::socket_rest_supervisor
+//class test_source : public virtual ext::net::socket_rest_supervisor
 //{
 //public:
 //	ext::future<std::string> test_request();
@@ -332,7 +332,7 @@ int main(int argc, char * argv[])
 
 //class test_request : public test_source::request<std::string>
 //{
-//	void request(ext::netlib::socket_streambuf & socket)
+//	void request(ext::net::socket_streambuf & socket)
 //	{
 //		static unsigned count = 0;
 
@@ -350,10 +350,10 @@ int main(int argc, char * argv[])
 //		os.write(buffer, 1024);
 //	}
 
-//	void response(ext::netlib::socket_streambuf & streambuf)
+//	void response(ext::net::socket_streambuf & streambuf)
 //	{
 //		std::string name, body;
-//		ext::netlib::http_parser parser(ext::netlib::http_parser::response);
+//		ext::net::http_parser parser(ext::net::http_parser::response);
 //		parser.parse_status(streambuf, body);
 //		parser.parse_trailing(streambuf);
 
@@ -372,11 +372,11 @@ int main(int argc, char * argv[])
 //{
 //	using namespace std;
 
-//	ext::netlib::listener list;
+//	ext::net::listener list;
 //	list.bind(8080);
 //	list.listen();
 
-//	ext::netlib::socket_streambuf recv = list.accept();
+//	ext::net::socket_streambuf recv = list.accept();
 //	recv.timeout(std::chrono::steady_clock::duration::max());
 //	recv.throw_errors(true);
 //	recv.self_tie(false);
@@ -388,7 +388,7 @@ int main(int argc, char * argv[])
 //		auto res = recv.sgetc();
 //		if (res == EOF) break;
 
-//		ext::netlib::parse_http_request(recv, method, uri, body);
+//		ext::net::parse_http_request(recv, method, uri, body);
 //		fmt::print("Got request: {} {}\n", method, uri);
 
 //		std::ostream os(&recv);
@@ -412,7 +412,7 @@ int main(int argc, char * argv[])
 //	using namespace std;
 //	std::signal(SIGPIPE, SIG_IGN);
 
-//	ext::netlib::socket_stream_init();
+//	ext::net::socket_stream_init();
 //	ext::init_future_library(std::thread::hardware_concurrency());
 
 //	std::thread thr(list_thread);

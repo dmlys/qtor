@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <qtor/abstract_data_source.hpp>
-#include <ext/netlib/socket_rest_supervisor.hpp>
+#include <ext/net/socket_rest_supervisor.hpp>
 
 #include <QtTools/GuiQueue.hqt>
 
@@ -9,10 +9,10 @@ namespace transmission
 {
 	class data_source :
 		public abstract_data_source,
-		public ext::netlib::socket_rest_supervisor
+		public ext::net::socket_rest_supervisor
 	{
 	private:
-		typedef ext::netlib::socket_rest_supervisor base_type;
+		typedef ext::net::socket_rest_supervisor base_type;
 
 	private:
 		std::string m_encoded_uri;
@@ -42,11 +42,11 @@ namespace transmission
 		auto get_gui_queue() const -> QtTools::GuiQueue * override;
 
 	public:
-		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::netlib::subscription_handle override { return {}; }
+		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::net::subscription_handle override { return {}; }
 		virtual ext::future<session_stat> get_session_stats() override { return {}; }
 
 	public:
-		auto subscribe_torrents(torrent_handler handler) -> ext::netlib::subscription_handle override;
+		auto subscribe_torrents(torrent_handler handler) -> ext::net::subscription_handle override;
 
 		virtual ext::future<torrent_list> get_torrents() override;
 		virtual ext::future<torrent_list> get_torrents(torrent_id_list ids) override;
