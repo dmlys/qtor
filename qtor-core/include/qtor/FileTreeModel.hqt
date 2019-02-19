@@ -132,21 +132,6 @@ namespace qtor
 	};
 
 
-	class FileTreeModel : public viewed::sftree_model_qtbase<FileTreeModelBase>
-	{
-		using base_type = viewed::sftree_model_qtbase<FileTreeModelBase>;
-
-	public:
-		FileTreeModel(QObject * parnet = nullptr);
-	};
-
-
-	class FileTreeViewModel : public viewed::sftree_view_qtbase<torrent_file_store, FileTreeModelBase>
-	{
-		using base_type = viewed::sftree_view_qtbase<torrent_file_store, FileTreeModelBase>;
-		using container_type = base_type::container_type;
-
-	public:
-		FileTreeViewModel(std::shared_ptr<container_type> m_owner, QObject * parent = nullptr);
-	};
+	using FileTreeModel     = viewed::sftree_model_qtbase<FileTreeModelBase>;
+	using FileTreeViewModel = viewed::sftree_view_qtbase<torrent_file_store, FileTreeModelBase>;
 }

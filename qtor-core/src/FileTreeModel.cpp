@@ -168,21 +168,7 @@ namespace qtor
 	{
 		m_meta = std::make_shared<torrent_file_meta>();
 		m_fmt = std::make_shared<formatter>();
-	}
 
-	FileTreeModel::FileTreeModel(QObject * parent /* = nullptr */)
-	    : base_type(parent)
-	{
-		SetColumns({
-		    torrent_file_meta::FileName,
-		    torrent_file_meta::TotalSize,
-		    torrent_file_meta::HaveSize
-		});
-	}
-
-	FileTreeViewModel::FileTreeViewModel(std::shared_ptr<torrent_file_store> store, QObject * parent /* = nullptr */)
-	    : base_type(std::move(store), parent)
-	{
 		SetColumns({
 		    torrent_file_meta::FileName,
 		    torrent_file_meta::TotalSize,
