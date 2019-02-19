@@ -2,20 +2,19 @@
 #include <qtor/torrent_file.hpp>
 #include <qtor/abstract_data_source.hpp>
 #include <viewed/hash_container_base.hpp>
+#include <boost/multi_index/member.hpp>
 
 namespace qtor
 {
 	class torrent_file_store :
 		public viewed::hash_container_base<
 			torrent_file,
-			torrent_file_id_hasher,
-			torrent_file_id_equal
+	        boost::multi_index::member<torrent_file, filepath_type, &torrent_file::filename>
 		>
 	{
 		using base_type = viewed::hash_container_base<
 			torrent_file,
-			torrent_file_id_hasher,
-			torrent_file_id_equal
+			boost::multi_index::member<torrent_file, filepath_type, &torrent_file::filename>
 		>;
 
 	protected:

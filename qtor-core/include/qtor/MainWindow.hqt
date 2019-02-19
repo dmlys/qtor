@@ -39,7 +39,7 @@ namespace qtor
 		QAction * m_actionDelete = nullptr;
 		QAction * m_actionPreferences = nullptr;
 
-	public:
+	protected:
 		// statusBar
 		QStatusBar * m_statusbar = nullptr;
 		QLabel * m_statusBarLabel = nullptr;

@@ -206,34 +206,33 @@ namespace qtor
 		QTOR_TORRENT_FOR_EACH_FIELD(QTOR_TORRENT_DEFINE_PROPERTY)
 	};
 
+//	struct torrent_id_hasher
+//	{
+//		auto operator()(const torrent & val) const noexcept
+//		{
+//			return std::hash<torrent_id_type>{} (val.id());
+//		}
+//	};
 
-	struct torrent_id_hasher
-	{
-		auto operator()(const torrent & val) const noexcept
-		{
-			return std::hash<torrent_id_type>{} (val.id());
-		}
-	};
+//	struct torrent_id_equal
+//	{
+//		bool operator()(const torrent & t1, const torrent & t2) const noexcept
+//		{
+//			return t1.id() == t2.id();
+//		}
+//	};
 
-	struct torrent_id_equal
-	{
-		bool operator()(const torrent & t1, const torrent & t2) const noexcept
-		{
-			return t1.id() == t2.id();
-		}
-	};
+//	template <class relation_comparator>
+//	struct torrent_id_comparator : relation_comparator
+//	{
+//		bool operator()(const torrent & t1, const torrent & t2) const noexcept
+//		{
+//			return relation_comparator::operator() (t1.id(), t2.id());
+//		}
+//	};
 
-	template <class relation_comparator>
-	struct torrent_id_comparator : relation_comparator
-	{
-		bool operator()(const torrent & t1, const torrent & t2) const noexcept
-		{
-			return relation_comparator::operator() (t1.id(), t2.id());
-		}
-	};
-
-	using torrent_id_less    = torrent_id_comparator<std::less<>>;
-	using torrent_id_greater = torrent_id_comparator<std::greater<>>;
+//	using torrent_id_less    = torrent_id_comparator<std::less<>>;
+//	using torrent_id_greater = torrent_id_comparator<std::greater<>>;
 
 
 	class torrent_meta : public simple_sparse_container_meta<torrent>
