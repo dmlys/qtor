@@ -1,18 +1,18 @@
 #pragma once
 #include <qtor/torrent_file.hpp>
 #include <qtor/abstract_data_source.hpp>
-#include <viewed/hash_container_base.hpp>
+#include <viewed/hash_container.hpp>
 #include <boost/multi_index/member.hpp>
 
 namespace qtor
 {
 	class torrent_file_store :
-		public viewed::hash_container_base<
+		public viewed::hash_container<
 			torrent_file,
 	        boost::multi_index::member<torrent_file, filepath_type, &torrent_file::filename>
 		>
 	{
-		using base_type = viewed::hash_container_base<
+		using base_type = viewed::hash_container<
 			torrent_file,
 			boost::multi_index::member<torrent_file, filepath_type, &torrent_file::filename>
 		>;

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 #include <qtor/torrent.hpp>
 #include <qtor/view_manager.hpp>
 #include <qtor/abstract_data_source.hpp>
-#include <viewed/hash_container_base.hpp>
+#include <viewed/hash_container.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 
 namespace qtor
@@ -12,12 +12,12 @@ namespace qtor
 	/// It also managed view connected views and automatically pauses subscription 
 	/// if there are no connected views.
 	class torrent_store :
-		public viewed::hash_container_base<
+		public viewed::hash_container<
 			torrent, boost::multi_index::const_mem_fun<torrent, torrent_id_type, &torrent::id>
 		>,
 		public view_manager
 	{
-		typedef viewed::hash_container_base<
+		typedef viewed::hash_container<
 			torrent, boost::multi_index::const_mem_fun<torrent, torrent_id_type, &torrent::id>
 		> base_type;
 
