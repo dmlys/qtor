@@ -84,7 +84,7 @@ namespace qtor
 			return false;
 
 		auto * pfirst = str.data();
-		auto * plast = pfirst + str.size();
+		//auto * plast = pfirst + str.size();
 		auto * tpfirst = test.data();
 		auto * tplast = tpfirst + test.size();
 
