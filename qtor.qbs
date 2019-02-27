@@ -14,6 +14,9 @@ Project
 		if (qbs.toolchain.contains("msvc"))
 			defs = defs.uniqueConcat(["_SCL_SECURE_NO_WARNINGS"])
 
+		if (qbs.toolchain.contains("gcc") || qbs.toolchain.contains("clang"))
+			defs = defs.uniqueConcat(["BOOST_ALL_DYN_LINK"])
+
 		return defs
 	}
 
