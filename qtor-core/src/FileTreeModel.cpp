@@ -108,7 +108,7 @@ namespace qtor
 	{
 		if (not idx.isValid()) return QVariant();
 
-		const auto & val = get_element_ptr(idx);
+		const auto & val = get_ielement_ptr(idx);
 		const auto meta_index = ViewToMetaIndex(idx.column());
 
 		auto visitor = [this, meta_index](auto * ptr)
@@ -130,7 +130,7 @@ namespace qtor
 	{
 		if (not idx.isValid()) return QVariant();
 
-		const auto & val = get_element_ptr(idx);
+		const auto & val = get_ielement_ptr(idx);
 		return viewed::visit(any_from_element(), val);
 	}
 
