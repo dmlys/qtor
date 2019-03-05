@@ -87,14 +87,14 @@ namespace qtor
 		if (it == last)
 		{
 			pathview_type name = path.mid(context.size());
-			return std::make_tuple(viewed::LEAF, context, std::move(name));
+			return std::make_tuple(viewed::LEAF, std::move(name), context);
 		}
 		else
 		{
 			pathview_type name = path.mid(context.size(), it - first);
 			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
-			pathview_type newpath = path.left(it - path.begin());
-			return std::make_tuple(viewed::PAGE, std::move(newpath), std::move(name));
+			pathview_type newcontext = path.left(it - path.begin());
+			return std::make_tuple(viewed::PAGE, std::move(name), std::move(newcontext));
 		}
 	}
 
