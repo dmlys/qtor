@@ -92,20 +92,20 @@ namespace qtor
 		{
 			template <class Type>
 			auto operator()(const Type * item)       const { return item->total_size; }
-			auto operator()(const ivalue_ptr & item) const { return viewed::visit(*this, item); }
+			auto operator()(const ivalue_ptr & item) const { return viewed::visit(node_accessor(*this), item); }
 		};
 
 		struct get_have_size_type
 		{
 			template <class Type>
 			auto operator()(const Type * item)       const { return item->have_size; }
-			auto operator()(const ivalue_ptr & item) const { return viewed::visit(*this, item); }
+			auto operator()(const ivalue_ptr & item) const { return viewed::visit(node_accessor(*this), item); }
 		};
 
 		struct get_wanted_type
 		{
 			Qt::CheckState operator()(const leaf_type * item)  const { return item->wanted ? Qt::Checked : Qt::Unchecked; }
-			Qt::CheckState operator()(const page_type * item)  const { return item->wanted; }
+			Qt::CheckState operator()(const page_type * item)  const { return item->node.wanted; }
 			Qt::CheckState operator()(const ivalue_ptr & item) const { return viewed::visit(*this, item); }
 		};
 

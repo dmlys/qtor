@@ -117,7 +117,7 @@ namespace qtor
 			return meta->get_item(*ptr, meta_index);
 		};
 
-		return viewed::visit(visitor, val);
+		return viewed::visit(node_accessor(visitor), val);
 	}
 
 	struct any_from_element
@@ -131,7 +131,7 @@ namespace qtor
 		if (not idx.isValid()) return QVariant();
 
 		const auto & val = get_ielement_ptr(idx);
-		return viewed::visit(any_from_element(), val);
+		return viewed::visit(node_accessor(any_from_element()), val);
 	}
 
 	int FileTreeModelBase::FullRowCount(const QModelIndex & idx) const
@@ -149,8 +149,8 @@ namespace qtor
 		auto first = children.begin();
 		auto last  = children.end();
 		
-		page.total_size = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_total_size(item); });
-		page.have_size  = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item);  });
+		page.node.total_size = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_total_size(item); });
+		page.node.have_size  = std::accumulate(first, last, zero, [](size_type val, auto & item) { return val + get_have_size(item);  });
 	}
 
 	void FileTreeModelBase::SortBy(int column, Qt::SortOrder order)
