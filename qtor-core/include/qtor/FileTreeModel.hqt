@@ -27,7 +27,7 @@ namespace qtor
 
 		auto parse_path(const pathview_type & path, const pathview_type & context) const
 		    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
-		bool is_child(const pathview_type & path, const pathview_type & context, const pathview_type & node_name) const;
+		bool is_child(const pathview_type & path, const pathview_type & context) const;
 
 		// fix for QString to QStringRef conversion
 		//static auto analyze(const path_type & path, const pathview_type & context)

@@ -98,10 +98,10 @@ namespace qtor
 		}
 	}
 
-	bool torrent_file_tree_traits::is_child(const pathview_type & path, const pathview_type & context, const pathview_type & node_name) const
+	bool torrent_file_tree_traits::is_child(const pathview_type & path, const pathview_type & context) const
 	{
-		auto ref = path.mid(context.size(), node_name.size());
-		return ref == node_name;
+		auto part = path.mid(0, context.size());
+		return context == part;
 	}
 
 	QVariant FileTreeModelBase::GetItem(const QModelIndex & idx) const
