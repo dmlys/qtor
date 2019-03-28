@@ -76,33 +76,6 @@ namespace qtor
 		return rec.contains(m_filterStr, Qt::CaseInsensitive);
 	}
 
-	auto torrent_file_tree_traits::parse_path(const pathview_type & path, const pathview_type & context) const
-	    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>
-	{
-		//[first, last) - next segment in leaf_path,
-		auto first = path.begin() + context.size();
-		auto last = path.end();
-		auto it = std::find(first, last, '/');
-
-		if (it == last)
-		{
-			pathview_type name = path.mid(context.size());
-			return std::make_tuple(viewed::LEAF, std::move(name), context);
-		}
-		else
-		{
-			pathview_type name = path.mid(context.size(), it - first);
-			it = std::find_if_not(it, last, [](auto ch) { return ch == '/'; });
-			pathview_type newcontext = path.left(it - path.begin());
-			return std::make_tuple(viewed::PAGE, std::move(name), std::move(newcontext));
-		}
-	}
-
-	bool torrent_file_tree_traits::is_child(const pathview_type & path, const pathview_type & context) const
-	{
-		auto part = path.mid(0, context.size());
-		return context == part;
-	}
 
 	QVariant FileTreeModelBase::GetItem(const QModelIndex & idx) const
 	{

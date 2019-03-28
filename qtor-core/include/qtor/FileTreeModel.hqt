@@ -5,36 +5,19 @@
 
 #include <viewed/sftree_view_qtbase.hpp>
 #include <viewed/sftree_model_qtbase.hpp>
+#include <viewed/sftree_string_traits.hpp>
 
 namespace qtor
 {
-	struct torrent_file_tree_traits
+	struct torrent_file_tree_traits : viewed::sftree_qstring_traits
 	{
-		using path_type = filepath_type;
-		using pathview_type = filepath_type;
-
-		using path_equal_to_type = std::equal_to<>;
-		using path_less_type     = std::less<>;
-		using path_hash_type     = std::hash<pathview_type>;
-
 		using leaf_type = torrent_file;
 		using node_type = torrent_dir;
 
-		static void set_name(node_type & node, const pathview_type & path, const pathview_type & name) { node.filename = name; }
-		static pathview_type get_name(const leaf_type & leaf) { return qtor::get_name(leaf.filename); }
-		static pathview_type get_name(const node_type & node) { return qtor::get_name(node.filename); }
-		static pathview_type get_path(const leaf_type & leaf) { return leaf.filename; }
-
-		auto parse_path(const pathview_type & path, const pathview_type & context) const
-		    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>;
-		bool is_child(const pathview_type & path, const pathview_type & context) const;
-
-		// fix for QString to QStringRef conversion
-		//static auto analyze(const path_type & path, const pathview_type & context)
-		//    -> std::tuple<std::uintptr_t, pathview_type, pathview_type>
-		//{ return analyze(&path, context); }
-		//static bool is_child(const path_type & path, const pathview_type & context, const pathview_type & node_name)
-		//{ return is_child(&path, context, name_name); }
+		void set_name(node_type & node, const pathview_type & path, const pathview_type & name) { node.filename = name; }
+		pathview_type get_name(const leaf_type & leaf) const { return sftree_qstring_traits::get_name(leaf.filename); }
+		pathview_type get_name(const node_type & node) const { return sftree_qstring_traits::get_name(node.filename); }
+		pathview_type get_path(const leaf_type & leaf) const { return leaf.filename; }
 
 		class column_sorter
 		{
@@ -43,11 +26,13 @@ namespace qtor
 
 			leaf_compare_function m_leaf_compare;
 			node_compare_function m_node_compare;
+			torrent_file_tree_traits * m_traits = nullptr;
 
 			template <class Entity, class Type, Type Entity::*member, class Pred>
 			static bool compare_entity(const Entity & e1, const Entity & e2) noexcept;
 
 		public:
+			void set_traits(torrent_file_tree_traits & traits) { m_traits = &traits; }
 			void reset(unsigned type, Qt::SortOrder order);
 
 		public:
@@ -64,16 +49,18 @@ namespace qtor
 		class filepath_filter
 		{
 			path_type m_filterStr;
+			torrent_file_tree_traits * m_traits = nullptr;
 
 		public:
+			void set_traits(torrent_file_tree_traits & traits) { m_traits = &traits; }
 			viewed::refilter_type set_expr(QString expr);
 
 			bool always_matches() const noexcept { return m_filterStr == ""; }
 			bool matches(const pathview_type & name) const noexcept;
 
 			inline bool operator()(const pathview_type & name) const noexcept { return matches(name); }
-			inline bool operator()(const leaf_type & l) const noexcept { return matches(get_name(l)); }
-			inline bool operator()(const node_type & p) const noexcept { return matches(get_name(p)); }
+			inline bool operator()(const leaf_type & l) const noexcept { return matches(m_traits->get_name(l)); }
+			inline bool operator()(const node_type & p) const noexcept { return matches(m_traits->get_name(p)); }
 			inline explicit operator bool() const noexcept { return not always_matches(); }
 		};
 

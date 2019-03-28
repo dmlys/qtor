@@ -58,11 +58,10 @@ namespace qtor
 	}
 
 	TorrentsModel::TorrentsModel(std::shared_ptr<torrent_store> store, QObject * parent)
-		: base_type(parent), view_type(store.get())
+		: base_type(parent), view_type(std::move(store))
 	{
-		assert(store);
-		m_recstore = std::move(store);
-		m_recstore->view_addref();
+		assert(m_owner);
+		m_owner->view_addref();
 
 		m_filter_pred.set_items({torrent::Name});
 		m_meta = std::make_shared<torrent_meta>();
@@ -97,6 +96,6 @@ namespace qtor
 
 	TorrentsModel::~TorrentsModel()
 	{
-		m_recstore->view_release();
+		m_owner->view_release();
 	}
 }

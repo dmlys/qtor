@@ -26,14 +26,11 @@ namespace qtor
 			sparse_container_filter
 		>;
 
-	private:
+	protected:
 		using view_type::m_owner;
 		using view_type::m_store;   // vector of pointers
 		using view_type::m_sort_pred;
 		using view_type::m_filter_pred;
-
-	private:
-		std::shared_ptr<torrent_store> m_recstore;
 
 	protected:
 		virtual void SortBy(int column, Qt::SortOrder order) override;

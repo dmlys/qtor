@@ -5,7 +5,7 @@ Project
 {
 	//property pathList additionalIncludePaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.12.0/include"] : []
 	//property pathList additionalLibraryPaths: qbs.buildVariant == "debug" ? ["~/.local/opt/qt-5.12.0/lib"]     : []
-	property stringList additionalDriverFlags: ["-pthread"]
+	property stringList additionalDriverFlags: ["-pthread", "-march=native"]
 	
 	property stringList additionalDefines:
 	{

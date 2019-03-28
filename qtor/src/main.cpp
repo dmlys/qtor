@@ -152,11 +152,11 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(QtTools);
 	Q_INIT_RESOURCE(qtor_core_resource);
 
-	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	//source->set_address("bin/data.db"s);
+	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
 
-	auto source = std::make_shared<qtor::transmission::data_source>();
-	source->set_address("http://melkiy:9091/transmission/rpc"s);
+	//auto source = std::make_shared<qtor::transmission::data_source>();
+	//source->set_address("http://melkiy:9091/transmission/rpc"s);
 
 	QApplication qapp {argc, argv};
 
