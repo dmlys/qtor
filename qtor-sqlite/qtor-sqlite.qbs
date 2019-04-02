@@ -11,6 +11,7 @@ StaticLibrary
 	Depends { name: "qtor-core" }
 	
 	Depends { name: "Qt"; submodules: ["core"] }
+	Depends { name: "ProjectSettings"; required: false }
 
 	cpp.cxxLanguageVersion : "c++17"
 	cpp.cxxFlags: project.additionalCxxFlags

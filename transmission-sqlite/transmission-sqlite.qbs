@@ -14,6 +14,8 @@ CppApplication
 	Depends { name: "qtor-sqlite" }
 	Depends { name: "transmission-remote" }
 
+	Depends { name: "ProjectSettings"; required: false }
+
 	cpp.cxxLanguageVersion : "c++17"
 	cpp.cxxFlags: project.additionalCxxFlags
 	cpp.driverFlags: project.additionalDriverFlags
