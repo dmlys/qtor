@@ -1,6 +1,5 @@
 ﻿#include <qtor/transmission/requests.hpp>
 #include <ext/range/combine.hpp>
-#include <yaml-cpp/yaml.h>
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -10,19 +9,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonParseError>
-
-namespace YAML
-{
-	template <>
-	struct convert<QString>
-	{
-		static bool decode(const YAML::Node & node, QString & str)
-		{
-			str = ToQString(node.Scalar());
-			return true;
-		}
-	};
-}
+#include <QtTools/JsonTools.hpp>
 
 namespace qtor {
 namespace transmission
@@ -180,69 +167,78 @@ namespace transmission
 		};
 	}
 
+	inline static bool valid(QJsonValue node)
+	{
+		return not node.isUndefined() and not node.isNull();
+	}
 	
-	static void parse_string(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(string_type val))
+	static void parse_string(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(string_type val))
 	{
-		if (not node) return;
+		if (not valid(node)) return;
 
-		(t.*pmf)(node.as<string_type>());
+		(t.*pmf)(node.toString());
 	}
 
-	static void parse_uint64(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(uint64_type val))
+	static void parse_uint64(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(uint64_type val))
 	{		
-		if (not node) return;
+		if (not valid(node)) return;
 
-		long long i = node.as<long long>(-1);
-		if (i >= 0) (t.*pmf)(static_cast<uint64_type>(i));
+		auto data = node.toVariant();
+		if (data.isValid() and data.canConvert<uint64_type>())
+			(t.*pmf)(qvariant_cast<uint64_type>(data));
 	}
 
-	static void parse_double(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(double val))
+	static void parse_double(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(double val))
 	{
-		if (not node) return;
+		if (not valid(node)) return;
 
-		double d = node.as<double>(NAN);
+		double d = node.toDouble(NAN);
 		if (not std::isnan(d)) (t.*pmf)(d);
 	}
 
-	static void parse_bool(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(bool val))
+	static void parse_bool(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(bool val))
 	{
-		if (not node) return;
+		if (not valid(node)) return;
 
-		int i = 2;
-		bool def = reinterpret_cast<bool &>(i);
-		bool b = node.as<bool>(def);
-		if (b != def) (t.*pmf)(b);
+		if (not node.isBool()) return;
+		(t.*pmf)(node.toBool());
 	}
 
-	static void parse_speed(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(speed_type val))
+	static void parse_speed(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(speed_type val))
 	{
 		return parse_uint64(node, t, pmf);
 	}
 
-	static void parse_size(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(size_type val))
+	static void parse_size(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(size_type val))
 	{
 		return parse_uint64(node, t, pmf);
 	}
 
-	static void parse_datetime(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(datetime_type val))
+	static void parse_datetime(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(datetime_type val))
 	{
-		if (not node) return;
+		if (not valid(node)) return;
 
-		long long seconds = node.as<long long>(-1);
+		auto data = node.toVariant();
+		if (not data.isValid() or not data.canConvert<long long>()) return;
+
+		long long seconds = qvariant_cast<long long>(data);
 		if (seconds >= 0) (t.*pmf)(datetime_type::clock::from_time_t(seconds));
 	}
 	
-	static void parse_duration(const YAML::Node & node, torrent & t, torrent & (torrent::*pmf)(duration_type val))
+	static void parse_duration(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(duration_type val))
 	{
-		if (not node) return;
+		if (not valid(node)) return;
 
-		long long seconds = node.as<long long>(-1);
+		auto data = node.toVariant();
+		if (not data.isValid() or not data.canConvert<long long>()) return;
+
+		long long seconds = qvariant_cast<long long>(data);
 		if (seconds >= 0) (t.*pmf)(std::chrono::seconds(seconds));
 	}
 
-	static void parse_status(const YAML::Node & node, torrent & t)
+	static void parse_status(const QJsonValue & node, torrent & t)
 	{
-		auto status = node.as<unsigned>(UINT_MAX);
+		auto status = node.toInt(-1);
 		switch (status)
 		{
 			// as defined in transmission.h
@@ -272,7 +268,7 @@ namespace transmission
 	{                                                                                              \
 		torrent * torr;                                                                            \
 		                                                                                           \
-		void operator()(const YAML::Node & node, torrent & (torrent::*pmf)(TYPE##_type val)) const \
+		void operator()(const QJsonValue & node, torrent & (torrent::*pmf)(TYPE##_type val)) const \
 		{                                                                                          \
 			parse_##TYPE(node, *torr, pmf);                                                        \
 		}                                                                                          \
@@ -315,59 +311,62 @@ namespace transmission
 		return static_cast<double>(opt1.value()) / static_cast<double>(opt2.value());
 	}
 	
-	static torrent_list parse_torrent_list(const YAML::Node & node)
+	static torrent_list parse_torrent_list(const QJsonDocument & doc)
 	{
+		using QtTools::Json::get_path;
+		using QtTools::Json::find_path;
 		torrent_list result;
 
-		const auto & res = node["result"].Scalar();
+		auto root = doc.object();
+		auto res = QtTools::FromQString(root["result"].toString());
 		if (res != "success")
 			throw std::runtime_error(fmt::format("Bad response: " + res));
 
-		YAML::Node torrents = node[Arguments][Torrents];
-		for (YAML::Node tnode : torrents)
+		auto torrents = get_path(root, "arguments/torrents").toArray();
+		for (const QJsonValue & tnode : torrents)
 		{
 			result.emplace_back();
 			auto & torr = result.back();
 
 			DECLARE_CONVS(torr);
 
-			parse_status(tnode[Status], torr);
-			string_conv(tnode[Id], &torrent::id);
-			string_conv(tnode[Name], &torrent::name);
-			string_conv(tnode[Comment], &torrent::comment);
-			string_conv(tnode[Creator], &torrent::creator);
+			parse_status(find_path(tnode, Status), torr);
+			string_conv(find_path(tnode, Id), &torrent::id);
+			string_conv(find_path(tnode, Name), &torrent::name);
+			string_conv(find_path(tnode, Comment), &torrent::comment);
+			string_conv(find_path(tnode, Creator), &torrent::creator);
 			
-			string_conv(tnode[ErrorString], &torrent::error_string);
-			bool_conv(tnode[IsFinished], &torrent::finished);
-			bool_conv(tnode[IsStalled], &torrent::stalled);
+			string_conv(find_path(tnode, ErrorString), &torrent::error_string);
+			bool_conv(find_path(tnode, IsFinished), &torrent::finished);
+			bool_conv(find_path(tnode, IsStalled), &torrent::stalled);
 
-			size_conv(tnode[LeftUntilDone], &torrent::left_size);
-			size_conv(tnode[SizeWhenDone], &torrent::requested_size);
-			size_conv(tnode[TotalSize], &torrent::total_size);			
+			size_conv(find_path(tnode, LeftUntilDone), &torrent::left_size);
+			size_conv(find_path(tnode, SizeWhenDone), &torrent::requested_size);
+			size_conv(find_path(tnode, TotalSize), &torrent::total_size);
 			torr.current_size(torr.requested_size() - torr.left_size());
 
-			size_conv(tnode[UploadedEver], &torrent::ever_uploaded);
-			size_conv(tnode[DownloadedEver], &torrent::ever_downloaded);
-			size_conv(tnode[CorruptEver], &torrent::ever_currupted);
+			size_conv(find_path(tnode, UploadedEver), &torrent::ever_uploaded);
+			size_conv(find_path(tnode, DownloadedEver), &torrent::ever_downloaded);
+			size_conv(find_path(tnode, CorruptEver), &torrent::ever_currupted);
 
 			torr.ratio(torr.ever_uploaded() / torr.ever_downloaded());
 
-			double_conv(tnode[RecheckProgress], &torrent::recheck_progress);
-			double_conv(tnode[MetadataPercentComplete], &torrent::metadata_progress);
+			double_conv(find_path(tnode, RecheckProgress), &torrent::recheck_progress);
+			double_conv(find_path(tnode, MetadataPercentComplete), &torrent::metadata_progress);
 			torr.requested_progress(torr.current_size() / torr.requested_size());
 			torr.total_progress(torr.current_size() / torr.total_size());
 
-			duration_conv(tnode[Eta], &torrent::eta);
-			duration_conv(tnode[EtaIdle], &torrent::eta_idle);
+			duration_conv(find_path(tnode, Eta), &torrent::eta);
+			duration_conv(find_path(tnode, EtaIdle), &torrent::eta_idle);
 
-			speed_conv(tnode[RateDownload], &torrent::download_speed);
-			speed_conv(tnode[RateUpload], &torrent::upload_speed);
+			speed_conv(find_path(tnode, RateDownload), &torrent::download_speed);
+			speed_conv(find_path(tnode, RateUpload), &torrent::upload_speed);
 
-			datetime_conv(tnode[DateCreated], &torrent::date_created);
-			datetime_conv(tnode[AddedDate], &torrent::date_added);
-			datetime_conv(tnode[StartDate], &torrent::date_started);
-			datetime_conv(tnode[DoneDate], &torrent::date_done);
-			//datetime_conv(tnode[ActivityDate], &torrent::date_last_activity);
+			datetime_conv(find_path(tnode, DateCreated), &torrent::date_created);
+			datetime_conv(find_path(tnode, AddedDate), &torrent::date_added);
+			datetime_conv(find_path(tnode, StartDate), &torrent::date_started);
+			datetime_conv(find_path(tnode, DoneDate), &torrent::date_done);
+			//datetime_conv(find_path(tnode, ActivityDate), &torrent::date_last_activity);
 		}
 
 		return result;
@@ -375,16 +374,16 @@ namespace transmission
 
 	static torrent_file_list parse_torrent_file_list(const QJsonDocument & doc)
 	{
+		using QtTools::Json::get_path;
 		torrent_file_list result;
 
 		auto root = doc.object();
-		auto res = root["result"].toString();
+		auto res = QtTools::FromQString(root["result"].toString());
 		if (res != "success")
-			throw std::runtime_error(fmt::format("Bad response: {}", res));
+			throw std::runtime_error(fmt::format("Bad response: " + res));
 
-		QJsonObject data = root["arguments"].toObject()["torrents"].toArray()[0].toObject();
-		QJsonArray files = data["files"].toArray();
-		QJsonArray fileStats = data["fileStats"].toArray();
+		auto files     = get_path(root, "arguments/torrents/0/files").toArray();
+		auto fileStats = get_path(root, "arguments/torrents/0/fileStats").toArray();
 
 		for (auto [file_node, file_stat_node] : ext::combine(files, fileStats))
 		{
@@ -402,61 +401,27 @@ namespace transmission
 		return result;
 	}
 
-	static torrent_file_list parse_torrent_file_list(const YAML::Node & node)
-	{
-		torrent_file_list result;
-
-		const auto & res = node["result"].Scalar();
-		if (res != "success")
-			throw std::runtime_error(fmt::format("Bad response: " + res));
-
-		YAML::Node files = node[Arguments][Torrents][0][Files];
-		YAML::Node fileStats = node[Arguments][Torrents][0][FileStats];
-
-		for (auto [file_node, file_stat_node] : ext::combine(files, fileStats))
-		{
-			torrent_file file;
-
-			file.filename = file_node[Name].as<filepath_type>();
-			file.total_size = file_node[Length].as<size_type>();
-			file.have_size = file_node[BytesCompleted].as<size_type>();
-			file.wanted = file_stat_node[Wanted].as<bool_type>();
-			file.priority = file_stat_node[Priority].as<int_type>();
-
-			result.push_back(std::move(file));
-		}
-
-		return result;
-	}
-
 	torrent_file_list parse_torrent_file_list(const std::string & json)
 	{
-		QByteArray source(json.c_str(), json.size());
-
-		QJsonParseError err;
-		QJsonDocument jdoc = jdoc.fromJson(source, &err);
-
-		if (not jdoc.isNull()) return parse_torrent_file_list(jdoc);
-
-		//auto doc = YAML::Load(json);
-		//return parse_torrent_file_list(doc);
+		auto jdoc = QtTools::Json::parse_json(json);
+		return parse_torrent_file_list(jdoc);
 	}
 
 	torrent_file_list parse_torrent_file_list(std::istream & json_source)
 	{
-		auto doc = YAML::Load(json_source);
-		return parse_torrent_file_list(doc);
+		auto jdoc = QtTools::Json::parse_json(json_source);
+		return parse_torrent_file_list(jdoc);
 	}
 
 	torrent_list parse_torrent_list(const std::string & json)
 	{
-		auto doc = YAML::Load(json);
-		return parse_torrent_list(doc);
+		auto jdoc = QtTools::Json::parse_json(json);
+		return parse_torrent_list(jdoc);
 	}
 
 	torrent_list parse_torrent_list(std::istream & json_stream)
 	{
-		auto doc = YAML::Load(json_stream);
-		return parse_torrent_list(doc);
+		auto jdoc = QtTools::Json::parse_json(json_stream);
+		return parse_torrent_list(jdoc);
 	}
 }}

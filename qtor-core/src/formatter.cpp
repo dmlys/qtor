@@ -43,7 +43,7 @@ namespace qtor
 		QT_TRANSLATE_NOOP(FORMATTER, "%Ln second(s)"),
 	};
 
-	auto formatter::weigh(double  val) const noexcept -> weight
+	auto formatter::weigh(double val) const noexcept -> weight
 	{
 		auto first = ms_weights.begin();
 		auto last  = ms_weights.end();
@@ -60,7 +60,7 @@ namespace qtor
 	{
 		auto w = weigh(val);
 		auto fmt = strings[w];
-		double v = 1.0 * val / ms_weights[w];
+		double v = static_cast<double>(val) / ms_weights[w];
 
 		unsigned precision = w == none ? 0 
 		                               : v < 100 ? 2 : 1;

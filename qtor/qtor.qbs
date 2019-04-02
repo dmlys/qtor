@@ -23,7 +23,7 @@ CppApplication
 	cpp.includePaths: project.additionalIncludePaths
 	cpp.libraryPaths: project.additionalLibraryPaths
 
-	cpp.dynamicLibraries: ["yaml-cpp", "z", "stdc++fs", "ssl", "crypto", "sqlite3", "boost_regex", "boost_system", "fmt"]
+	cpp.dynamicLibraries: ["z", "stdc++fs", "ssl", "crypto", "sqlite3", "boost_regex", "boost_system", "fmt"]
 
 	files: [
 		"src/*"

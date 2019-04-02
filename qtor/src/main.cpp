@@ -48,6 +48,15 @@
 #include <QtTools/ItemViewUtils.hpp>
 #include <QtTools/ListModel.hqt>
 
+#include <QtCore/QByteArray>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
+
+#include <QtCore/QJsonValue>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonParseError>
 
 //class http_method
 //{
@@ -138,6 +147,8 @@
 
 #include <ext/net/listener.hpp>
 
+#include <QtTools/JsonTools.hpp>
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -152,85 +163,101 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(QtTools);
 	Q_INIT_RESOURCE(qtor_core_resource);
 
+	try
+	{
+		using namespace QtTools::Json;
+		auto json = R"({"abc": 1, "ccc": 2})";
+		auto doc = parse_json(json);
+		//auto result = get_path(doc, "abc");
+		//cout << result.toInt() << endl;
+		cout << get_string(doc, "abc") << endl;
+	}
+	catch (std::exception & ex)
+	{
+		cerr << ex.what() << endl;
+	}
+
+	return 0;
+
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
 
 	//auto source = std::make_shared<qtor::transmission::data_source>();
 	//source->set_address("http://melkiy:9091/transmission/rpc"s);
 
-	QApplication qapp {argc, argv};
+//	QApplication qapp {argc, argv};
 
 //	source->connect().get();
 //	auto files = source->get_torrent_files("174").get();
 
-	std::vector<torrent_file> paths, paths2;
-	paths.assign({
-	    { QStringLiteral("folder/copa/file1.txt"), 11 * 1000, 2 * 1000 },
-	    { QStringLiteral("folder123/copa/file1.txt"), 12 * 1000, 3 * 1000 },
-	    { QStringLiteral("foldex/copa/file2.txt"), 13 * 1000, 4 * 1000 },
-	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
-	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
-	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
-	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
-	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
-	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
-	});
-
-	paths2 = paths;
-	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
-	
-	//paths.assign({
-	//	{ QStringLiteral("file1.txt") },
-	//	{ QStringLiteral("file2.txt") },
-	//	{ QStringLiteral("file.sft") },
-	//	{ QStringLiteral("file.txt") },
-	//	{ QStringLiteral("ops.sh") },
-	//	{ QStringLiteral("westworld.mkv") },
-	//});
-
-	//paths2.assign({
-	//		{QStringLiteral("file1.txt")},
-	//		{QStringLiteral("file.sft")},
-	//		{QStringLiteral("ziggaman.sh")},
-	//		{QStringLiteral("westworld.mkv")},
-	//});
-
-	//auto store = std::make_shared<torrent_file_store>();
-	auto model = std::make_shared<FileTreeModel>();
-	//auto model = std::make_shared<FileTreeModel>(store);
-	
-//	//store->assign_records(paths);
-//	//store->assign_records(paths2);
-//	//store->assign_records(paths);
-
-//	model->assign(files);
-	model->assign(paths);
-	model->upsert(paths2);
-	model->assign(paths);
-	
-	auto idx0 = model->find_element("dir1");
-	Q_ASSERT(not idx0.isValid());
-	auto idx1 = model->find_element("dir");
-	auto idx2 = model->find_element("dir/prox");
-	auto idx3 = model->find_element("dir/prox/dir.txt");
-
-	//QTableView view;
-	//view.setModel(model.get());
-	FileTreeView view;
-	view.SetModel(model);
-	QtTools::ResizeColumnsToContents(view.GetTreeView());
-
-	view.GetTreeView()->expand(idx1);
-	view.GetTreeView()->expand(idx2);
-	view.GetTreeView()->selectionModel()->select(idx3, QItemSelectionModel::Select);
-	view.GetTreeView()->setRootIndex(idx1);
-	model->set_filter_root(idx1);
-
-	//QTimer::singleShot(3s, [&view] {
-	    view.showMaximized();
-		    view.activateWindow();
-		view.raise();
-	//});
+//	std::vector<torrent_file> paths, paths2;
+//	paths.assign({
+//	    { QStringLiteral("folder/copa/file1.txt"), 11 * 1000, 2 * 1000 },
+//	    { QStringLiteral("folder123/copa/file1.txt"), 12 * 1000, 3 * 1000 },
+//	    { QStringLiteral("foldex/copa/file2.txt"), 13 * 1000, 4 * 1000 },
+//	    { QStringLiteral("dir/file.sft"),     14 * 1000, 5 * 1000 },
+//	    { QStringLiteral("dir/prox/dir.txt"), 15 * 1000, 6 * 1000 },
+//	    { QStringLiteral("ops.sh"),           16 * 1000, 7 * 1000 },
+//	    { QStringLiteral("westworld.mkv"),    17 * 1000, 8 * 1000 },
+//	    { QStringLiteral("folder/sup/file3.txt"), 10 * 1000, 2 * 1000 },
+//	    { QStringLiteral("folder/sup/inner/file.txt"), 10 * 1000, 2 * 1000 },
+//	});
+//
+//	paths2 = paths;
+//	paths2.back().filename = QStringLiteral("upsershalt/ziggaman.txt");
+//
+//	//paths.assign({
+//	//	{ QStringLiteral("file1.txt") },
+//	//	{ QStringLiteral("file2.txt") },
+//	//	{ QStringLiteral("file.sft") },
+//	//	{ QStringLiteral("file.txt") },
+//	//	{ QStringLiteral("ops.sh") },
+//	//	{ QStringLiteral("westworld.mkv") },
+//	//});
+//
+//	//paths2.assign({
+//	//		{QStringLiteral("file1.txt")},
+//	//		{QStringLiteral("file.sft")},
+//	//		{QStringLiteral("ziggaman.sh")},
+//	//		{QStringLiteral("westworld.mkv")},
+//	//});
+//
+//	//auto store = std::make_shared<torrent_file_store>();
+//	auto model = std::make_shared<FileTreeModel>();
+//	//auto model = std::make_shared<FileTreeModel>(store);
+//
+////	//store->assign_records(paths);
+////	//store->assign_records(paths2);
+////	//store->assign_records(paths);
+//
+////	model->assign(files);
+//	model->assign(paths);
+//	model->upsert(paths2);
+//	model->assign(paths);
+//
+//	auto idx0 = model->find_element("dir1");
+//	Q_ASSERT(not idx0.isValid());
+//	auto idx1 = model->find_element("dir");
+//	auto idx2 = model->find_element("dir/prox");
+//	auto idx3 = model->find_element("dir/prox/dir.txt");
+//
+//	//QTableView view;
+//	//view.setModel(model.get());
+//	FileTreeView view;
+//	view.SetModel(model);
+//	QtTools::ResizeColumnsToContents(view.GetTreeView());
+//
+//	view.GetTreeView()->expand(idx1);
+//	view.GetTreeView()->expand(idx2);
+//	view.GetTreeView()->selectionModel()->select(idx3, QItemSelectionModel::Select);
+//	view.GetTreeView()->setRootIndex(idx1);
+//	model->set_filter_root(idx1);
+//
+//	//QTimer::singleShot(3s, [&view] {
+//	    view.showMaximized();
+//		    view.activateWindow();
+//		view.raise();
+//	//});
 	
 
 
@@ -302,9 +329,9 @@ int main(int argc, char * argv[])
 
 //	nsys.AddNotification(std::move(nf));
 
-	auto res = qapp.exec();
-	qapp.closeAllWindows();
-	return res;
+//	auto res = qapp.exec();
+//	qapp.closeAllWindows();
+//	return res;
 }
 
 

@@ -21,7 +21,9 @@ namespace qtor
 {
 	inline namespace types
 	{
-		using string_type = QString;
+		using string_type   = QString;
+		using filepath_type = QString;
+
 		using uint64_type = std::uint64_t;
 		using int64_type  = std::int64_t;
 		using int_type    = int;
@@ -39,7 +41,6 @@ namespace qtor
 		// date time types
 		using datetime_type = std::chrono::system_clock::time_point;
 		using duration_type = std::chrono::system_clock::duration;
-		using filepath_type = QString;
 
 		// using any, optional, variant classes from std
 		template <class type>
