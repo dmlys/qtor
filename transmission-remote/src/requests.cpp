@@ -176,7 +176,8 @@ namespace transmission
 	{
 		if (not valid(node)) return;
 
-		(t.*pmf)(node.toString());
+		auto data = node.toVariant();
+		(t.*pmf)(data.toString());
 	}
 
 	static void parse_uint64(const QJsonValue & node, torrent & t, torrent & (torrent::*pmf)(uint64_type val))

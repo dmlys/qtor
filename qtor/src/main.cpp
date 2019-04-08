@@ -163,29 +163,14 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(QtTools);
 	Q_INIT_RESOURCE(qtor_core_resource);
 
-	try
-	{
-		using namespace QtTools::Json;
-		auto json = R"({"abc": 1, "ccc": 2})";
-		auto doc = parse_json(json);
-		//auto result = get_path(doc, "abc");
-		//cout << result.toInt() << endl;
-		cout << get_string(doc, "abc") << endl;
-	}
-	catch (std::exception & ex)
-	{
-		cerr << ex.what() << endl;
-	}
-
-	return 0;
+	QApplication qapp {argc, argv};
 
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
 
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
 
-//	QApplication qapp {argc, argv};
 
 //	source->connect().get();
 //	auto files = source->get_torrent_files("174").get();
@@ -272,13 +257,13 @@ int main(int argc, char * argv[])
 	qapp.setPalette(palette);
 #endif
 
-//	qtor::TransmissionRemoteApp app {std::move(source)};
-//	qtor::MainWindow mainWindow;
+	qtor::TransmissionRemoteApp app {std::move(source)};
+	qtor::MainWindow mainWindow;
 
-//	mainWindow.Init(app);
-//	mainWindow.show();
+	mainWindow.Init(app);
+	mainWindow.show();
 
-//	QTimer::singleShot(100, [&app] { app.Connect(); });
+	QTimer::singleShot(100, [&app] { app.Connect(); });
 
 //	auto longTitle = "Some Very Long Title, No, Seriosly, Seriosly, Seriosly, And this quiet pricnce should not be seen. Even longer than you think, forget it";
 
@@ -329,9 +314,9 @@ int main(int argc, char * argv[])
 
 //	nsys.AddNotification(std::move(nf));
 
-//	auto res = qapp.exec();
-//	qapp.closeAllWindows();
-//	return res;
+	auto res = qapp.exec();
+	qapp.closeAllWindows();
+	return res;
 }
 
 
