@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QVBoxLayout>
@@ -11,6 +11,7 @@
 
 #include <qtor/TorrentsModel.hpp>
 #include <qtor/TorrentListDelegate.hqt>
+#include <qtor/FormattedDelegate.hqt>
 
 
 namespace qtor
@@ -46,6 +47,7 @@ namespace qtor
 
 		QtTools::Delegates::SearchDelegate * m_nameDelegate = nullptr;
 		TorrentListDelegate * m_listDelegate = nullptr;
+		FormattedDelegate * m_tableDelegate = nullptr;
 
 		ViewMode m_viewMode = TableMode;
 		QAbstractItemView * m_itemView = nullptr;
@@ -136,7 +138,7 @@ namespace qtor
 		virtual void InitHeaderTracking(QtTools::HeaderSectionInfoList * headerConf = nullptr);
 
 		/// desired size
-		QSize sizeHint() const override;
+		virtual QSize sizeHint() const override;
 
 	public:
 		TorrentsView(QWidget * parent = nullptr);

@@ -478,6 +478,9 @@ namespace qtor
 		m_tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
 		m_nameDelegate = new QtTools::Delegates::SearchDelegate(this);
+		m_tableDelegate = new FormattedDelegate(this);
+
+		m_tableView->setItemDelegate(m_tableDelegate);
 
 		auto * vertHeader = m_tableView->verticalHeader();
 		vertHeader->setDefaultSectionSize(QtTools::CalculateDefaultRowHeight(m_tableView));

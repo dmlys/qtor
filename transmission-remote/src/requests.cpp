@@ -280,6 +280,7 @@ namespace transmission
 
 		return static_cast<double>(opt1.value()) / static_cast<double>(opt2.value());
 	}
+
 	
 	static torrent_list parse_torrent_list(const QJsonDocument & doc)
 	{
@@ -319,7 +320,10 @@ namespace transmission
 			READ(size, DownloadedEver, ever_downloaded);
 			READ(size, CorruptEver, ever_currupted);
 
-			torr.ratio(torr.ever_uploaded() / torr.ever_downloaded());
+			if (auto ever_downloaded = torr.ever_downloaded())
+				torr.ratio(torr.ever_uploaded() / ever_downloaded);
+			else
+				torr.ratio(torr.ever_uploaded() / torr.requested_size());
 
 			READ(double, RecheckProgress, recheck_progress);
 			READ(double, MetadataPercentComplete, metadata_progress);
