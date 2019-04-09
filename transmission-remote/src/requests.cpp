@@ -264,37 +264,6 @@ namespace transmission
 		t.status(status);
 	}
 	
-#define TYPE_CONV(TYPE)                                                                            \
-	struct TYPE##_conv_type                                                                        \
-	{                                                                                              \
-		torrent * torr;                                                                            \
-		                                                                                           \
-		void operator()(const QJsonValue & node, torrent & (torrent::*pmf)(TYPE##_type val)) const \
-		{                                                                                          \
-			parse_##TYPE(node, *torr, pmf);                                                        \
-		}                                                                                          \
-	};
-
-#define DECLARE_CONVS(torr_val)                                                                    \
-	[[maybe_unused]] string_conv_type string_conv     = {&torr_val};                               \
-	[[maybe_unused]] uint64_conv_type uint64_conv     = {&torr_val};                               \
-	[[maybe_unused]] double_conv_type double_conv     = {&torr_val};                               \
-	[[maybe_unused]] bool_conv_type bool_conv         = {&torr_val};                               \
-	[[maybe_unused]] size_conv_type size_conv         = {&torr_val};                               \
-	[[maybe_unused]] speed_conv_type speed_conv       = {&torr_val};                               \
-	[[maybe_unused]] datetime_conv_type datetime_conv = {&torr_val};                               \
-	[[maybe_unused]] duration_conv_type duration_conv = {&torr_val};                               \
-	
-	
-	TYPE_CONV(string);
-	TYPE_CONV(uint64);
-	TYPE_CONV(double);
-	TYPE_CONV(bool);
-	TYPE_CONV(size);
-	TYPE_CONV(speed);
-	TYPE_CONV(datetime);
-	TYPE_CONV(duration);
-
 
 	template <class Type>
 	static optional<std::decay_t<Type>> operator -(optional<Type> opt1, optional<Type> opt2)
@@ -329,45 +298,47 @@ namespace transmission
 			result.emplace_back();
 			auto & torr = result.back();
 
-			DECLARE_CONVS(torr);
+			#define READ(type, name, where) parse_##type(find_path(tnode, name), torr, &torrent::where)
 
 			parse_status(find_path(tnode, Status), torr);
-			string_conv(find_path(tnode, Id), &torrent::id);
-			string_conv(find_path(tnode, Name), &torrent::name);
-			string_conv(find_path(tnode, Comment), &torrent::comment);
-			string_conv(find_path(tnode, Creator), &torrent::creator);
+			READ(string, Id, id);
+			READ(string, Name, name);
+			READ(string, Comment, comment);
+			READ(string, Creator, creator);
 			
-			string_conv(find_path(tnode, ErrorString), &torrent::error_string);
-			bool_conv(find_path(tnode, IsFinished), &torrent::finished);
-			bool_conv(find_path(tnode, IsStalled), &torrent::stalled);
+			READ(string, ErrorString, error_string);
+			READ(bool, IsFinished, finished);
+			READ(bool, IsStalled, stalled);
 
-			size_conv(find_path(tnode, LeftUntilDone), &torrent::left_size);
-			size_conv(find_path(tnode, SizeWhenDone), &torrent::requested_size);
-			size_conv(find_path(tnode, TotalSize), &torrent::total_size);
+			READ(size, LeftUntilDone, left_size);
+			READ(size, SizeWhenDone, requested_size);
+			READ(size, TotalSize, total_size);
 			torr.current_size(torr.requested_size() - torr.left_size());
 
-			size_conv(find_path(tnode, UploadedEver), &torrent::ever_uploaded);
-			size_conv(find_path(tnode, DownloadedEver), &torrent::ever_downloaded);
-			size_conv(find_path(tnode, CorruptEver), &torrent::ever_currupted);
+			READ(size, UploadedEver, ever_uploaded);
+			READ(size, DownloadedEver, ever_downloaded);
+			READ(size, CorruptEver, ever_currupted);
 
 			torr.ratio(torr.ever_uploaded() / torr.ever_downloaded());
 
-			double_conv(find_path(tnode, RecheckProgress), &torrent::recheck_progress);
-			double_conv(find_path(tnode, MetadataPercentComplete), &torrent::metadata_progress);
+			READ(double, RecheckProgress, recheck_progress);
+			READ(double, MetadataPercentComplete, metadata_progress);
 			torr.requested_progress(torr.current_size() / torr.requested_size());
 			torr.total_progress(torr.current_size() / torr.total_size());
 
-			duration_conv(find_path(tnode, Eta), &torrent::eta);
-			duration_conv(find_path(tnode, EtaIdle), &torrent::eta_idle);
+			READ(duration, Eta, eta);
+			READ(duration, EtaIdle, eta_idle);
 
-			speed_conv(find_path(tnode, RateDownload), &torrent::download_speed);
-			speed_conv(find_path(tnode, RateUpload), &torrent::upload_speed);
+			READ(speed, RateDownload, download_speed);
+			READ(speed, RateUpload, upload_speed);
 
-			datetime_conv(find_path(tnode, DateCreated), &torrent::date_created);
-			datetime_conv(find_path(tnode, AddedDate), &torrent::date_added);
-			datetime_conv(find_path(tnode, StartDate), &torrent::date_started);
-			datetime_conv(find_path(tnode, DoneDate), &torrent::date_done);
-			//datetime_conv(find_path(tnode, ActivityDate), &torrent::date_last_activity);
+			READ(datetime, DateCreated, date_created);
+			READ(datetime, AddedDate, date_added);
+			READ(datetime, StartDate, date_started);
+			READ(datetime, DoneDate, date_done);
+			//READ(datetime, ActivityDate, date_last_activity);
+
+			#undef READ
 		}
 
 		return result;
@@ -386,15 +357,17 @@ namespace transmission
 		auto files     = get_path(root, "arguments/torrents/0/files").toArray();
 		auto fileStats = get_path(root, "arguments/torrents/0/fileStats").toArray();
 
-		for (auto [file_node, file_stat_node] : ext::combine(files, fileStats))
+		for (auto [file_node_ref, file_stat_node_ref] : ext::combine(files, fileStats))
 		{
+			QJsonValue file_node = file_node_ref;
+			QJsonValue file_stat_node = file_stat_node_ref;
 			torrent_file file;
 
-			file.filename = file_node.toObject()["name"].toString();
-			file.total_size = file_node.toObject()["length"].toDouble();
-			file.have_size = file_node.toObject()["bytesCompleted"].toDouble();
-			file.wanted = file_stat_node.toObject()["wanted"].toBool();
-			file.priority = file_stat_node.toObject()["priority"].toInt();
+			file.filename = file_node["name"].toString();
+			file.total_size = file_node["length"].toDouble();
+			file.have_size = file_node["bytesCompleted"].toDouble();
+			file.wanted = file_stat_node["wanted"].toBool();
+			file.priority = file_stat_node["priority"].toInt();
 
 			result.push_back(std::move(file));
 		}
