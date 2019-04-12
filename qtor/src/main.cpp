@@ -33,6 +33,9 @@
 #include <qtor/TorrentsView.hqt>
 #include <qtor/MainWindow.hqt>
 #include <qtor/Application.hqt>
+#include <qtor/FileTreeModel.hqt>
+#include <qtor/FileTreeView.hqt>
+
 #include "TransmissionRemoteApp.hqt"
 
 #include "ScreenInfo.hpp"
@@ -57,6 +60,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonParseError>
+
 
 //class http_method
 //{
@@ -132,23 +136,6 @@
 //	}
 //}
 
-#include <qtor/FileTreeModel.hqt>
-#include <qtor/FileTreeView.hqt>
-#include <QtTools/PlainLabel.hqt>
-#include <QtTools/DateUtils.hpp>
-
-#include <QtXml/QtXml>
-#include <QtXmlPatterns/QXmlFormatter>
-
-#include <qtor/qt_model_meta.hpp>
-
-#include <QtWidgets/QStyleFactory>
-#include <QtWidgets/QMessageBox>
-
-#include <ext/net/listener.hpp>
-
-#include <QtTools/JsonTools.hpp>
-
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -168,8 +155,8 @@ int main(int argc, char * argv[])
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
 
-	auto source = std::make_shared<qtor::transmission::data_source>();
-	source->set_address("http://melkiy:9091/transmission/rpc"s);
+	//auto source = std::make_shared<qtor::transmission::data_source>();
+	//source->set_address("http://melkiy:9091/transmission/rpc"s);
 
 
 //	source->connect().get();

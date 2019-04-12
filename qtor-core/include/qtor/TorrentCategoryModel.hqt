@@ -1,0 +1,70 @@
+#pragma once
+#include <qtor/types.hpp>
+#include <qtor/torrent.hpp>
+#include <qtor/torrent_store.hpp>
+#include <qtor/AbstractItemModel.hqt>
+
+namespace qtor
+{
+	class TorrentCategoryModel : public QAbstractListModel
+	{
+		Q_OBJECT;
+
+	private:
+		using self_type = TorrentCategoryModel;
+		using base_type = QAbstractListModel;
+
+	private:
+		enum category_type
+		{
+			all,
+			downloading,
+			downloaded,
+			active,
+			nonactive,
+			stopped,
+			error,
+		};
+
+		struct CategoryItem
+		{
+			category_type category;
+			std::size_t count;
+		};
+
+		struct TrackerItem
+		{
+			string_type name;
+			std::size_t count;
+		};
+
+		struct PathItem
+		{
+			filepath_type folder_name;
+			std::size_t count;
+		};
+
+	private:
+		std::vector<CategoryItem> m_categories;
+		std::vector<TrackerItem> m_trackers;
+		std::vector<PathItem> m_paths;
+
+		std::shared_ptr<torrent_store> m_torrent_store;
+
+	private:
+		void InitStatusItems();
+
+		void UpdateData(const torrent * first, const torrent * last);
+
+	public:
+		virtual int rowCount(const QModelIndex & parent = {}) const override;
+		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+
+	public:
+		void SetTorrentStore(std::shared_ptr<torrent_store> store);
+
+	public:
+		using base_type::base_type;
+	};
+}
