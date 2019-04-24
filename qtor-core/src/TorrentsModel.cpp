@@ -74,8 +74,6 @@ namespace qtor
 			//torrent::Comment,
 
 			torrent::ErrorString,
-			torrent::Finished,
-			torrent::Stalled,
 
 			torrent::CurrentSize,
 			torrent::RequestedSize,

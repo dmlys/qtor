@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <QtCore/QAbstractTableModel>
 
 #include <qtor/model_meta.hpp>
@@ -30,7 +30,7 @@ namespace qtor
 		void SetColumns(std::vector<unsigned> columns);
 
 	public:
-		// view index - index of qt modelm that column of QModelIndex
+		// view index - index of qt model that column of QModelIndex
 		// meta index - index as used in meta
 		inline  unsigned ViewToMetaIndex(std::size_t view_index) const { return m_columns[view_index]; }
 		virtual unsigned MetaToViewIndex(unsigned meta_index) const;

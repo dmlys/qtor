@@ -305,11 +305,8 @@ namespace transmission
 			READ(string, Id, id);
 			READ(string, Name, name);
 			READ(string, Comment, comment);
-			READ(string, Creator, creator);
-			
+			READ(string, Creator, creator);			
 			READ(string, ErrorString, error_string);
-			READ(bool, IsFinished, finished);
-			READ(bool, IsStalled, stalled);
 
 			READ(size, LeftUntilDone, left_size);
 			READ(size, SizeWhenDone, requested_size);

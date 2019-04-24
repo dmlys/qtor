@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <utility>
 #include <functional>
 #include <boost/preprocessor/if.hpp>
@@ -84,10 +84,6 @@ namespace qtor
 	/*opt, Id, Name, Type, TypeName */                                          \
 	F(QTOR_REQ, Status,      status,       uint64, uint64_type)                 \
 	F(QTOR_OPT, ErrorString, error_string, string, string_type)                 \
-	                                                                            \
-	F(QTOR_OPT, Finished,    finished,     bool,   bool)                        \
-	F(QTOR_OPT, Completed,   completed,    bool,   bool)                        \
-	F(QTOR_OPT, Stalled,     stalled,      bool,   bool)                        \
 	                                                                            \
 	F(QTOR_OPT, UploadingPeers,   uploading_peers,   uint64, uint64_type)       \
 	F(QTOR_OPT, DownloadingPeers, downloading_peers, uint64, uint64_type)       \
