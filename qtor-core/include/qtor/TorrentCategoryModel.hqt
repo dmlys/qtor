@@ -3,6 +3,9 @@
 #include <qtor/torrent.hpp>
 #include <qtor/torrent_store.hpp>
 #include <qtor/AbstractItemModel.hqt>
+#include <ext/enum_bitset.hpp>
+
+#include <QtGui/QIcon>
 
 namespace qtor
 {
@@ -14,7 +17,7 @@ namespace qtor
 		using self_type = TorrentCategoryModel;
 		using base_type = QAbstractListModel;
 
-	private:
+	public:
 		enum category_type
 		{
 			all,
@@ -24,42 +27,43 @@ namespace qtor
 			nonactive,
 			stopped,
 			error,
+
+			count
 		};
+
+		using category_set = ext::enum_bitset<category_type, category_type::count>;
 
 		struct CategoryItem
 		{
 			category_type category;
 			std::size_t count;
-		};
-
-		struct TrackerItem
-		{
-			string_type name;
-			std::size_t count;
-		};
-
-		struct PathItem
-		{
-			filepath_type folder_name;
-			std::size_t count;
+			QString name;
+			QIcon icon;
 		};
 
 	private:
 		std::vector<CategoryItem> m_categories;
-		std::vector<TrackerItem> m_trackers;
-		std::vector<PathItem> m_paths;
+		qtor::view_manager_ref<torrent_store> m_torrent_store;
 
-		std::shared_ptr<torrent_store> m_torrent_store;
+		boost::signals2::scoped_connection m_on_update_conn;
+		boost::signals2::scoped_connection m_on_erase_conn;
+		boost::signals2::scoped_connection m_on_clear_conn;
 
-	private:
-		void InitStatusItems();
+	private:		
+		virtual QIcon IconForCategory(category_type cat) const;
+		virtual QString NameForCategory(category_type cat) const;
+		virtual void InitStatusItems();
+		virtual void RecalculateData();
 
-		void UpdateData(const torrent * first, const torrent * last);
+	public:
+		static category_set category(const torrent & torr) noexcept;
+		virtual CategoryItem GetItem(int row) const;
+		virtual void LanguageChanged();
+		virtual void LocaleChanged();
 
 	public:
 		virtual int rowCount(const QModelIndex & parent = {}) const override;
 		QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
 	public:
 		void SetTorrentStore(std::shared_ptr<torrent_store> store);
