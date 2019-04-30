@@ -52,14 +52,13 @@ namespace qtor
 	private:		
 		virtual QIcon IconForCategory(category_type cat) const;
 		virtual QString NameForCategory(category_type cat) const;
-		virtual void InitStatusItems();
+		virtual void InitCategoryItems();
 		virtual void RecalculateData();
 
 	public:
 		static category_set category(const torrent & torr) noexcept;
 		virtual CategoryItem GetItem(int row) const;
-		virtual void LanguageChanged();
-		virtual void LocaleChanged();
+		virtual void Reinit();
 
 	public:
 		virtual int rowCount(const QModelIndex & parent = {}) const override;
@@ -69,6 +68,6 @@ namespace qtor
 		void SetTorrentStore(std::shared_ptr<torrent_store> store);
 
 	public:
-		using base_type::base_type;
+		TorrentCategoryModel(QObject * parent = nullptr);
 	};
 }

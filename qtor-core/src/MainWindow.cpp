@@ -1,4 +1,5 @@
 #include <qtor/MainWindow.hqt>
+#include <QtTools/Utility.hpp>
 
 #include <QtWidgets/QFileDialog>
 #include <QtSvg/QSvgGenerator>
@@ -138,26 +139,26 @@ namespace qtor
 	{
 		m_toolBar->setWindowTitle(tr("Main Toolbar"));
 
-		m_actionOpen->setIcon(QIcon(":/icons/qtor-core/open.png"));
+		m_actionOpen->setIcon(QtTools::LoadIcon(QStringLiteral("document-open"), QStyle::SP_DialogOpenButton));
 		m_actionOpen->setText(tr("&Open"));
 		m_actionOpen->setToolTip("Open(Ctrl+N)");
 		m_actionOpen->setShortcut(tr("Ctrl+N"));
 
-		m_actionStartAll->setIcon(QIcon(":/icons/qtor-core/start-all.png"));
+		m_actionStartAll->setIcon(QtTools::LoadIcon(QStringLiteral("media-playback-start"), QStyle::SP_MediaPlay));
 		m_actionStartAll->setText(tr("&Start all"));
 		m_actionStartAll->setToolTip(tr("Start all(Ctrl+S)"));
 		m_actionStartAll->setShortcut(tr("Ctrl+S"));
 
-		m_actionStopAll->setIcon(QIcon(":/icons/qtor-core/stop-all.png"));
+		m_actionStopAll->setIcon(QtTools::LoadIcon(QStringLiteral("media-playback-pause"), QStyle::SP_MediaStop));
 		m_actionStopAll->setText(tr("Sto&p all"));
 		m_actionStopAll->setToolTip(tr("Stop all(Ctrl+P)"));
 		m_actionStopAll->setShortcut(tr("Ctrl+P"));
 
-		m_actionDelete->setIcon(QIcon(":/icons/qtor-core/delete-all.png"));
+		m_actionDelete->setIcon(QtTools::LoadIcon(QStringLiteral("list-remove"), QStyle::SP_TrashIcon));
 		m_actionDelete->setText(tr("&Delete"));
 		//m_actionDelete->setShortcut(tr("Ctrl+D"));
 
-		m_actionPreferences->setIcon(QIcon(":/icons/qtor-core/preferences.png"));
+		m_actionPreferences->setIcon(QtTools::LoadIcon(QStringLiteral("preferences-system"), QStringLiteral(":/icons/qtor-core/preferences.png")));
 		m_actionPreferences->setText(tr("Pre&ferences"));
 		m_actionPreferences->setToolTip(tr("Preferences(Ctrl+P)"));
 		m_actionPreferences->setShortcut(tr("Ctrl+P"));

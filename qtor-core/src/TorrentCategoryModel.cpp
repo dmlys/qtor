@@ -23,13 +23,13 @@ namespace qtor
 	{
 		switch (cat)
 		{
-			case category_type::all:             //return QIcon::fromTheme("");
-			case category_type::downloading:     //return QIcon::fromTheme("");
-			case category_type::downloaded:      //return QIcon::fromTheme("");
-			case category_type::active:          //return QIcon::fromTheme("");
-			case category_type::nonactive:       //return QIcon::fromTheme("");
-			case category_type::stopped:         //return QIcon::fromTheme("");
-			case category_type::error:           //return QIcon::fromTheme("");
+			case category_type::all:             return QIcon::fromTheme("");
+			case category_type::downloading:     return QIcon::fromTheme("");
+			case category_type::downloaded:      return QIcon::fromTheme("");
+			case category_type::active:          return QIcon::fromTheme("");
+			case category_type::nonactive:       return QIcon::fromTheme("");
+			case category_type::stopped:         return QIcon::fromTheme("");
+			case category_type::error:           return QIcon::fromTheme("");
 			default:                             return {};
 		}
 	}
@@ -61,7 +61,7 @@ namespace qtor
 		return result;
 	}
 
-	void TorrentCategoryModel::InitStatusItems()
+	void TorrentCategoryModel::InitCategoryItems()
 	{
 		m_categories.push_back({.category = all});
 		m_categories.push_back({.category = downloading});
@@ -79,19 +79,12 @@ namespace qtor
 		}
 	}
 
-	void TorrentCategoryModel::LanguageChanged()
+	void TorrentCategoryModel::Reinit()
 	{
 		beginResetModel();
-		InitStatusItems();
+		InitCategoryItems();
 		RecalculateData();
 		endResetModel();
-	}
-
-	void TorrentCategoryModel::LocaleChanged()
-	{
-		int first = 0;
-		int last  = qint(m_categories.size() - 1);
-		Q_EMIT dataChanged(index(first), index(last));
 	}
 
 	void TorrentCategoryModel::RecalculateData()
@@ -166,5 +159,11 @@ namespace qtor
 			case Qt::DecorationRole: return item.icon;
 			default: return QVariant();
 		}
+	}
+
+	TorrentCategoryModel::TorrentCategoryModel(QObject * parent)
+	    : QAbstractListModel(parent)
+	{
+		Reinit();
 	}
 }
