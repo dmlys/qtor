@@ -2,7 +2,7 @@
 #include <qtor/abstract_data_source.hpp>
 #include <ext/net/socket_rest_supervisor.hpp>
 
-#include <QtTools/GuiQueue.hqt>
+#include <QtTools/gui_executor.hqt>
 
 namespace qtor {
 namespace transmission
@@ -18,7 +18,7 @@ namespace transmission
 		std::string m_encoded_uri;
 		std::string m_xtransmission_session;		
 		
-		QtTools::GuiQueue * m_queue = nullptr;
+		QtTools::gui_executor * m_executor = nullptr;
 
 	protected:
 		class request_base;
@@ -38,8 +38,8 @@ namespace transmission
 		void set_address(std::string addr) override;
 		void set_timeout(std::chrono::steady_clock::duration timeout) override;
 		void set_logger(ext::library_logger::logger * logger) override;
-		void set_gui_queue(QtTools::GuiQueue * queue) override;
-		auto get_gui_queue() const -> QtTools::GuiQueue * override;
+		void set_gui_executor(QtTools::gui_executor * executor) override;
+		auto get_gui_executor() const -> QtTools::gui_executor * override;
 
 	public:
 		virtual auto subscribe_session_stats(session_stat_handler handler) -> ext::net::subscription_handle override { return {}; }

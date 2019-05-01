@@ -11,10 +11,10 @@ namespace transmission
 {
 	void data_source::emit_signal(event_sig & sig, event_type ev)
 	{
-		if (not m_queue)
+		if (not m_executor)
 			sig(ev);
 		else
-			m_queue->Add([&sig, ev] { sig(ev); });
+			m_executor->submit([&sig, ev] { sig(ev); });
 	}
 
 	void data_source::set_address(std::string addr)
@@ -36,14 +36,14 @@ namespace transmission
 		base_type::set_logger(logger);
 	}
 
-	void data_source::set_gui_queue(QtTools::GuiQueue * queue)
+	void data_source::set_gui_executor(QtTools::gui_executor * executor)
 	{
-		m_queue = queue;
+		m_executor = executor;
 	}
 
-	auto data_source::get_gui_queue() const -> QtTools::GuiQueue *
+	auto data_source::get_gui_executor() const -> QtTools::gui_executor *
 	{
-		return m_queue;
+		return m_executor;
 	}
 	
 	class data_source::request_base : public base_type::request_base
@@ -80,8 +80,8 @@ namespace transmission
 	void data_source::subscription_base::emit_data(Data data, const Handler & handler)
 	{
 		auto owner = static_cast<data_source *>(m_owner);
-		auto * queue = owner->m_queue;
-		if (not queue)
+		auto * executor = owner->m_executor;
+		if (not executor)
 			handler(data);
 		else
 		{
@@ -90,7 +90,7 @@ namespace transmission
 				handler(data);
 			};
 			
-			queue->Add(action);
+			executor->submit(action);
 		}
 	}
 

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 #include <QtCore/QObject>
 #include <QtCore/QSharedPointer>
 #include <QtTools/ToolsBase.hpp>
-#include <QtTools/GuiQueue.hqt>
+#include <QtTools/gui_executor.hqt>
 
 #include <qtor/abstract_data_source.hpp>
 #include <qtor/torrent_store.hpp>
@@ -24,7 +24,7 @@ namespace qtor
 		abstract_data_source_ptr m_source;
 		torrent_store_ptr        m_torrent_store;
 
-		QtTools::GuiQueue * m_queue = new QtTools::GuiQueue(this);
+		QtTools::gui_executor * m_executor = new QtTools::gui_executor(this);
 
 	protected:
 		virtual auto CreateSource() -> abstract_data_source_ptr = 0;
