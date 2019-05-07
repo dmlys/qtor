@@ -91,6 +91,15 @@ namespace qtor
 		m_statusBarLabel = new QLabel(this);
 		m_statusbar->addWidget(m_statusBarLabel);
 		setStatusBar(m_statusbar);
+
+
+		auto connected = QIcon::fromTheme(QStringLiteral("network-transmit-receive"));
+		auto disconnected = QIcon::fromTheme(QStringLiteral("network-offline"));
+
+		auto statusBarSize = m_statusbar->size();
+		auto statusBarHeight = statusBarSize.height();
+		m_connectedPixmap = ScalePixmap(connected.pixmap(statusBarHeight));
+		m_disconnectedPixmap = ScalePixmap(disconnected.pixmap(statusBarHeight));
 	}
 
 	void MainWindow::setupUi()
@@ -166,8 +175,7 @@ namespace qtor
 
 	void MainWindow::retranslateStatusBar()
 	{
-		m_connectedPixmap = ScalePixmap({":/icons/qtor-core/connected.ico"});
-		m_disconnectedPixmap = ScalePixmap({":/icons/qtor-core/disconnected.ico"});
+
 	}
 
 	QPixmap MainWindow::ScalePixmap(const QPixmap & pcx)
