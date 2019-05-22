@@ -159,7 +159,7 @@ int main(int argc, char * argv[])
 	//source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
 
 	auto source = std::make_shared<qtor::transmission::data_source>();
-	source->set_address("http://localhost:9091/transmission/rpc"s);
+	source->set_address("http://melkiy:9091/transmission/rpc"s);
 
 //	source->connect().get();
 //	auto files = source->get_torrent_files("174").get();

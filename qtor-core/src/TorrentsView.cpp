@@ -15,6 +15,8 @@
 #include <QtTools/ToolsBase.hpp>
 #include <ext/join_into.hpp>
 
+Q_DECLARE_METATYPE(std::shared_ptr<qtor::torrent_id_list>)
+
 namespace qtor
 {
 	void TorrentsView::OnFilterChanged()
@@ -228,24 +230,27 @@ namespace qtor
 		connect(action, &QAction::triggered, this, [this] { SetViewMode(ListMode); });
 		menu->addAction(action);
 
-		torrent_id_list ids;
+		auto ids = std::make_shared<torrent_id_list>();
 		for (const QModelIndex & idx : idxs)
 		{
 			if (idx.isValid())
 			{
 				auto * torrent_ptr = qvariant_cast<const torrent *>(m_model->GetEntity(idx));
-				if (torrent_ptr) ids.push_back(torrent_ptr->id());
+				if (torrent_ptr) ids->push_back(torrent_ptr->id());
 			}
 		}
 
-		if (not ids.empty())
+		if (not ids->empty())
 		{
 			menu->addSeparator();
 
 #define CONNECT(METHOD)                                                                     \
-			connect(action, &QAction::triggered, this, [this, ids]                          \
+			action->setData(QVariant::fromValue(ids));                                      \
+			connect(action, &QAction::triggered, this, [this]                               \
 			{                                                                               \
-				Q_EMIT METHOD(ids);                                                         \
+				auto * sender = qobject_cast<QAction * >(QObject::sender());                \
+				auto ids = qvariant_cast<std::shared_ptr<torrent_id_list>>(sender->data()); \
+				Q_EMIT METHOD(std::move(*ids));                                             \
 			})                                                                              \
 
 			action = menu->addAction(tr("&Properties"));
