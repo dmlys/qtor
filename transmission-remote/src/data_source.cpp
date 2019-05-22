@@ -222,7 +222,7 @@ namespace transmission
 		}
 	};
 
-	class data_source::torrent_list_request : public request<torrent_file_list>
+	class data_source::torrent_file_list_request : public request<torrent_file_list>
 	{
 		using base_type = data_source::request<torrent_file_list>;
 
@@ -239,6 +239,27 @@ namespace transmission
 		void parse_response(std::string body) override
 		{
 			auto list = parse_torrent_file_list(body);
+			set_value(std::move(list));
+		}
+	};
+
+	class data_source::tracker_list_request : public request<tracker_list>
+	{
+		using base_type = data_source::request<tracker_list>;
+
+	public:
+		torrent_id_type m_request_id;
+
+	public:
+		auto request_command() -> std::string override
+		{
+			auto cmd = make_tracker_list_get_command(m_request_id);
+			return cmd;
+		}
+
+		void parse_response(std::string body) override
+		{
+			auto list = parse_tracker_list(body);
 			set_value(std::move(list));
 		}
 	};
@@ -283,7 +304,14 @@ namespace transmission
 
 	auto data_source::get_torrent_files(torrent_id_type idx) -> ext::future<torrent_file_list>
 	{
-		auto obj = ext::make_intrusive<torrent_list_request>();
+		auto obj = ext::make_intrusive<torrent_file_list_request>();
+		obj->m_request_id = std::move(idx);
+		return this->add_request(std::move(obj));
+	}
+
+	auto data_source::get_trackers(torrent_id_type idx) -> ext::future<tracker_list>
+	{
+		auto obj = ext::make_intrusive<tracker_list_request>();
 		obj->m_request_id = std::move(idx);
 		return this->add_request(std::move(obj));
 	}

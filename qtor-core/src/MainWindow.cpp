@@ -2,6 +2,7 @@
 #include <QtTools/Utility.hpp>
 
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
 #include <QtSvg/QSvgGenerator>
 
 namespace qtor

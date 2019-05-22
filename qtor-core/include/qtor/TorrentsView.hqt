@@ -16,8 +16,6 @@
 
 namespace qtor
 {
-	class MainWindow;
-
 	/// Torrent item view widget. Consists of QAbstractItemView + QLineEdit filter.
 	/// QAbstractItemView can be table view or list view.
 	/// Provides methods for behavior customization
@@ -38,8 +36,6 @@ namespace qtor
 	protected:
 		/// display model
 		std::shared_ptr<AbstractTableItemModel> m_model;
-		/// parent window
-		MainWindow * m_parent = nullptr;
 
 		/// table headers customization/tracking
 		QtTools::HeaderControlModel * m_headerModel = nullptr;
@@ -83,9 +79,9 @@ namespace qtor
 	protected:
 		/// Joins clipboard text from items and sets it into clipboard
 		virtual void CopySelectedIntoClipboard();
-		/// creates context menu for an item with idx,
-		/// if idx is not valid, common menu was requested
-		virtual QMenu * CreateItemMenu(const QModelIndex & idx);
+		/// creates context menu for items with idxs,
+		/// if idx is empty, common menu was requested
+		virtual QMenu * CreateItemMenu(const QModelIndexList & idxs);
 		/// basic menu handler
 		virtual void contextMenuEvent(QContextMenuEvent * ev) override;
 		/// to change ListView clipboard handling
@@ -106,6 +102,17 @@ namespace qtor
 		QLineEdit * GetFilterWidget() const { return m_rowFilter; }
 		/// table view
 		QTableView * GetTableView() const { return m_tableView; }
+
+	Q_SIGNALS:
+		void StartTorrents(torrent_id_list ids);
+		void StartNowTorrents(torrent_id_list ids);
+		void StopTorrents(torrent_id_list ids);
+		void AnnounceTorrents(torrent_id_list ids);
+		void RemoveTorrents(torrent_id_list ids);
+		void PurgeTorrents(torrent_id_list ids);
+
+		void OpenTorrentFolder(torrent_id_list ids);
+		void ShowProperties(torrent_id_list ids);
 
 	public:
 		/// opens table headers configuration widget,

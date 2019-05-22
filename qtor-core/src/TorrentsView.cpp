@@ -198,7 +198,7 @@ namespace qtor
 		qApp->clipboard()->setText(text);
 	}
 
-	QMenu * TorrentsView::CreateItemMenu(const QModelIndex & idx)
+	QMenu * TorrentsView::CreateItemMenu(const QModelIndexList & idxs)
 	{
 		QAction * action;
 		auto * menu = new QMenu(this);
@@ -228,23 +228,30 @@ namespace qtor
 		connect(action, &QAction::triggered, this, [this] { SetViewMode(ListMode); });
 		menu->addAction(action);
 
-/*		if (idx.isValid())
+		torrent_id_list ids;
+		for (const QModelIndex & idx : idxs)
 		{
-			QPersistentModelIndex pidx = idx;
+			if (idx.isValid())
+			{
+				auto * torrent_ptr = qvariant_cast<const torrent *>(m_model->GetEntity(idx));
+				if (torrent_ptr) ids.push_back(torrent_ptr->id());
+			}
+		}
+
+		if (not ids.empty())
+		{
+			menu->addSeparator();
 
 #define CONNECT(METHOD)                                                                     \
-			action->setData(pidx);                                                          \
-			connect(action, &QAction::triggered, this, [this]                               \
+			connect(action, &QAction::triggered, this, [this, ids]                          \
 			{                                                                               \
-				auto * action = static_cast<QAction *>(QObject::sender());                  \
-				QModelIndex idx = qvariant_cast<QPersistentModelIndex>(action->data());     \
-				m_parent->METHOD(idx);                                                      \
+				Q_EMIT METHOD(ids);                                                         \
 			})                                                                              \
 
 			action = menu->addAction(tr("&Properties"));
 			action->setIcon(QIcon::fromTheme("document-properties"));
 			action->setShortcut(QKeySequence("Alt+Enter"));
-			CONNECT(OpenTorrentLocationSettings);
+			CONNECT(ShowProperties);
 
 			action = menu->addAction(tr("Open Fold&er"));
 			action->setIcon(QIcon::fromTheme("folder-open"));
@@ -252,28 +259,25 @@ namespace qtor
 			CONNECT(OpenTorrentFolder);
 
 			action = menu->addAction(tr("Start"));
-			CONNECT(StartTorrent);
+			CONNECT(StartTorrents);
 
-			action = menu->addAction(tr("start Now"));
-			CONNECT(StartTorrentNow);
+			action = menu->addAction(tr("Start Now"));
+			CONNECT(StartNowTorrents);
 
 			action = menu->addAction(tr("Stop"));
-			CONNECT(StopTorrent);
+			CONNECT(StopTorrents);
 
 			action = menu->addAction(tr("Announce"));
-			CONNECT(AnnounceTorrent);
+			CONNECT(AnnounceTorrents);
 
 			action = menu->addAction(tr("Remove"));
-			CONNECT(DeleteTorrent);
+			CONNECT(RemoveTorrents);
 
 			action = menu->addAction(tr("Remove and Delete data"));
-			CONNECT(PurgeTorrent);
-
-
+			CONNECT(PurgeTorrents);
 
 #undef CONNECT
 		}
-*/
 
 		return menu;
 	}
@@ -290,8 +294,11 @@ namespace qtor
 		if (not viewport->contentsRect().contains(viewPos))
 			return;
 
-		auto idx = m_tableView->indexAt(viewPos);
-		auto * menu = CreateItemMenu(idx);
+		QModelIndexList selected = m_itemView == m_tableView
+			? m_tableView->selectionModel()->selectedRows()
+			: m_listView->selectionModel()->selectedIndexes();
+
+		auto * menu = CreateItemMenu(selected);
 		if (menu) menu->popup(pos);
 	}
 

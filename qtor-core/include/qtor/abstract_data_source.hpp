@@ -49,6 +49,8 @@ namespace qtor
 	public:
 		virtual ext::future<torrent_file_list> get_torrent_files(torrent_id_type id) = 0;
 		virtual ext::future<torrent_peer_list> get_torrent_peers(torrent_id_type id) = 0;
+
+		virtual ext::future<tracker_list> get_trackers(torrent_id_type) { return ext::make_ready_future(tracker_list()); };
 		
 	public:
 		virtual void set_address(std::string addr) = 0;

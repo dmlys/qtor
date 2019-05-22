@@ -57,6 +57,12 @@ namespace qtor
 		double progress;
 	};
 
+	struct tracker_stat
+	{
+		string_type host;
+		string_type announce;
+		string_type scrape;
+	};
 
 	struct session_stat
 	{

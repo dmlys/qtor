@@ -29,7 +29,8 @@ namespace transmission
 
 		class torrent_subscription;
 		class torrent_request;
-		class torrent_list_request;
+		class torrent_file_list_request;
+		class tracker_list_request;
 
 	protected:
 		void emit_signal(event_sig & sig, event_type ev) override;
@@ -68,6 +69,8 @@ namespace transmission
 	public:
 		virtual ext::future<torrent_file_list> get_torrent_files(torrent_id_type id) override;
 		virtual ext::future<torrent_peer_list> get_torrent_peers(torrent_id_type id) override { return ext::make_ready_future<torrent_peer_list>({}); }
+
+		virtual ext::future<tracker_list> get_trackers(torrent_id_type id) override;
 
 	public:
 		data_source() = default;

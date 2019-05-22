@@ -1,0 +1,28 @@
+#pragma once
+#include <QtWidgets/QFrame>
+#include <QtWidgets/QListView>
+#include <qtor/TorrentCategoryModel.hqt>
+
+namespace qtor
+{
+	class CategoryWidget : public QFrame
+	{
+		Q_OBJECT;
+
+	protected:
+		QListView * m_categoryView = nullptr;
+		TorrentCategoryModel * m_catgeotyModel = nullptr;
+
+	public:
+		CategoryWidget(QWidget * wgt = nullptr);
+		~CategoryWidget();
+
+	public:
+		Q_SIGNAL void SelectionsChanged();
+
+	protected:
+		void setupUi();
+		void retranslateUi();
+		void connectSignals();
+	};
+}

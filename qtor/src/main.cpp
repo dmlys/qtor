@@ -136,6 +136,9 @@
 //	}
 //}
 
+#include <QtCore/QDebug>
+#include <QtWidgets/QMessageBox>
+
 int main(int argc, char * argv[])
 {
 	using namespace std;
@@ -152,12 +155,11 @@ int main(int argc, char * argv[])
 
 	QApplication qapp {argc, argv};
 
-	auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
-	source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
+	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
+	//source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
 
-	//auto source = std::make_shared<qtor::transmission::data_source>();
-	//source->set_address("http://melkiy:9091/transmission/rpc"s);
-
+	auto source = std::make_shared<qtor::transmission::data_source>();
+	source->set_address("http://localhost:9091/transmission/rpc"s);
 
 //	source->connect().get();
 //	auto files = source->get_torrent_files("174").get();
@@ -249,6 +251,15 @@ int main(int argc, char * argv[])
 
 	mainWindow.Init(app);
 	mainWindow.show();
+
+//	QMessageBox messageBox(&mainWindow);
+//	messageBox.setText("Test message box");
+//	messageBox.setInformativeText("Informative text");
+//	messageBox.setDetailedText("detailed text");
+//	messageBox.setWindowTitle("Title");
+//	messageBox.setIcon(QMessageBox::Icon::Information);
+
+//	messageBox.show();
 
 	QTimer::singleShot(100, [&app] { app.Connect(); });
 

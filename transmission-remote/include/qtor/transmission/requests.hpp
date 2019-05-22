@@ -60,6 +60,7 @@ namespace transmission
 		extern const std::vector<std::string> request_default_fields;
 		extern const std::vector<std::string> request_torrent_files_fields;
 		extern const std::vector<std::string> request_torrent_peers_fields;
+		extern const std::vector<std::string> request_trackers_fields;
 
 		extern const std::string torrent_get;
 		extern const std::string torrent_set;
@@ -180,11 +181,20 @@ namespace transmission
 		return make_torrent_get_command(ids, request_torrent_files_fields);
 	}
 
+	inline std::string make_tracker_list_get_command(const torrent_id_type & id)
+	{
+		auto ids = {id};
+		return make_torrent_get_command(ids, request_trackers_fields);
+	}
+
 	torrent_list parse_torrent_list(const std::string & json);
 	torrent_list parse_torrent_list(std::istream & json_stream);
 
 	torrent_file_list parse_torrent_file_list(const std::string & json);
 	torrent_file_list parse_torrent_file_list(std::istream & json_source);
+
+	tracker_list parse_tracker_list(const std::string & json);
+	tracker_list parse_tracker_list(std::istream & json_source);
 
 	session_stat parse_statistics(const std::string & json);
 	session_stat parse_statistics(std::istream & json_stream);

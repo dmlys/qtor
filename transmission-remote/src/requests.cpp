@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include <QtCore/QDebug>
 #include <QtCore/QJsonValue>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
@@ -164,6 +165,11 @@ namespace transmission
 		const std::vector<std::string> request_torrent_peers_fields =
 		{
 			Trackers, TrackerStats,
+		};
+
+		const std::vector<std::string> request_trackers_fields =
+		{
+		    Trackers, TrackerStats,
 		};
 	}
 
@@ -376,6 +382,30 @@ namespace transmission
 		return result;
 	}
 
+	static tracker_list parse_tracker_list(const QJsonDocument & doc)
+	{
+		using QtTools::Json::get_path;
+		tracker_list result;
+
+		auto root = doc.object();
+		auto res = QtTools::FromQString(root["result"].toString());
+		if (res != "success")
+			throw std::runtime_error(fmt::format("Bad response: " + res));
+
+		auto trackerStats = get_path(root, "arguments/torrents/0/trackerStats").toArray();
+		for (QJsonValue trackerNode : trackerStats)
+		{
+			tracker_stat stat;
+			stat.host     = trackerNode["host"].toString();
+			stat.announce = trackerNode["announce"].toString();
+			stat.scrape   = trackerNode["scrape"].toString();
+
+			result.push_back(std::move(stat));
+		}
+
+		return result;
+	}
+
 	torrent_file_list parse_torrent_file_list(const std::string & json)
 	{
 		auto jdoc = QtTools::Json::parse_json(json);
@@ -398,5 +428,18 @@ namespace transmission
 	{
 		auto jdoc = QtTools::Json::parse_json(json_stream);
 		return parse_torrent_list(jdoc);
+	}
+
+	tracker_list parse_tracker_list(const std::string & json)
+	{
+		qDebug() << QtTools::ToQString(json);
+		auto jdoc = QtTools::Json::parse_json(json);
+		return parse_tracker_list(jdoc);
+	}
+
+	tracker_list parse_tracker_list(std::istream & json_stream)
+	{
+		auto jdoc = QtTools::Json::parse_json(json_stream);
+		return parse_tracker_list(jdoc);
 	}
 }}

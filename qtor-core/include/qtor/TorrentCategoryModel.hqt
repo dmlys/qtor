@@ -33,7 +33,7 @@ namespace qtor
 
 		using category_set = ext::enum_bitset<category_type, category_type::count>;
 
-		struct CategoryItem
+		struct category_item
 		{
 			category_type category;
 			std::size_t count;
@@ -42,7 +42,7 @@ namespace qtor
 		};
 
 	private:
-		std::vector<CategoryItem> m_categories;
+		std::vector<category_item> m_categories;
 		qtor::view_manager_ref<torrent_store> m_torrent_store;
 
 		boost::signals2::scoped_connection m_on_update_conn;
@@ -56,8 +56,8 @@ namespace qtor
 		virtual void RecalculateData();
 
 	public:
-		static category_set category(const torrent & torr) noexcept;
-		virtual CategoryItem GetItem(int row) const;
+		static category_set Category(const torrent & torr) noexcept;
+		virtual category_item GetItem(int row) const;
 		virtual void Reinit();
 
 	public:

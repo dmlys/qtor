@@ -34,7 +34,7 @@ namespace qtor
 		}
 	}
 
-	auto TorrentCategoryModel::category(const torrent & torr) noexcept -> category_set
+	auto TorrentCategoryModel::Category(const torrent & torr) noexcept -> category_set
 	{
 		category_set result;
 		const auto status = torr.status();
@@ -96,7 +96,7 @@ namespace qtor
 		{
 			for (const torrent & tor : *m_torrent_store)
 			{
-				auto catset = category(tor);
+				auto catset = Category(tor);
 
 				if (catset[all])         m_categories[0].count += 1;
 				if (catset[downloading]) m_categories[1].count += 1;
@@ -141,7 +141,7 @@ namespace qtor
 		return qint(m_categories.size());
 	}
 
-	auto TorrentCategoryModel::GetItem(int row) const -> CategoryItem
+	auto TorrentCategoryModel::GetItem(int row) const -> category_item
 	{
 		return m_categories.at(row);
 	}
