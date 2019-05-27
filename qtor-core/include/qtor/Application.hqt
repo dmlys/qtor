@@ -1,8 +1,9 @@
 ﻿#pragma once
 #include <QtCore/QObject>
 #include <QtCore/QSharedPointer>
-#include <QtTools/ToolsBase.hpp>
 #include <QtTools/gui_executor.hqt>
+#include <QtTools/ToolsBase.hpp>
+#include <QtTools/NotificationSystem.hpp>
 
 #include <qtor/abstract_data_source.hpp>
 #include <qtor/torrent_store.hpp>
@@ -24,11 +25,14 @@ namespace qtor
 		abstract_data_source_ptr m_source;
 		torrent_store_ptr        m_torrent_store;
 
+		QtTools::NotificationSystem::NotificationCenter * m_notificationCenter = new QtTools::NotificationSystem::NotificationCenter(this);
 		QtTools::gui_executor * m_executor = new QtTools::gui_executor(this);
 
 	protected:
 		virtual auto CreateSource() -> abstract_data_source_ptr = 0;
 		virtual void OnEventSource(abstract_data_source::event_type ev);
+		virtual void OnExecutionResult(ext::future<void> result, QString errTitle, QString errMessageTemplate);
+		virtual void OnConnectionError();
 
 	protected:
 		// initializes this object, probably should be called in constructor
@@ -36,12 +40,25 @@ namespace qtor
 		virtual auto GetStore() -> torrent_store_ptr;
 
 	public:
+
+	public:
 		virtual auto AccquireTorrentModel() -> abstract_torrent_model_ptr;
 		virtual auto GetSource() -> abstract_data_source_ptr;
+
+		auto * GuiExecutor() const noexcept { return m_executor; }
+		auto * NotificationCenter() const noexcept { return m_notificationCenter; }
 
 	public Q_SLOTS:
 		virtual void Connect();
 		virtual void Disconnect();
+
+	public Q_SLOTS:
+		virtual void StartTorrents(torrent_id_list ids);
+		virtual void StartNowTorrents(torrent_id_list ids);
+		virtual void StopTorrents(torrent_id_list ids);
+		virtual void AnnounceTorrents(torrent_id_list ids);
+		virtual void RemoveTorrents(torrent_id_list ids);
+		virtual void PurgeTorrents(torrent_id_list ids);
 		
 	Q_SIGNALS:
 		void Connected();

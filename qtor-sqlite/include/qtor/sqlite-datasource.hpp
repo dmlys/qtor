@@ -80,6 +80,9 @@ namespace qtor::sqlite
 		virtual ext::future<torrent_peer_list> get_torrent_peers(torrent_id_type id) override { return ext::make_ready_future<torrent_peer_list>({}); }
 
 	public:
+		virtual std::string last_errormsg() const override { return ""; }
+
+	public:
 		sqlite_datasource();
 		~sqlite_datasource();
 	};

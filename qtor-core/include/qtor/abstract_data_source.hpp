@@ -60,6 +60,9 @@ namespace qtor
 		virtual auto get_gui_executor() const -> QtTools::gui_executor * = 0;
 
 	public:
+		virtual std::string last_errormsg() const = 0;
+
+	public:
 		virtual ~abstract_data_source() = default;
 	};
 }

@@ -73,6 +73,9 @@ namespace transmission
 		virtual ext::future<tracker_list> get_trackers(torrent_id_type id) override;
 
 	public:
+		virtual std::string last_errormsg() const override { return base_type::last_errormsg(); }
+
+	public:
 		data_source() = default;
 		~data_source() = default;
 	};

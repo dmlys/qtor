@@ -1,5 +1,6 @@
 #include <qtor/MainWindow.hqt>
 #include <QtTools/Utility.hpp>
+#include <QtTools/NotificationSystem/NotificationPopupLayout.hqt>
 
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
@@ -43,6 +44,10 @@ namespace qtor
 		auto model = m_app->AccquireTorrentModel();
 		m_torrentWidget->SetModel(std::move(model));
 		m_torrentWidget->InitHeaderTracking(nullptr);
+
+		auto nl = new QtTools::NotificationSystem::NotificationPopupLayout(this);
+		nl->SetNotificationCenter(m_app->NotificationCenter());
+		nl->SetParent(this);
 	}
 
 	MainWindow::MainWindow(QWidget * wgt /*= nullptr*/) : QMainWindow(wgt)
