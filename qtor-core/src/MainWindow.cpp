@@ -41,6 +41,17 @@ namespace qtor
 		connect(m_app, &Application::Disconnected, this, &MainWindow::OnDisconnected);
 		connect(m_app, &Application::ConnectionError, this, &MainWindow::OnConnectionError);
 
+
+		connect(m_torrentWidget, &TorrentsView::StartTorrents, m_app, &Application::StartTorrents);
+		connect(m_torrentWidget, &TorrentsView::StartNowTorrents, m_app, &Application::StartNowTorrents);
+		connect(m_torrentWidget, &TorrentsView::StopTorrents, m_app, &Application::StopTorrents);
+		connect(m_torrentWidget, &TorrentsView::AnnounceTorrents, m_app, &Application::AnnounceTorrents);
+		connect(m_torrentWidget, &TorrentsView::RemoveTorrents, m_app, &Application::RemoveTorrents);
+		connect(m_torrentWidget, &TorrentsView::PurgeTorrents, m_app, &Application::PurgeTorrents);
+
+
+		//connect(m_actionStopAll, &QAction::triggered, this, [this](bool) { m_app->StopTorrents({}); });
+
 		auto model = m_app->AccquireTorrentModel();
 		m_torrentWidget->SetModel(std::move(model));
 		m_torrentWidget->InitHeaderTracking(nullptr);

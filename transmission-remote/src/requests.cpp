@@ -19,12 +19,22 @@ namespace transmission
 	{
 		const std::string request_template = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ], "ids": [ {} ] }} }})";
 		const std::string request_template_all = R"({{ "method": "{}", "arguments": {{ "fields": [ {} ] }} }})";
+		const std::string command_template = R"({{ "method": "{}", "arguments": {{ "ids": [ {} ] }} }})";
+		const std::string command_template_all = R"({{ "method": "{}" }})";
 
 		// commands
 		const std::string torrent_get = "torrent-get";
 		const std::string torrent_set = "torrent-set";
 		const std::string torrent_add = "torrent-add";
+
+		const std::string torrent_start = "torrent-start";
+		const std::string torrent_start_now = "torrent-start-now";
+		const std::string torrent_stop = "torrent-stop";
+		const std::string torrent_verify = "torrent-verify";
+		const std::string torrent_reannounce = "torrent-reannounce";
+
 		const std::string torrent_remove = "torrent-remove";
+		const std::string torrent_purege = "torrent-purge";
 		const std::string torrent_set_location = "torrent-set-location";
 
 
@@ -270,6 +280,14 @@ namespace transmission
 		t.status(status);
 	}
 	
+	static void check_success(const QJsonDocument & doc)
+	{
+		auto root = doc.object();
+		auto res = QtTools::FromQString(root["result"].toString());
+		if (res != "success")
+			throw std::runtime_error(fmt::format("Bad response: " + res));
+	}
+
 
 	template <class Type>
 	static optional<std::decay_t<Type>> operator -(optional<Type> opt1, optional<Type> opt2)
@@ -294,12 +312,9 @@ namespace transmission
 		using QtTools::Json::find_path;
 		torrent_list result;
 
-		auto root = doc.object();
-		auto res = QtTools::FromQString(root["result"].toString());
-		if (res != "success")
-			throw std::runtime_error(fmt::format("Bad response: " + res));
+		check_success(doc);
 
-		auto torrents = get_path(root, "arguments/torrents").toArray();
+		auto torrents = get_path(doc, "arguments/torrents").toArray();
 		for (const QJsonValue & tnode : torrents)
 		{
 			result.emplace_back();
@@ -356,13 +371,10 @@ namespace transmission
 		using QtTools::Json::get_path;
 		torrent_file_list result;
 
-		auto root = doc.object();
-		auto res = QtTools::FromQString(root["result"].toString());
-		if (res != "success")
-			throw std::runtime_error(fmt::format("Bad response: " + res));
+		check_success(doc);
 
-		auto files     = get_path(root, "arguments/torrents/0/files").toArray();
-		auto fileStats = get_path(root, "arguments/torrents/0/fileStats").toArray();
+		auto files     = get_path(doc, "arguments/torrents/0/files").toArray();
+		auto fileStats = get_path(doc, "arguments/torrents/0/fileStats").toArray();
 
 		for (auto [file_node_ref, file_stat_node_ref] : ext::combine(files, fileStats))
 		{
@@ -387,12 +399,9 @@ namespace transmission
 		using QtTools::Json::get_path;
 		tracker_list result;
 
-		auto root = doc.object();
-		auto res = QtTools::FromQString(root["result"].toString());
-		if (res != "success")
-			throw std::runtime_error(fmt::format("Bad response: " + res));
+		check_success(doc);
 
-		auto trackerStats = get_path(root, "arguments/torrents/0/trackerStats").toArray();
+		auto trackerStats = get_path(doc, "arguments/torrents/0/trackerStats").toArray();
 		for (QJsonValue trackerNode : trackerStats)
 		{
 			tracker_stat stat;
@@ -404,6 +413,24 @@ namespace transmission
 		}
 
 		return result;
+	}
+
+	static void parse_command_response(const QJsonDocument & doc)
+	{
+		check_success(doc);
+	}
+
+
+	void parse_command_response(const std::string & json)
+	{
+		auto jdoc = QtTools::Json::parse_json(json);
+		return parse_command_response(jdoc);
+	}
+
+	void parse_command_response(std::istream & json_stream)
+	{
+		auto jdoc = QtTools::Json::parse_json(json_stream);
+		return parse_command_response(jdoc);
 	}
 
 	torrent_file_list parse_torrent_file_list(const std::string & json)

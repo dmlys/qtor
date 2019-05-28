@@ -56,16 +56,16 @@ namespace qtor
 		virtual void Disconnect();
 
 	public: // torrent actions
-		void StartTorrent(const QModelIndex & idx);
-		void StartTorrentNow(const QModelIndex & idx);
-		void StopTorrent(const QModelIndex & idx);
-
-		void DeleteTorrent(const QModelIndex & idx);
-		void PurgeTorrent(const QModelIndex & idx);
-
-		void AnnounceTorrent(const QModelIndex & idx);
-		void VerifyTorrentLocalData(const QModelIndex & idx);
-		void SetTorrentLocation(const QModelIndex & idx, QString location);
+		//void StartTorrent(const QModelIndex & idx);
+		//void StartTorrentNow(const QModelIndex & idx);
+		//void StopTorrent(const QModelIndex & idx);
+		//
+		//void DeleteTorrent(const QModelIndex & idx);
+		//void PurgeTorrent(const QModelIndex & idx);
+		//
+		//void AnnounceTorrent(const QModelIndex & idx);
+		//void VerifyTorrentLocalData(const QModelIndex & idx);
+		//void SetTorrentLocation(const QModelIndex & idx, QString location);
 
 		void saveToSvg();
 

@@ -32,6 +32,8 @@ namespace transmission
 		class torrent_file_list_request;
 		class tracker_list_request;
 
+		class torrent_action_request;
+
 	protected:
 		void emit_signal(event_sig & sig, event_type ev) override;
 
@@ -55,9 +57,9 @@ namespace transmission
 		virtual ext::future<void> start_all_torrents() override { return ext::make_ready_future(); }
 		virtual ext::future<void> stop_all_torrents() override { return ext::make_ready_future(); }
 
-		virtual ext::future<void> start_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
-		virtual ext::future<void> start_torrents_now(torrent_id_list ids) override { return ext::make_ready_future(); }
-		virtual ext::future<void> stop_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
+		virtual ext::future<void> start_torrents(torrent_id_list ids) override;
+		virtual ext::future<void> start_torrents_now(torrent_id_list ids) override;
+		virtual ext::future<void> stop_torrents(torrent_id_list ids) override;
 
 		virtual ext::future<void> verify_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }
 		virtual ext::future<void> announce_torrents(torrent_id_list ids) override { return ext::make_ready_future(); }

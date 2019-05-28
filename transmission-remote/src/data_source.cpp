@@ -6,6 +6,8 @@
 #include <ext/library_logger/logging_macros.hpp>
 #include <fmt/format.h>
 
+#include <QtWidgets/QMessageBox>
+
 namespace qtor {
 namespace transmission
 {
@@ -59,6 +61,7 @@ namespace transmission
 
 	class data_source::subscription_base : public subscription
 	{
+	protected:
 		std::chrono::steady_clock::time_point m_next = std::chrono::steady_clock::now();
 		std::chrono::steady_clock::duration m_delay = std::chrono::seconds(2);
 
@@ -73,7 +76,7 @@ namespace transmission
 
 	public:
 		virtual auto request_command() -> std::string = 0;
-		virtual void parse_response(std::string body) = 0;
+		virtual void process_response(std::string body) = 0;
 	};
 
 	template <class Data, class Handler>
@@ -130,7 +133,7 @@ namespace transmission
 		{
 			ext::net::parse_http_response(parser, streambuf, body);
 			m_next = std::chrono::steady_clock::now() + m_delay;
-			parse_response(std::move(body));
+			process_response(std::move(body));
 		}
 		else if (code == 409)
 		{
@@ -276,12 +279,35 @@ namespace transmission
 			return make_torrent_get_command(m_request_idx);
 		}
 
-		void parse_response(std::string body) override
+		void process_response(std::string body) override
 		{
 			auto tlist = parse_torrent_list(body);
 			emit_data(std::move(tlist), m_handler);
 		}
 	};
+
+
+	class data_source::torrent_action_request : public request<void>
+	{
+		using base_type = data_source::request<void>;
+
+	public:
+		torrent_id_list m_ids;
+		std::string m_action;
+
+	public:
+		auto request_command() -> std::string override
+		{
+			return make_request_command(m_action, m_ids);
+		}
+
+		void parse_response(std::string body) override
+		{
+			parse_command_response(body);
+			set_value();
+		}
+	};
+
 
 	auto data_source::get_torrents() -> ext::future<torrent_list>
 	{
@@ -313,6 +339,33 @@ namespace transmission
 	{
 		auto obj = ext::make_intrusive<tracker_list_request>();
 		obj->m_request_id = std::move(idx);
+		return this->add_request(std::move(obj));
+	}
+
+	auto data_source::start_torrents(torrent_id_list ids) -> ext::future<void>
+	{
+		auto obj = ext::make_intrusive<torrent_action_request>();
+		obj->m_ids = std::move(ids);
+		obj->m_action = torrent_start;
+
+		return this->add_request(std::move(obj));
+	}
+
+	auto data_source::start_torrents_now(torrent_id_list ids) -> ext::future<void>
+	{
+		auto obj = ext::make_intrusive<torrent_action_request>();
+		obj->m_ids = std::move(ids);
+		obj->m_action = torrent_start_now;
+
+		return this->add_request(std::move(obj));
+	}
+
+	auto data_source::stop_torrents(torrent_id_list ids) -> ext::future<void>
+	{
+		auto obj = ext::make_intrusive<torrent_action_request>();
+		obj->m_ids = std::move(ids);
+		obj->m_action = torrent_stop;
+
 		return this->add_request(std::move(obj));
 	}
 }}

@@ -38,11 +38,7 @@ namespace qtor
 				errText = tr("Unknown error");
 			}
 
-			auto notification = m_notificationCenter->CreateNotification();
-			notification->Title(errTitle);
-			notification->Text(errMessageTemplate.arg(errText));
-
-			m_notificationCenter->AddNotification(std::move(notification));
+			m_notificationCenter->AddError(errTitle, errMessageTemplate);
 		};
 
 		m_executor->submit(std::move(result), handler);

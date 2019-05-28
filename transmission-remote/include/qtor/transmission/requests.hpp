@@ -57,16 +57,24 @@ namespace transmission
 	{
 		extern const std::string request_template;
 		extern const std::string request_template_all;
+		extern const std::string command_template;
+		extern const std::string command_template_all;
+
 		extern const std::vector<std::string> request_default_fields;
 		extern const std::vector<std::string> request_torrent_files_fields;
 		extern const std::vector<std::string> request_torrent_peers_fields;
 		extern const std::vector<std::string> request_trackers_fields;
 
+		// commands
 		extern const std::string torrent_get;
 		extern const std::string torrent_set;
 		extern const std::string torrent_add;
-		extern const std::string torrent_remove;
-		extern const std::string torrent_set_location;
+
+		extern const std::string torrent_start;
+		extern const std::string torrent_start_now;
+		extern const std::string torrent_stop;
+		extern const std::string torrent_verify;
+		extern const std::string torrent_reannounce;
 	}
 
 
@@ -153,6 +161,15 @@ namespace transmission
 	}
 	
 
+	template <class IdsRange>
+	std::string make_request_command(const std::string & command, const IdsRange & ids)
+	{
+		if (boost::empty(ids))
+			return fmt::format(command_template_all, command);
+		else
+			return fmt::format(command_template, command, json_join(ids | as_ints));
+	}
+
 	template <class IdsRange, class FieldsRange>
 	std::string make_request_command(const std::string & command, const IdsRange & ids, const FieldsRange & fields)
 	{
@@ -186,6 +203,9 @@ namespace transmission
 		auto ids = {id};
 		return make_torrent_get_command(ids, request_trackers_fields);
 	}
+
+	void parse_command_response(const std::string & json);
+	void parse_command_response(std::istream & json_stream);
 
 	torrent_list parse_torrent_list(const std::string & json);
 	torrent_list parse_torrent_list(std::istream & json_stream);
