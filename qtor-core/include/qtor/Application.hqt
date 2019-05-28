@@ -30,16 +30,25 @@ namespace qtor
 
 	protected:
 		virtual auto CreateSource() -> abstract_data_source_ptr = 0;
-		virtual void OnEventSource(abstract_data_source::event_type ev);
-		virtual void OnExecutionResult(ext::future<void> result, QString errTitle, QString errMessageTemplate);
+		virtual void OnSourceEvent(abstract_data_source::event_type ev);
 		virtual void OnConnectionError();
+
+	protected:
+		template <class Type>
+		Type OnExecutionResult(ext::future<Type> & result, const torrent_id_list & ids, QString errTitle, QString errMessageTemplate);
+
+	protected:
+		virtual void OnTorrentsRefreshed(ext::future<torrent_list> result, torrent_id_list ids);
+
+		virtual void OnTorrentsStarted(ext::future<void> result, torrent_id_list ids);
+		virtual void OnTorrentsStopped(ext::future<void> result, torrent_id_list ids);
+		virtual void OnTorrentsRemoved(ext::future<void> result, torrent_id_list ids);
+		virtual void OnTorrentsAnnounced(ext::future<void> result, torrent_id_list ids);
 
 	protected:
 		// initializes this object, probably should be called in constructor
 		virtual void Init();
 		virtual auto GetStore() -> torrent_store_ptr;
-
-	public:
 
 	public:
 		virtual auto AccquireTorrentModel() -> abstract_torrent_model_ptr;
@@ -53,6 +62,8 @@ namespace qtor
 		virtual void Disconnect();
 
 	public Q_SLOTS:
+		virtual void RefreshTorrents(torrent_id_list ids);
+
 		virtual void StartTorrents(torrent_id_list ids);
 		virtual void StartNowTorrents(torrent_id_list ids);
 		virtual void StopTorrents(torrent_id_list ids);
@@ -66,4 +77,31 @@ namespace qtor
 		void ConnectionError();
 		void ConnectionLost();
 	};
+
+
+
+	template <class Type>
+	Type Application::OnExecutionResult(ext::future<Type> & result, const torrent_id_list & ids, QString errTitle, QString errMessageTemplate)
+	{
+		assert(result.is_ready());
+		if (not result.has_exception())
+			return result.get();
+
+		QString errText;
+
+		try
+		{
+			result.get();
+		}
+		catch (std::runtime_error & ex)
+		{
+			errText += QtTools::ToQString(ex.what());
+		}
+		catch (...)
+		{
+			errText = tr("Unknown error");
+		}
+
+		m_notificationCenter->AddError(errTitle, errMessageTemplate.arg(errText));
+	}
 }
