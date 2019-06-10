@@ -4,9 +4,9 @@
 #include <ext/net/parse_url.hpp>
 #include <ext/net/http_parser.hpp>
 #include <ext/library_logger/logging_macros.hpp>
-#include <fmt/format.h>
 
-#include <QtWidgets/QMessageBox>
+#include <regex>
+#include <fmt/format.h>
 
 namespace qtor {
 namespace transmission
@@ -106,6 +106,9 @@ namespace transmission
 		auto & session = owner->m_xtransmission_session;
 
 		auto body = request_command();
+		auto command = extract_command(body);
+
+		EXTLL_INFO_FMT(logger(), "sending {} command", command);
 
 		stream
 			<< "POST " << uri << " HTTP/1.1\r\n"
@@ -117,6 +120,8 @@ namespace transmission
 			stream << "X-Transmission-Session-Id: " << session << "\r\n";
 
 		stream << "\r\n" << body;
+
+		EXTLL_DEBUG_FMT(logger(), "sent {} command", command);
 	}
 
 	void data_source::subscription_base::response(ext::net::socket_streambuf & streambuf)

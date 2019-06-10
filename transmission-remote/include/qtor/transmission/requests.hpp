@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <istream>
+#include <regex>
 
 #include <ext/itoa.hpp>
 #include <ext/type_traits.hpp>
@@ -75,8 +76,12 @@ namespace transmission
 		extern const std::string torrent_stop;
 		extern const std::string torrent_verify;
 		extern const std::string torrent_reannounce;
+
+		extern std::regex method_regex;
 	}
 
+
+	std::string_view extract_command(std::string_view command);
 
 	
 	template <class String, class OutContainer>

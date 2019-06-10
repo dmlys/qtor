@@ -181,6 +181,21 @@ namespace transmission
 		{
 		    Trackers, TrackerStats,
 		};
+
+		std::regex method_regex(R"a("method":\s*"(.*?)")a", std::regex_constants::ECMAScript);
+	}
+
+	std::string_view extract_command(std::string_view command)
+	{
+		std::cmatch match_result;
+		auto first = command.data();
+		auto last  = first + command.size();
+		if (not std::regex_search(first, last, match_result, method_regex))
+			return "<not found>";
+
+		first = match_result[1].first;
+		last  = match_result[1].second;
+		return std::string_view(first, last - first);
 	}
 
 	inline static bool valid(QJsonValue node)
