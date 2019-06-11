@@ -109,6 +109,12 @@ namespace qtor
 		return m_locale.toString(dt);
 	}
 
+	QString formatter::format_datetime_short(datetime_type val) const
+	{
+		auto dt = QtTools::ToQDateTime(val);
+		return m_locale.toString(dt, QLocale::FormatType::ShortFormat);
+	}
+
 	QString formatter::format_duration(duration_type val) const
 	{
 		uint64_type secs = std::chrono::duration_cast<std::chrono::seconds>(val).count();
@@ -138,6 +144,11 @@ namespace qtor
 		return tr(ms_duration_strings[idx], nullptr, *it)
 		     % QStringLiteral(", ")
 		     % tr(ms_duration_strings[idx + 1], nullptr, *(it + 1));
+	}
+
+	QString formatter::format_duration_short(duration_type val) const
+	{
+		return format_duration(std::move(val));
 	}
 
 	QString formatter::format_ratio(double val) const
@@ -202,8 +213,8 @@ namespace qtor
 
 			case model_meta::Speed    : return format_speed(val);
 			case model_meta::Size     : return format_size(val);
-			case model_meta::DateTime : return format_datetime(val);
-			case model_meta::Duration : return format_duration(val);
+			case model_meta::DateTime : return format_datetime_short(val);
+			case model_meta::Duration : return format_duration_short(val);
 			case model_meta::Percent  : return format_percent(val);
 			case model_meta::Ratio    : return format_ratio(val);
 

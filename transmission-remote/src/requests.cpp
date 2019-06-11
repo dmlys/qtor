@@ -128,10 +128,10 @@ namespace transmission
 		//static const std::string MaxConnectedPeers = "maxConnectedPeers";
 		//static const std::string MetadataPercentComplete = "metadataPercentComplete";
 		//static const std::string PeerLimit = "peer-limit";		
-		//static const std::string PeersConnected = "peersConnected";
-		//static const std::string PeersFrom = "peersFrom";
-		//static const std::string PeersGettingFromUs = "peersGettingFromUs";
-		//static const std::string PeersSendingToUs = "peersSendingToUs";
+		static const std::string PeersConnected = "peersConnected";
+		static const std::string PeersFrom = "peersFrom";
+		static const std::string PeersGettingFromUs = "peersGettingFromUs";
+		static const std::string PeersSendingToUs = "peersSendingToUs";
 		//static const std::string PercentDone = "percentDone";
 		//static const std::string Pieces = "pieces";
 		//static const std::string PieceCount = "pieceCount";
@@ -151,8 +151,9 @@ namespace transmission
 		//static const std::string UploadLimited = "uploadLimited";
 		//static const std::string UploadRatio = "uploadRatio";
 		//static const std::string Wanted = "wanted";
-		//static const std::string Webseeds = "webseeds";
-		//static const std::string WebseedsSendingToUs = "webseedsSendingToUs";
+
+		static const std::string Webseeds = "webseeds";
+		static const std::string WebseedsSendingToUs = "webseedsSendingToUs";
 
 
 		const std::vector<std::string> request_default_fields =
@@ -163,6 +164,7 @@ namespace transmission
 			DownloadedEver, UploadedEver, CorruptEver,
 			RecheckProgress, MetadataPercentComplete,
 			Eta, EtaIdle,
+		    PeersConnected, PeersGettingFromUs, PeersSendingToUs,
 			RateDownload, RateUpload,
 			AddedDate, DateCreated, StartDate, DoneDate, ActivityDate,
 		};
@@ -367,13 +369,18 @@ namespace transmission
 			READ(duration, EtaIdle, eta_idle);
 
 			READ(speed, RateDownload, download_speed);
-			READ(speed, RateUpload, upload_speed);
+			READ(speed, RateUpload, upload_speed);			
 
 			READ(datetime, DateCreated, date_created);
 			READ(datetime, AddedDate, date_added);
 			READ(datetime, StartDate, date_started);
 			READ(datetime, DoneDate, date_done);
 			//READ(datetime, ActivityDate, date_last_activity);
+
+			READ(uint64, PeersConnected, connected_peers);
+			READ(uint64, PeersGettingFromUs, uploading_peers);
+			READ(uint64, PeersSendingToUs, downloading_peers);
+			READ(uint64, WebseedsSendingToUs, downloading_webseeds);
 
 			#undef READ
 		}

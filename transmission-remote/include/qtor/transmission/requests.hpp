@@ -167,7 +167,7 @@ namespace transmission
 	
 
 	template <class IdsRange>
-	std::string make_request_command(const std::string & command, const IdsRange & ids)
+	std::string make_request_command(std::string_view command, const IdsRange & ids)
 	{
 		if (boost::empty(ids))
 			return fmt::format(command_template_all, command);
@@ -176,7 +176,7 @@ namespace transmission
 	}
 
 	template <class IdsRange, class FieldsRange>
-	std::string make_request_command(const std::string & command, const IdsRange & ids, const FieldsRange & fields)
+	std::string make_request_command(std::string_view command, const IdsRange & ids, const FieldsRange & fields)
 	{
 		if (boost::empty(ids))
 			return fmt::format(request_template_all, command, json_join(fields));

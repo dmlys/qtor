@@ -108,7 +108,7 @@ namespace transmission
 		auto body = request_command();
 		auto command = extract_command(body);
 
-		EXTLL_INFO_FMT(logger(), "sending {} command", command);
+		EXTLL_DEBUG_FMT(logger(), "subscription {}: sending {} command", fmt::ptr(this), command);
 
 		stream
 			<< "POST " << uri << " HTTP/1.1\r\n"
@@ -121,11 +121,13 @@ namespace transmission
 
 		stream << "\r\n" << body;
 
-		EXTLL_DEBUG_FMT(logger(), "sent {} command", command);
+		EXTLL_TRACE_FMT(logger(), "subscription {}: sent {} command", fmt::ptr(this), command);
 	}
 
 	void data_source::subscription_base::response(ext::net::socket_streambuf & streambuf)
 	{
+		EXTLL_DEBUG_FMT(logger(), "subscription {}: receiving answer", fmt::ptr(this));
+
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
 
@@ -146,11 +148,15 @@ namespace transmission
 				if (name == "X-Transmission-Session-Id")
 					session = body;
 
+			EXTLL_INFO_FMT(logger(), "subscription {}: get HTTP 409 code, Transmission-Session-Id - {}", fmt::ptr(this), session);
+
 			parser.parse_trailing(streambuf);
 		}
 		else
 		{
 			parser.parse_trailing(streambuf);
+
+			EXTLL_WARN_FMT(logger(), "subscription {}: Bad http response: {}, {}", fmt::ptr(this), code, body);
 			auto err = fmt::format("Bad http response: {}, {}", code, body);
 			throw std::runtime_error(std::move(err));
 		}
@@ -165,6 +171,9 @@ namespace transmission
 		auto & session = owner->m_xtransmission_session;
 
 		auto body = request_command();
+		auto command = extract_command(body);
+
+		EXTLL_DEBUG_FMT(logger(), "request {}: sending {} command", fmt::ptr(this), command);
 
 		stream
 			<< "POST " << uri << " HTTP/1.1\r\n"
@@ -176,10 +185,14 @@ namespace transmission
 			stream << "X-Transmission-Session-Id: " << session << "\r\n";
 
 		stream << "\r\n" << body;
+
+		EXTLL_TRACE_FMT(logger(), "request {}: sent {} command", fmt::ptr(this), command);
 	}
 
 	void data_source::request_base::response(ext::net::socket_streambuf & streambuf)
 	{
+		EXTLL_DEBUG_FMT(logger(), "request {}: receiving answer", fmt::ptr(this));
+
 		auto owner = static_cast<data_source *>(m_owner);
 		auto & session = owner->m_xtransmission_session;
 
@@ -199,12 +212,16 @@ namespace transmission
 				if (name == "X-Transmission-Session-Id")
 					session = body;
 
+			EXTLL_INFO_FMT(logger(), "subscription {}: get HTTP 409 code, Transmission-Session-Id - {}", fmt::ptr(this), session);
+
 			parser.parse_trailing(streambuf);
 			set_repeat();
 		}
 		else
 		{
 			parser.parse_trailing(streambuf);
+
+			EXTLL_WARN_FMT(logger(), "subscription {}: Bad http response: {}, {}", fmt::ptr(this), code, body);
 			auto err = fmt::format("Bad http response: {}, {}", code, body);
 			throw std::runtime_error(std::move(err));
 		}

@@ -22,6 +22,8 @@ namespace qtor
 		typedef std::shared_ptr<AbstractTableItemModel>  abstract_torrent_model_ptr;
 
 	protected:
+		std::shared_ptr<ext::library_logger::logger> m_logger = nullptr;
+
 		abstract_data_source_ptr m_source;
 		torrent_store_ptr        m_torrent_store;
 

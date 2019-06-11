@@ -85,9 +85,9 @@ namespace qtor
 		switch (role)
 		{
 		    case Qt::DisplayRole:
-		    case Qt::ToolTipRole:
-		    case Qt::UserRole: return GetItem(index);
-		    default:           return {};
+		    case Qt::ToolTipRole: return GetStringShort(index);
+		    case Qt::UserRole:    return GetItem(index);
+		    default:              return {};
 		}
 	}
 

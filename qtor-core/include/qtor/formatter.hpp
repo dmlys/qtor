@@ -55,6 +55,9 @@ namespace qtor
 		virtual QString format_datetime(datetime_type val) const;
 		virtual QString format_duration(duration_type val) const;
 
+		virtual QString format_datetime_short(datetime_type val) const;
+		virtual QString format_duration_short(duration_type val) const;
+
 		virtual QString format_ratio(double val) const;
 		virtual QString format_percent(double val) const;
 		virtual QString format_bool(bool val) const;
@@ -94,6 +97,9 @@ namespace qtor
 
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_datetime, datetime_type);
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_duration, duration_type);
+
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_datetime_short, datetime_type);
+		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_duration_short, duration_type);
 
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_percent, double);
 		QTOR_FORMATTER_OPTIONAL_ANY_OVERLOAD(format_ratio,   double);

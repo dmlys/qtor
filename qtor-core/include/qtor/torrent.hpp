@@ -94,9 +94,7 @@ namespace qtor
 	F(QTOR_OPT, UploadingPeers,   uploading_peers,   uint64, uint64_type)       \
 	F(QTOR_OPT, DownloadingPeers, downloading_peers, uint64, uint64_type)       \
 	F(QTOR_OPT, ConnectedPeers,   connected_peers,   uint64, uint64_type)       \
-	                                                                            \
 	F(QTOR_OPT, DownloadingWebseeds, downloading_webseeds, uint64, uint64_type) \
-	F(QTOR_OPT, ConnectedWebseeds,   connected_webseeds,   uint64, uint64_type) \
 
 
 

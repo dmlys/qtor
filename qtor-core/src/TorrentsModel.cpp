@@ -85,6 +85,11 @@ namespace qtor
 			torrent::Eta,
 			torrent::EtaIdle,
 
+			torrent::ConnectedPeers,
+			torrent::UploadingPeers,
+			torrent::DownloadingPeers,
+			torrent::DownloadingWebseeds,
+
 			torrent::DateAdded,
 			torrent::DateCreated,
 			torrent::DateStarted,

@@ -147,11 +147,11 @@ namespace qtor
 				auto uploading = tor.uploading_peers().value_or(0);
 				if (connected == 0)
 				{
-					str = tr("Seeding to %Ln peer(s)", 0, uploading);
+					str = tr("Seeding to %Ln peer(s)", nullptr, uploading);
 				}
 				else
 				{
-					str = tr("Seeding to %1 of %Ln connected peer(s)", 0, connected)
+					str = tr("Seeding to %1 of %Ln connected peer(s)", nullptr, connected)
 						.arg(fmt->format_uint64(uploading));
 				}
 
@@ -165,22 +165,22 @@ namespace qtor
 				if (metadata_progress < 1.0)
 				{
 					auto peers = tor.downloading_peers().value_or(0);
-					str = tr("Downloading metadata from %Ln peer(s) (%1 done)", 0, peers)
+					str = tr("Downloading metadata from %Ln peer(s) (%1 done)", nullptr, peers)
 						.arg(fmt->format_percent(metadata_progress));
 				}
 				else
 				{
 					auto peers = tor.connected_peers().value_or(0);
-					auto webseeds = tor.connected_webseeds().value_or(0);
+					auto webseeds = tor.downloading_webseeds().value_or(0);
 					auto connected = peers + webseeds;
 					/* it would be nicer for translation if this was all one string, but I don't see how to do multiple %n's in tr() */
-					str = tr("Downloading from %1 of %Ln connected peer(s)", 0, connected)
+					str = tr("Downloading from %1 of %Ln connected peer(s)", nullptr, connected)
 							 .arg(fmt->format_uint64(tor.downloading_peers()));
 					
 					if (webseeds)
 						//: Second (optional) part of phrase "Downloading from ... of ... connected peer(s) and ... web seed(s)";
 						//: notice that leading space (before "and") is included here
-						str += tr(" and %Ln web seed(s)", 0, webseeds);
+						str += tr(" and %Ln web seed(s)", nullptr, webseeds);
 
 					str += " - " % fmt->format_speed(tor.download_speed()) % "  " % fmt->format_speed(tor.upload_speed());
 				}
