@@ -138,7 +138,7 @@
 
 #include <QtCore/QDebug>
 #include <QtWidgets/QMessageBox>
-
+#include <qtor/TorrentDetailView.hqt>
 
 int main(int argc, char * argv[])
 {
@@ -155,6 +155,11 @@ int main(int argc, char * argv[])
 	Q_INIT_RESOURCE(qtor_core_resource);
 
 	QApplication qapp {argc, argv};
+
+	qtor::TorrentDetailView view;
+	view.show();
+
+	return qapp.exec();
 
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);

@@ -1,0 +1,72 @@
+#pragma once
+#include <qtor/torrent.hpp>
+#include <qtor/torrent_store.hpp>
+
+#include <QtWidgets/QFrame>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QTextBrowser>
+#include <QtWidgets/QFormLayout>
+#include <QtWidgets/QBoxLayout>
+
+namespace qtor
+{
+	class TorrentDetailView : public QFrame
+	{
+		Q_OBJECT
+
+	protected:
+		QLabel * m_activityGroupLabel = nullptr;
+		QLabel * m_detailsGroupLabel = nullptr;
+		//QLabel * m_haveLabel = nullptr;
+		// activity group
+		QLabel * m_haveLabel = nullptr;
+		QLabel * m_haveValueLabel = nullptr;
+		QLabel * m_availLabel = nullptr;
+		QLabel * m_availValueLabel = nullptr;
+		QLabel * m_uploadedLabel = nullptr;
+		QLabel * m_uploadedValueLabel = nullptr;
+		QLabel * m_downloadedLabel = nullptr;
+		QLabel * m_downloadedValueLabel = nullptr;
+		QLabel * m_stateLabel = nullptr;
+		QLabel * m_stateValueLabel = nullptr;
+		QLabel * m_runningTimeLabel = nullptr;
+		QLabel * m_runningTimeValueLabel = nullptr;
+		QLabel * m_remainingTimeLabel = nullptr;
+		QLabel * m_remainingTimeValueLabel = nullptr;
+		QLabel * m_lastActivityLabel = nullptr;
+		QLabel * m_lastActivityValueLabel = nullptr;
+		QLabel * m_errorLabel = nullptr;
+		QLabel * m_errorValueLabel = nullptr;
+
+		// details group
+		QLabel * m_sizeLabel = nullptr;
+		QLabel * m_sizeValueLabel = nullptr;
+		QLabel * m_locationLabel = nullptr;
+		QLabel * m_locationValueLabel = nullptr;
+		QLabel * m_hashLabel = nullptr;
+		QLabel * m_hashValueLabel = nullptr;
+		QLabel * m_privacyLabel = nullptr;
+		QLabel * m_privacyValueLabel = nullptr;
+		QLabel * m_originLabel = nullptr;
+		QLabel * m_originValueLabel = nullptr;
+
+		QLabel * m_commentLabel = nullptr;
+		QTextBrowser * m_commentText = nullptr;
+
+	protected:
+		const formatter * m_fmt = nullptr;
+
+	public:
+		void SetTorrent(const QModelIndex & index);
+		void SetTorrent(const torrent & torr);
+		void SetTorrent(const torrent_list & torents);
+
+	public:
+		TorrentDetailView(QWidget * parent = nullptr);
+
+	protected:
+		void setupUi();
+		void retranslateUi();
+
+	};
+}
