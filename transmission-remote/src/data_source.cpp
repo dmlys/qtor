@@ -148,7 +148,7 @@ namespace transmission
 				if (name == "X-Transmission-Session-Id")
 					session = body;
 
-			EXTLL_INFO_FMT(logger(), "subscription {}: get HTTP 409 code, Transmission-Session-Id - {}", fmt::ptr(this), session);
+			EXTLL_INFO_FMT(logger(), "subscription {}: got HTTP 409 code, Transmission-Session-Id - {}", fmt::ptr(this), session);
 
 			parser.parse_trailing(streambuf);
 		}
@@ -220,7 +220,7 @@ namespace transmission
 		else
 		{
 			parser.parse_trailing(streambuf);
-
+\
 			EXTLL_WARN_FMT(logger(), "subscription {}: Bad http response: {}, {}", fmt::ptr(this), code, body);
 			auto err = fmt::format("Bad http response: {}, {}", code, body);
 			throw std::runtime_error(std::move(err));

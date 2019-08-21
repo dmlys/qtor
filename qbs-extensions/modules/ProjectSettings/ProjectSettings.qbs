@@ -59,6 +59,7 @@ Module
 			flags.push("-Wno-unused-function")
 			flags.push("-Wno-implicit-fallthrough")
 			//flags.push("-Wno-sign-compare")
+			flags.push("-Wno-deprecated-declarations")
 		}
 
 		return flags

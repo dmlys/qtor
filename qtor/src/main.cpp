@@ -156,11 +156,6 @@ int main(int argc, char * argv[])
 
 	QApplication qapp {argc, argv};
 
-	qtor::TorrentDetailView view;
-	view.show();
-
-	return qapp.exec();
-
 	//auto source = std::make_shared<qtor::sqlite::sqlite_datasource>();
 	//source->set_address("/home/lisachenko/projects/dmlys/qtor/bin/data.db"s);
 
